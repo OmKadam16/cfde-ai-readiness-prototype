@@ -56,6 +56,7 @@ import re
 from datetime import date
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from c2m2_to_croissant import CORE_TABLES, ONTOLOGY_COLUMNS, build_croissant
@@ -157,7 +158,8 @@ WHY_IT_MATTERS = {
 # ---------------------------------------------------------------------------
 
 # Tables whose rows belong to a program.
-PER_PROGRAM_TABLES = CORE_TABLES + ["biosample_disease", "subject_disease", "biosample_from_subject"]
+PER_PROGRAM_TABLES = CORE_TABLES + ["biosample_disease", "subject_disease", "biosample_from_subject",
+                                    "file_describes_biosample", "file_describes_subject"]
 RECORD_TABLES = ["project", "subject", "biosample", "file"]
 DISEASE_TABLES = ["biosample_disease", "subject_disease"]
 
@@ -171,6 +173,10 @@ MIN_COLUMNS = {
     "biosample_disease": ["biosample_id_namespace", "biosample_local_id", "disease"],
     "subject_disease": ["subject_id_namespace", "subject_local_id", "disease"],
     "biosample_from_subject": ["biosample_id_namespace", "biosample_local_id",
+                               "subject_id_namespace", "subject_local_id"],
+    "file_describes_biosample": ["file_id_namespace", "file_local_id",
+                                 "biosample_id_namespace", "biosample_local_id"],
+    "file_describes_subject": ["file_id_namespace", "file_local_id",
                                "subject_id_namespace", "subject_local_id"],
 }
 
@@ -638,6 +644,170 @@ METHODS = [
 
 
 # ---------------------------------------------------------------------------
+# Field coverage and requirement combinations (reported, never scored)
+# ---------------------------------------------------------------------------
+
+# Requirements a researcher might need for a model. For each level (subject,
+# biosample, file) we record, per record, which requirements it meets, and
+# store how many records share each combination. Any "has all of X, Y, Z"
+# count is then an exact sum over those combinations -- nothing is estimated.
+REQUIREMENTS = [
+    ("sex", "Sex"),
+    ("age", "Age"),
+    ("anatomy", "Anatomy"),
+    ("disease", "Disease labels"),
+    ("checksum", "Checksums"),
+    ("persistent_id", "Persistent IDs"),
+    ("file_format", "File format"),
+]
+FILE_ONLY_REQUIREMENTS = {"checksum", "file_format"}
+
+COMBINATION_RULES = (
+    "A record meets a requirement if it, or a record it is directly linked to, has the value. "
+    "Subjects: sex and age are their own (age also counts age_at_sampling on any of their biosamples); "
+    "anatomy and disease count if any of their biosamples has them (disease also via subject_disease). "
+    "Biosamples: anatomy is their own; sex, age and disease also come from their subject "
+    "(biosample_from_subject). Files: sex, age, anatomy and disease come from the biosamples and "
+    "subjects they describe (file_describes_biosample, file_describes_subject); checksums and file "
+    "format are the file's own. Persistent IDs are always the record's own. Records are linked only "
+    "through these C2M2 link tables, not through collections. Sex and age count for every subject "
+    "here, not only single organisms.")
+
+
+def record_index(df: pd.DataFrame) -> pd.MultiIndex:
+    """(id_namespace, local_id) of each row, used to find rows by their C2M2 key."""
+    return pd.MultiIndex.from_arrays([df["id_namespace"].astype(str), df["local_id"].astype(str)])
+
+
+def positions(index: pd.MultiIndex, links: pd.DataFrame, entity: str) -> np.ndarray:
+    """Row number in `index` of each link row's <entity>_id_namespace/<entity>_local_id (-1 if absent)."""
+    if links.empty or len(index) == 0:
+        return np.full(len(links), -1)
+    keys = pd.MultiIndex.from_arrays([links[f"{entity}_id_namespace"].astype(str),
+                                      links[f"{entity}_local_id"].astype(str)])
+    return index.get_indexer(keys)
+
+
+def any_linked(n_from: int, from_pos: np.ndarray, to_pos: np.ndarray, to_flag: np.ndarray) -> np.ndarray:
+    """For each 'from' record: does ANY record it links to have the flag?"""
+    ok = (from_pos >= 0) & (to_pos >= 0)
+    hits = np.bincount(from_pos[ok], weights=to_flag[to_pos[ok]], minlength=n_from)
+    return hits > 0
+
+
+def combination_counts(prog: dict[str, pd.DataFrame]) -> dict:
+    # Work on row numbers rather than string keys: the largest packages have
+    # millions of link rows. Duplicate keys (should not occur) keep their first row.
+    subjects, biosamples, files = (prog[t].drop_duplicates(["id_namespace", "local_id"]).reset_index(drop=True)
+                                   for t in ("subject", "biosample", "file"))
+    s_idx, b_idx, f_idx = record_index(subjects), record_index(biosamples), record_index(files)
+    n_s, n_b, n_f = len(subjects), len(biosamples), len(files)
+
+    bfs = prog["biosample_from_subject"]
+    bs_b, bs_s = positions(b_idx, bfs, "biosample"), positions(s_idx, bfs, "subject")
+    sampled = column_mask(bfs, "age_at_sampling").to_numpy()
+    fdb, fds = prog["file_describes_biosample"], prog["file_describes_subject"]
+    fb_f, fb_b = positions(f_idx, fdb, "file"), positions(b_idx, fdb, "biosample")
+    fs_f, fs_s = positions(f_idx, fds, "file"), positions(s_idx, fds, "subject")
+
+    def flagged(n: int, pos: np.ndarray) -> np.ndarray:
+        flags = np.zeros(n, dtype=bool)
+        flags[pos[pos >= 0]] = True
+        return flags
+
+    # Each record's own values.
+    s_sex = column_mask(subjects, "sex").to_numpy()
+    s_age = column_mask(subjects, "age_at_enrollment").to_numpy() | flagged(n_s, bs_s[sampled])
+    s_disease = flagged(n_s, positions(s_idx, prog["subject_disease"], "subject"))
+    s_pid = is_persistent(subjects, "persistent_id").to_numpy()
+    b_anatomy = column_mask(biosamples, "anatomy").to_numpy()
+    b_disease = flagged(n_b, positions(b_idx, prog["biosample_disease"], "biosample"))
+    b_age = flagged(n_b, bs_b[sampled])
+    b_pid = is_persistent(biosamples, "persistent_id").to_numpy()
+
+    # Subject level: anatomy and disease also from any of the subject's biosamples.
+    subject_level = {
+        "sex": s_sex, "age": s_age,
+        "anatomy": any_linked(n_s, bs_s, bs_b, b_anatomy),
+        "disease": s_disease | any_linked(n_s, bs_s, bs_b, b_disease),
+        "persistent_id": s_pid,
+    }
+    # Biosample level: sex, age and disease also from the biosample's subject.
+    biosample_level = {
+        "sex": any_linked(n_b, bs_b, bs_s, subject_level["sex"]),
+        "age": b_age | any_linked(n_b, bs_b, bs_s, subject_level["age"]),
+        "anatomy": b_anatomy,
+        "disease": b_disease | any_linked(n_b, bs_b, bs_s, subject_level["disease"]),
+        "persistent_id": b_pid,
+    }
+    # File level: labels from the biosamples and subjects each file describes.
+    file_level = {
+        flag: any_linked(n_f, fb_f, fb_b, biosample_level[flag])
+        | (any_linked(n_f, fs_f, fs_s, subject_level[flag]) if flag != "anatomy" else False)
+        for flag in ("sex", "age", "anatomy", "disease")
+    }
+    file_level["checksum"] = (column_mask(files, "sha256") | column_mask(files, "md5")).to_numpy()
+    file_level["persistent_id"] = (is_persistent(files, "persistent_id") | is_persistent(files, "access_url")).to_numpy()
+    file_level["file_format"] = column_mask(files, "file_format").to_numpy()
+
+    order = [r for r, _ in REQUIREMENTS]
+
+    def patterns(level: dict, n: int) -> dict:
+        """How many records share each combination, as bit strings in REQUIREMENTS order."""
+        if n == 0:
+            return {"total": 0, "patterns": {}}
+        code = np.zeros(n, dtype=np.int64)
+        for i, flag in enumerate(order):
+            if flag in level:
+                code |= level[flag].astype(np.int64) << (len(order) - 1 - i)
+        counts = np.bincount(code, minlength=2 ** len(order))
+        return {"total": n, "patterns": {format(c, f"0{len(order)}b"): int(k)
+                                         for c, k in enumerate(counts) if k}}
+
+    return {
+        "requirements": order,
+        "levels": {"subject": patterns(subject_level, n_s), "biosample": patterns(biosample_level, n_b),
+                   "file": patterns(file_level, n_f)},
+    }
+
+
+def count_meeting(combinations: dict, level: str, required: list[str]) -> tuple[int, int]:
+    """(records at `level` that meet ALL `required`, total records at `level`), from stored combinations."""
+    order = combinations["requirements"]
+    data = combinations["levels"][level]
+    positions = [order.index(r) for r in required]
+    met = sum(n for bits, n in data["patterns"].items() if all(bits[i] == "1" for i in positions))
+    return met, data["total"]
+
+
+def field_coverage(dims: dict, combinations: dict) -> list[dict]:
+    """% of records with each key field filled, for the Field coverage view. Reuses the
+    scored checks' numbers; disease links come from the biosample-level combinations."""
+    def from_check(dim_name: str, check_id: str) -> tuple[int, int]:
+        # A dimension with nothing to measure (e.g. no files) has no checks: 0 of 0.
+        c = next((c for c in dims[dim_name]["checks"] if c["id"] == check_id), None)
+        return (c["passed"], c["total"]) if c else (0, 0)
+
+    disease = count_meeting(combinations, "biosample", ["disease"])
+    fields = [
+        ("sex", "Sex", "subject.sex", "single-organism subjects", from_check("Characterization", "subject_sex")),
+        ("age", "Age", "subject.age_at_enrollment, biosample_from_subject.age_at_sampling",
+         "single-organism subjects", from_check("Characterization", "subject_age")),
+        ("anatomy", "Anatomy", "biosample.anatomy", "biosamples", from_check("Characterization", "biosample_anatomy")),
+        ("disease", "Disease link", "biosample_disease, subject_disease (via biosample_from_subject)",
+         "biosamples", disease),
+        ("persistent_id", "Persistent ID", "persistent_id (all records), file.access_url", "records",
+         from_check("FAIRness", "persistent_ids")),
+        ("checksum", "Checksum", "file.sha256, file.md5", "files", from_check("Provenance", "file_checksums")),
+        ("file_format", "File format", "file.file_format", "files", from_check("Computability", "file_format")),
+        ("creation_time", "Creation time", "creation_time (all records)", "records",
+         from_check("Provenance", "creation_time")),
+    ]
+    return [{"field": f, "label": label, "columns": cols, "unit": unit, "passed": passed, "total": total}
+            for f, label, cols, unit, (passed, total) in fields]
+
+
+# ---------------------------------------------------------------------------
 # Data quality notes (reported, never scored)
 # ---------------------------------------------------------------------------
 
@@ -710,6 +880,7 @@ def score_program(namespace: str, label: str, prog: dict[str, pd.DataFrame],
         if dim["score"] != NOT_ASSESSABLE and dim["score"] < LOW_SCORE_THRESHOLD:
             dim["observation"] = low_score_sentence(dim)
     numeric = [d["score"] for d in dims.values() if d["score"] != NOT_ASSESSABLE]
+    combinations = combination_counts(prog)
     return {
         "program": label,
         "namespace": namespace,
@@ -721,6 +892,8 @@ def score_program(namespace: str, label: str, prog: dict[str, pd.DataFrame],
         "dimensions_assessed": len(numeric),
         "dimensions": dims,
         "data_quality_notes": data_quality_notes(prog),
+        "field_coverage": field_coverage(dims, combinations),
+        "combinations": combinations,
     }
 
 
@@ -1006,6 +1179,8 @@ def run_compare(root: Path) -> None:
                    "generated": date.today().isoformat(),
                    "old_release_years": OLD_RELEASE_YEARS,
                    "old_release_flag": OLD_RELEASE_FLAG,
+                   "requirements": dict(REQUIREMENTS),
+                   "combination_rules": COMBINATION_RULES,
                    "programs": results,
                    "top_gaps": top_gap_data(results)}, f, indent=2)
     print()

@@ -180,7 +180,109 @@
       },
       "data_quality_notes": [
         "project.tsv: 78 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://projectreporter.nih.gov (71), https://sparc.science (5), https://cdmrp.health.mil (1), https://gtr.ukri.org (1)."
-      ]
+      ],
+      "field_coverage": [
+        {
+          "field": "sex",
+          "label": "Sex",
+          "columns": "subject.sex",
+          "unit": "single-organism subjects",
+          "passed": 0,
+          "total": 4597
+        },
+        {
+          "field": "age",
+          "label": "Age",
+          "columns": "subject.age_at_enrollment, biosample_from_subject.age_at_sampling",
+          "unit": "single-organism subjects",
+          "passed": 0,
+          "total": 4597
+        },
+        {
+          "field": "anatomy",
+          "label": "Anatomy",
+          "columns": "biosample.anatomy",
+          "unit": "biosamples",
+          "passed": 9206,
+          "total": 9212
+        },
+        {
+          "field": "disease",
+          "label": "Disease link",
+          "columns": "biosample_disease, subject_disease (via biosample_from_subject)",
+          "unit": "biosamples",
+          "passed": 0,
+          "total": 9212
+        },
+        {
+          "field": "persistent_id",
+          "label": "Persistent ID",
+          "columns": "persistent_id (all records), file.access_url",
+          "unit": "records",
+          "passed": 175471,
+          "total": 189358
+        },
+        {
+          "field": "checksum",
+          "label": "Checksum",
+          "columns": "file.sha256, file.md5",
+          "unit": "files",
+          "passed": 175471,
+          "total": 175471
+        },
+        {
+          "field": "file_format",
+          "label": "File format",
+          "columns": "file.file_format",
+          "unit": "files",
+          "passed": 173792,
+          "total": 175471
+        },
+        {
+          "field": "creation_time",
+          "label": "Creation time",
+          "columns": "creation_time (all records)",
+          "unit": "records",
+          "passed": 173350,
+          "total": 189358
+        }
+      ],
+      "combinations": {
+        "requirements": [
+          "sex",
+          "age",
+          "anatomy",
+          "disease",
+          "checksum",
+          "persistent_id",
+          "file_format"
+        ],
+        "levels": {
+          "subject": {
+            "total": 4597,
+            "patterns": {
+              "0000000": 6,
+              "0010000": 4591
+            }
+          },
+          "biosample": {
+            "total": 9212,
+            "patterns": {
+              "0000000": 6,
+              "0010000": 9206
+            }
+          },
+          "file": {
+            "total": 175471,
+            "patterns": {
+              "0000110": 1,
+              "0000111": 9249,
+              "0010110": 1678,
+              "0010111": 164543
+            }
+          }
+        }
+      }
     }
   ]
 }

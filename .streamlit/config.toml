@@ -2,3 +2,9 @@
 [server]
 # Upload cap for "Check your own datapackage", in MB (app.py also checks it).
 maxUploadSize = 50
+
+[theme]
+# Accent colour for buttons, checkboxes and progress bars: the same neutral
+# blue as the charts (Streamlit's default accent is red). Light/dark mode
+# still follows the viewer's settings.
+primaryColor = "#2a78d6"

@@ -182,7 +182,112 @@
         "assay_type.tsv: 2 term ID(s) have leading/trailing whitespace ('OBI:0001271 ', 'OBI:0600020 '). As written they are not valid term IDs, and any tool that trims whitespace on one side of a join but not the other will fail to match them. The labels exist; this checker trims both sides before matching.",
         "13,520 ontology-field value(s) in the data have leading/trailing whitespace: file.tsv assay_type: 13,520 (e.g. 'OBI:0001271 ', 'OBI:0600020 ')",
         "Persistent IDs present, but stored in access_url instead of the C2M2 persistent_id field (154,612 of 154,612 files; 3,233 distinct identifiers, e.g. 'https://doi.org/10.60586/SNT968.LLQQ.268', 'https://doi.org/10.60586/SNT693.RHFM.739', ... (3231 more))."
-      ]
+      ],
+      "field_coverage": [
+        {
+          "field": "sex",
+          "label": "Sex",
+          "columns": "subject.sex",
+          "unit": "single-organism subjects",
+          "passed": 450,
+          "total": 897
+        },
+        {
+          "field": "age",
+          "label": "Age",
+          "columns": "subject.age_at_enrollment, biosample_from_subject.age_at_sampling",
+          "unit": "single-organism subjects",
+          "passed": 462,
+          "total": 897
+        },
+        {
+          "field": "anatomy",
+          "label": "Anatomy",
+          "columns": "biosample.anatomy",
+          "unit": "biosamples",
+          "passed": 5669,
+          "total": 5673
+        },
+        {
+          "field": "disease",
+          "label": "Disease link",
+          "columns": "biosample_disease, subject_disease (via biosample_from_subject)",
+          "unit": "biosamples",
+          "passed": 0,
+          "total": 5673
+        },
+        {
+          "field": "persistent_id",
+          "label": "Persistent ID",
+          "columns": "persistent_id (all records), file.access_url",
+          "unit": "records",
+          "passed": 154612,
+          "total": 161203
+        },
+        {
+          "field": "checksum",
+          "label": "Checksum",
+          "columns": "file.sha256, file.md5",
+          "unit": "files",
+          "passed": 154612,
+          "total": 154612
+        },
+        {
+          "field": "file_format",
+          "label": "File format",
+          "columns": "file.file_format",
+          "unit": "files",
+          "passed": 146936,
+          "total": 154612
+        },
+        {
+          "field": "creation_time",
+          "label": "Creation time",
+          "columns": "creation_time (all records)",
+          "unit": "records",
+          "passed": 161182,
+          "total": 161203
+        }
+      ],
+      "combinations": {
+        "requirements": [
+          "sex",
+          "age",
+          "anatomy",
+          "disease",
+          "checksum",
+          "persistent_id",
+          "file_format"
+        ],
+        "levels": {
+          "subject": {
+            "total": 897,
+            "patterns": {
+              "0000000": 6,
+              "0010000": 429,
+              "0110000": 12,
+              "1100000": 2,
+              "1110000": 448
+            }
+          },
+          "biosample": {
+            "total": 5673,
+            "patterns": {
+              "0000000": 4,
+              "0010000": 2106,
+              "0110000": 94,
+              "1110000": 3469
+            }
+          },
+          "file": {
+            "total": 154612,
+            "patterns": {
+              "0000110": 7676,
+              "0000111": 146936
+            }
+          }
+        }
+      }
     }
   ]
 }

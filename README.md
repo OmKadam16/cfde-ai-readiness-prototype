@@ -94,8 +94,9 @@ python3 readiness_checker.py --data-dir ../data_real/sparc  # one real package
 python3 readiness_checker.py                              # the hand-collected sample in data/
 ```
 
-`--compare` scores every package in `data_real/` (about a minute; the
-largest, LINCS, peaks around 2.5 GB of memory) and writes
+`--compare` scores every package in `data_real/` (about 75 seconds;
+peak memory around 4 GB, mostly from Kids First's and LINCS's multi-million
+row file and link tables) and writes
 `output/readiness_comparison.md` and `.json` plus a
 `readiness_report_<program>.md` / `readiness_scores_<program>.json` per
 program. The checker itself uses only pandas and the standard library.
@@ -111,12 +112,27 @@ pip3 install -r requirements.txt
 streamlit run app.py
 ```
 
-It opens at http://localhost:8501 with five pages: Home, Comparison
-(table, heatmap and top-3 gaps), Program report card (one program's
-scores, raw numbers, observations and data quality notes), Methods
-(every check and its C2M2 source), and Check your own datapackage (upload
-a C2M2 `.zip` up to 50 MB zipped / 300 MB unzipped and score it live; the
-file is unpacked to a temporary folder and deleted afterwards).
+It opens at http://localhost:8501. The pages answer three questions:
+
+- **Overview** (a reviewer: how AI-ready is CFDE metadata?) - a score card
+  per program, a radar of the six measurable dimensions (all programs in
+  gray, one highlighted in blue), and the three key cross-program gaps.
+- **Field coverage** - a heatmap of how many records have each key field
+  filled (sex, age, anatomy, disease link, persistent ID, checksum, file
+  format, creation time); hover a cell for the raw count and C2M2 column.
+- **Find ML-ready data** (a researcher: where are records with everything
+  my model needs?) - tick requirements and see, per program, how many
+  subjects, biosamples or files meet all of them. Counts are exact: the
+  checker stores how many records share each combination of requirements.
+- **Program report card** (a program's data team: what would help most?) -
+  dimension scores, every check as a progress bar with "X of Y", the top 3
+  fixes ranked by points they would add, and data quality notes.
+- **Methods** and **Check your own datapackage** (upload a C2M2 `.zip` up
+  to 50 MB zipped / 300 MB unzipped and see its report card; the file is
+  unpacked to a temporary folder and deleted afterwards).
+
+Charts use one neutral blue scale for scores and gray for n/a, and read in
+both Streamlit's light and dark themes.
 
 To publish it on Streamlit Community Cloud (free): push the repo to
 GitHub, then at share.streamlit.io choose "Create app", pick this repo and

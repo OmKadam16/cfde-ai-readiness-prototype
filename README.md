@@ -1,4 +1,4 @@
-# CFDE AI-Readiness Prototype — Week 1
+# CFDE AI-Readiness Prototype — Week 2
 
 ## What this is
 A working prototype that:
@@ -41,7 +41,12 @@ too, kept as a clean example of the schema mechanics.
 - `schema/c2m2_field_reference.md` — real C2M2 column definitions.
 - `data/*.tsv` — the datapackage (real + one demo cluster).
 - `src/c2m2_to_croissant.py` — converts the datapackage to Croissant JSON-LD.
-- `src/build_graph.py` — builds and queries the knowledge graph.
+- `src/build_graph.py` — builds the knowledge graph (every node carries a
+  `dcc` attribute now, not just an ID string, so DCC-based queries are
+  reliable rather than guessed from substrings).
+- `src/query.py` — command-line query interface over the graph (see below).
+- `src/validate_croissant.py` — structural Croissant spec validator.
+- `src/term_labels.py` — human-readable ontology term labels.
 - `output/croissant.json` — the generated AI-ready metadata file.
 
 ## Run it
@@ -49,6 +54,16 @@ too, kept as a clean example of the schema mechanics.
 cd src
 python3 c2m2_to_croissant.py
 python3 build_graph.py
+python3 validate_croissant.py
+```
+
+## Query it
+```
+python3 query.py list --type biosample
+python3 query.py search --anatomy brain
+python3 query.py search --dcc sparc
+python3 query.py connected biosample:QC9XMFT8 --hops 2
+python3 query.py show biosample:QC9XMFT8
 ```
 
 ## Validation + term labels (done)
@@ -66,7 +81,14 @@ python3 build_graph.py
   independently confirmed), or `placeholder` (used only in the synthetic
   demo cluster, explicitly flagged as unverified rather than guessed).
 
+## Week 2: query CLI (done)
+- `src/query.py` — a simple, real command-line interface: `connected`,
+  `list`, `search`, `show`. Building it surfaced (and fixed) a real bug:
+  the graph originally had no explicit `dcc` attribute on nodes, so a
+  "search by DCC" query silently returned nothing for some DCCs. Now
+  every node carries its source DCC explicitly.
+
 ## Next steps
 - Write up the disease-unification example as a short case study for the
   outreach email — it's the clearest illustration of "why this matters."
-- Package as a public GitHub repo with the README doubling as the pitch.
+- Draft the actual outreach email to Chen/AI.MED Lab, linking the repo.

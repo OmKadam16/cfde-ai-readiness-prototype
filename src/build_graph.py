@@ -33,20 +33,23 @@ def build_graph() -> nx.DiGraph:
     file_desc_bio = load("file_describes_biosample")
     bio_disease = load("biosample_disease")
 
-    # Add nodes with attributes
+    # Add nodes with attributes. id_namespace is stored explicitly on every
+    # node (dcc=...) so DCC-based queries actually work -- it's not safe to
+    # assume it lines up with a node ID substring.
     for _, row in project.iterrows():
-        G.add_node(f"project:{row.local_id}", type="project", name=row["name"])
+        G.add_node(f"project:{row.local_id}", type="project", name=row["name"], dcc=row["id_namespace"])
 
     for _, row in subject.iterrows():
-        G.add_node(f"subject:{row.local_id}", type="subject", sex=row["sex"], age=row["age_at_enrollment"])
+        G.add_node(f"subject:{row.local_id}", type="subject", sex=row["sex"],
+                    age=row["age_at_enrollment"], dcc=row["id_namespace"])
         G.add_edge(f"subject:{row.local_id}", f"project:{row.project_local_id}", relation="enrolled_in")
 
     for _, row in biosample.iterrows():
-        G.add_node(f"biosample:{row.local_id}", type="biosample", anatomy=row["anatomy"])
+        G.add_node(f"biosample:{row.local_id}", type="biosample", anatomy=row["anatomy"], dcc=row["id_namespace"])
         G.add_edge(f"biosample:{row.local_id}", f"project:{row.project_local_id}", relation="collected_by")
 
     for _, row in file_df.iterrows():
-        G.add_node(f"file:{row.local_id}", type="file", filename=row["filename"])
+        G.add_node(f"file:{row.local_id}", type="file", filename=row["filename"], dcc=row["id_namespace"])
         G.add_edge(f"file:{row.local_id}", f"project:{row.project_local_id}", relation="produced_by")
 
     for _, row in bio_from_subj.iterrows():

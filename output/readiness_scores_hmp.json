@@ -179,7 +179,126 @@
           ]
         }
       },
-      "data_quality_notes": []
+      "data_quality_notes": [],
+      "field_coverage": [
+        {
+          "field": "sex",
+          "label": "Sex",
+          "columns": "subject.sex",
+          "unit": "single-organism subjects",
+          "passed": 6623,
+          "total": 7903
+        },
+        {
+          "field": "age",
+          "label": "Age",
+          "columns": "subject.age_at_enrollment, biosample_from_subject.age_at_sampling",
+          "unit": "single-organism subjects",
+          "passed": 0,
+          "total": 7903
+        },
+        {
+          "field": "anatomy",
+          "label": "Anatomy",
+          "columns": "biosample.anatomy",
+          "unit": "biosamples",
+          "passed": 48510,
+          "total": 51873
+        },
+        {
+          "field": "disease",
+          "label": "Disease link",
+          "columns": "biosample_disease, subject_disease (via biosample_from_subject)",
+          "unit": "biosamples",
+          "passed": 2531,
+          "total": 51873
+        },
+        {
+          "field": "persistent_id",
+          "label": "Persistent ID",
+          "columns": "persistent_id (all records), file.access_url",
+          "unit": "records",
+          "passed": 220615,
+          "total": 310936
+        },
+        {
+          "field": "checksum",
+          "label": "Checksum",
+          "columns": "file.sha256, file.md5",
+          "unit": "files",
+          "passed": 251136,
+          "total": 251136
+        },
+        {
+          "field": "file_format",
+          "label": "File format",
+          "columns": "file.file_format",
+          "unit": "files",
+          "passed": 251136,
+          "total": 251136
+        },
+        {
+          "field": "creation_time",
+          "label": "Creation time",
+          "columns": "creation_time (all records)",
+          "unit": "records",
+          "passed": 0,
+          "total": 310936
+        }
+      ],
+      "combinations": {
+        "requirements": [
+          "sex",
+          "age",
+          "anatomy",
+          "disease",
+          "checksum",
+          "persistent_id",
+          "file_format"
+        ],
+        "levels": {
+          "subject": {
+            "total": 7903,
+            "patterns": {
+              "0000000": 190,
+              "0010000": 1087,
+              "0011000": 3,
+              "1000000": 410,
+              "1001000": 166,
+              "1010000": 5724,
+              "1011000": 323
+            }
+          },
+          "biosample": {
+            "total": 51873,
+            "patterns": {
+              "0000000": 1362,
+              "0010000": 18335,
+              "0011000": 13,
+              "1000000": 1692,
+              "1001000": 309,
+              "1010000": 27953,
+              "1011000": 2209
+            }
+          },
+          "file": {
+            "total": 251136,
+            "patterns": {
+              "0000101": 4208,
+              "0000111": 1525,
+              "0010101": 13788,
+              "0010111": 102023,
+              "0011111": 104,
+              "1000101": 1397,
+              "1000111": 1891,
+              "1001111": 1015,
+              "1010101": 11128,
+              "1010111": 103815,
+              "1011111": 10242
+            }
+          }
+        }
+      }
     }
   ]
 }

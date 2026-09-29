@@ -182,7 +182,166 @@
       },
       "data_quality_notes": [
         "project.tsv: 45 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://www.ncbi.nlm.nih.gov (44), https://kidsfirstdrc.org (1)."
-      ]
+      ],
+      "field_coverage": [
+        {
+          "field": "sex",
+          "label": "Sex",
+          "columns": "subject.sex",
+          "unit": "single-organism subjects",
+          "passed": 39044,
+          "total": 39156
+        },
+        {
+          "field": "age",
+          "label": "Age",
+          "columns": "subject.age_at_enrollment, biosample_from_subject.age_at_sampling",
+          "unit": "single-organism subjects",
+          "passed": 7349,
+          "total": 39156
+        },
+        {
+          "field": "anatomy",
+          "label": "Anatomy",
+          "columns": "biosample.anatomy",
+          "unit": "biosamples",
+          "passed": 60726,
+          "total": 111300
+        },
+        {
+          "field": "disease",
+          "label": "Disease link",
+          "columns": "biosample_disease, subject_disease (via biosample_from_subject)",
+          "unit": "biosamples",
+          "passed": 106067,
+          "total": 111300
+        },
+        {
+          "field": "persistent_id",
+          "label": "Persistent ID",
+          "columns": "persistent_id (all records), file.access_url",
+          "unit": "records",
+          "passed": 370371,
+          "total": 1507315
+        },
+        {
+          "field": "checksum",
+          "label": "Checksum",
+          "columns": "file.sha256, file.md5",
+          "unit": "files",
+          "passed": 0,
+          "total": 1356814
+        },
+        {
+          "field": "file_format",
+          "label": "File format",
+          "columns": "file.file_format",
+          "unit": "files",
+          "passed": 1280973,
+          "total": 1356814
+        },
+        {
+          "field": "creation_time",
+          "label": "Creation time",
+          "columns": "creation_time (all records)",
+          "unit": "records",
+          "passed": 1507314,
+          "total": 1507315
+        }
+      ],
+      "combinations": {
+        "requirements": [
+          "sex",
+          "age",
+          "anatomy",
+          "disease",
+          "checksum",
+          "persistent_id",
+          "file_format"
+        ],
+        "levels": {
+          "subject": {
+            "total": 39156,
+            "patterns": {
+              "0000000": 1,
+              "0001000": 15,
+              "0011000": 2,
+              "0101000": 45,
+              "0111000": 49,
+              "1000000": 3151,
+              "1001000": 26851,
+              "1010000": 830,
+              "1011000": 957,
+              "1100000": 146,
+              "1101000": 2272,
+              "1110000": 388,
+              "1111000": 4449
+            }
+          },
+          "biosample": {
+            "total": 111300,
+            "patterns": {
+              "0000000": 1,
+              "0001000": 23,
+              "0011000": 10,
+              "0101000": 95,
+              "0111000": 288,
+              "1000000": 3767,
+              "1001000": 34490,
+              "1010000": 831,
+              "1011000": 1290,
+              "1100000": 183,
+              "1101000": 12015,
+              "1110000": 451,
+              "1111000": 57856
+            }
+          },
+          "file": {
+            "total": 1356814,
+            "patterns": {
+              "0000001": 4,
+              "0000010": 1,
+              "0000011": 14,
+              "0001001": 162,
+              "0001010": 2,
+              "0001011": 36,
+              "0011001": 4,
+              "0011011": 2,
+              "0101000": 35,
+              "0101001": 537,
+              "0111000": 64,
+              "0111001": 703,
+              "1000000": 243,
+              "1000001": 47626,
+              "1000010": 4602,
+              "1000011": 35204,
+              "1001000": 13378,
+              "1001001": 474828,
+              "1001010": 18918,
+              "1001011": 254484,
+              "1010000": 12,
+              "1010001": 6718,
+              "1011000": 20,
+              "1011001": 11926,
+              "1011010": 1699,
+              "1011011": 29826,
+              "1100000": 64,
+              "1100001": 3192,
+              "1100010": 146,
+              "1101000": 4658,
+              "1101001": 77799,
+              "1101010": 965,
+              "1101011": 13187,
+              "1110000": 1052,
+              "1110001": 19565,
+              "1111000": 29619,
+              "1111001": 294234,
+              "1111010": 363,
+              "1111011": 10922
+            }
+          }
+        }
+      }
     }
   ]
 }

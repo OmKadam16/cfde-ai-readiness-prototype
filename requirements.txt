@@ -1,0 +1,10 @@
+# Python dependencies for the CFDE AI-Readiness Prototype.
+#
+# Install with:
+#   pip3 install -r requirements.txt
+#
+# (On newer macOS/Linux Python installs, if you see an "externally managed
+# environment" error, use: pip3 install -r requirements.txt --break-system-packages)
+
+pandas>=2.0        # reads/writes the C2M2 .tsv tables
+networkx>=3.0       # builds and queries the knowledge graph

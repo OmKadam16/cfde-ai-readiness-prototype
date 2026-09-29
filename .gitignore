@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .DS_Store
 *.egg-info/
+
+# Real C2M2 datapackages downloaded from CFDE (large; re-download, see README)
+data_real/

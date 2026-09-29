@@ -1,7 +1,7 @@
 id_namespace	local_id	persistent_id	creation_time	abbreviation	name	description
 demo:proj1	proj001	https://example.org/proj/proj001	2026-01-15T00:00:00-05:00	DEMOEEG	Demo EEG Study	A small demonstration project modeling EEG biosample and file records in C2M2 format
-cfde:sparc	OT2OD023873	https://commonfund.nih.gov/sparc	2026-01-15T00:00:00-05:00	SPARC	SPARC	Real NIH Common Fund SPARC project - Stimulating Peripheral Activity to Relieve Conditions (pulled from CFDE Data Portal, biosample search)
-cfde:kidsfirst	SD_YGVA0E1C	https://kidsfirstdrc.org	2026-01-15T00:00:00-05:00	KF_STUDY	Kids First Study SD_YGVA0E1C	Real Gabriella Miller Kids First study, referenced by a real biosample in the CFDE Data Portal
+cfde:sparc	OT2OD023873	https://commonfund.nih.gov/sparc		SPARC	SPARC	Real NIH Common Fund SPARC project - Stimulating Peripheral Activity to Relieve Conditions (pulled from CFDE Data Portal, biosample search)
+cfde:kidsfirst	SD_YGVA0E1C	https://kidsfirstdrc.org		KF_STUDY	Kids First Study SD_YGVA0E1C	Real Gabriella Miller Kids First study, referenced by a real biosample in the CFDE Data Portal
 cfde:sparc	OT2OD023848			SPARC2	SPARC (P1700 series)	Real SPARC project pulled from CFDE portal (cardiac nerve plexus biosample)
 cfde:sparc	OT3OD025349			SPARC3	SPARC (stomach dataset)	Real SPARC project pulled from CFDE portal (stomach biosample)
 cfde:kidsfirst	SD_DYPMEHHF			KF2	Kids First Study SD_DYPMEHHF	Real Kids First study pulled from CFDE portal

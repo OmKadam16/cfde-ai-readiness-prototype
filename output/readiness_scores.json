@@ -1,0 +1,794 @@
+{
+  "source": "Clark T, et al. \"AI-readiness Criteria for Biomedical Data.\" bioRxiv 2024. doi:10.1101/2024.10.23.619844 (first posted as \"AI-readiness for Biomedical Data: Bridge2AI Recommendations\")",
+  "disclaimer": "These are simplified proxy measures for exploration, not an official evaluation.",
+  "banner": "DEMO ON A SMALL HAND-COLLECTED SAMPLE - these scores reflect this sample, not the full program's metadata.",
+  "data_dir": "/Users/omkadam/Documents/Om Kadam/PROJECTS/cfde-project/data",
+  "programs": [
+    {
+      "program": "hmp",
+      "namespace": "cfde:hmp",
+      "release": "",
+      "release_date": "",
+      "record_counts": {
+        "project": 1,
+        "subject": 2,
+        "biosample": 2,
+        "file": 0
+      },
+      "overall_score": 11,
+      "dimensions_assessed": 3,
+      "dimensions": {
+        "FAIRness": {
+          "score": 0,
+          "reason": "",
+          "checks": [
+            {
+              "id": "persistent_ids",
+              "description": "Records with a persistent ID (persistent_id field, or a persistent-identifier access_url on files)",
+              "passed": 0,
+              "total": 5,
+              "score": 0,
+              "detail": "5 of 5 records have no persistent identifier recorded (0 have one in persistent_id; 0 more files have one only in access_url; 2 persistent_id values use a non-persistent scheme and are not counted)",
+              "raw": {
+                "persistent_id_field": 0,
+                "access_url_only": 0,
+                "access_url_persistent_total": 0,
+                "persistent_id_non_persistent_scheme": 2
+              }
+            },
+            {
+              "id": "ontology_ids",
+              "description": "Ontology-coded field values that are real term IDs (PREFIX:ID), not free text",
+              "passed": 0,
+              "total": 2,
+              "score": 0,
+              "detail": "0 of 2 ontology-field values use a term ID; free text found: 'Feces', 'posterior fornix of vagina'",
+              "note": "The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata."
+            }
+          ]
+        },
+        "Provenance": {
+          "score": 0,
+          "reason": "",
+          "checks": [
+            {
+              "id": "creation_time",
+              "description": "Records (project/subject/biosample/file) with a creation_time",
+              "passed": 0,
+              "total": 5,
+              "score": 0,
+              "detail": "5 of 5 records have no a creation_time recorded"
+            },
+            {
+              "id": "file_checksums",
+              "description": "Files with a sha256 or md5 checksum",
+              "passed": 0,
+              "total": 0,
+              "score": null,
+              "detail": "0 of 0 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all)"
+            }
+          ]
+        },
+        "Characterization": {
+          "score": 33,
+          "reason": "",
+          "checks": [
+            {
+              "id": "subject_sex",
+              "description": "Single-organism subjects with sex recorded",
+              "passed": 0,
+              "total": 2,
+              "score": 0,
+              "detail": "2 of 2 subjects have no sex recorded"
+            },
+            {
+              "id": "subject_age",
+              "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
+              "passed": 0,
+              "total": 2,
+              "score": 0,
+              "detail": "2 of 2 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
+              "raw": {
+                "age_at_enrollment": 0,
+                "age_at_sampling_only": 0
+              }
+            },
+            {
+              "id": "biosample_anatomy",
+              "description": "Biosamples with anatomy recorded",
+              "passed": 2,
+              "total": 2,
+              "score": 100,
+              "detail": "0 of 2 biosamples have no anatomy recorded"
+            }
+          ],
+          "info": [
+            "2 subject(s) have no granularity recorded and are counted as single organisms",
+            "0 disease associations in this release (0 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease"
+          ]
+        },
+        "Pre-model Explainability": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This program uses no ontology term IDs -- its ontology fields hold free text (see FAIRness), so there are no codes to look up labels for. The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata.",
+          "checks": [
+            {
+              "id": "labeled_terms",
+              "description": "Distinct ontology term IDs with a human-readable label (from the package's own term tables, or portal-sourced in term_labels.py)",
+              "passed": 0,
+              "total": 0,
+              "score": null,
+              "detail": "0 of 0 term IDs have a label (datapackage term table or portal)",
+              "note": "The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata."
+            }
+          ]
+        },
+        "Ethics": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.",
+          "checks": []
+        },
+        "Sustainability": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This program has no file records, so there is nothing whose long-term access can be checked.",
+          "checks": [
+            {
+              "id": "file_locatable",
+              "description": "Files with a persistent_id or access_url",
+              "passed": 0,
+              "total": 0,
+              "score": null,
+              "detail": "0 of 0 files have no both a persistent_id and an access_url recorded"
+            }
+          ]
+        },
+        "Computability": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This program has no file records, so there is no data for a model to load (for reference: croissant generated for this program's records and passed validate_croissant.py).",
+          "checks": []
+        }
+      },
+      "data_quality_notes": [
+        "biosample.tsv: 2 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://cfde.cloud (2)."
+      ]
+    },
+    {
+      "program": "kidsfirst",
+      "namespace": "cfde:kidsfirst",
+      "release": "",
+      "release_date": "",
+      "record_counts": {
+        "project": 3,
+        "subject": 3,
+        "biosample": 3,
+        "file": 1
+      },
+      "overall_score": 17,
+      "dimensions_assessed": 6,
+      "dimensions": {
+        "FAIRness": {
+          "score": 25,
+          "reason": "",
+          "checks": [
+            {
+              "id": "persistent_ids",
+              "description": "Records with a persistent ID (persistent_id field, or a persistent-identifier access_url on files)",
+              "passed": 0,
+              "total": 10,
+              "score": 0,
+              "detail": "10 of 10 records have no persistent identifier recorded (0 have one in persistent_id; 0 more files have one only in access_url; 3 persistent_id values use a non-persistent scheme and are not counted)",
+              "raw": {
+                "persistent_id_field": 0,
+                "access_url_only": 0,
+                "access_url_persistent_total": 0,
+                "persistent_id_non_persistent_scheme": 3
+              }
+            },
+            {
+              "id": "ontology_ids",
+              "description": "Ontology-coded field values that are real term IDs (PREFIX:ID), not free text",
+              "passed": 1,
+              "total": 2,
+              "score": 50,
+              "detail": "1 of 2 ontology-field values use a term ID; free text found: 'neck'",
+              "note": "The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata."
+            }
+          ]
+        },
+        "Provenance": {
+          "score": 15,
+          "reason": "",
+          "checks": [
+            {
+              "id": "creation_time",
+              "description": "Records (project/subject/biosample/file) with a creation_time",
+              "passed": 3,
+              "total": 10,
+              "score": 30,
+              "detail": "7 of 10 records have no a creation_time recorded"
+            },
+            {
+              "id": "file_checksums",
+              "description": "Files with a sha256 or md5 checksum",
+              "passed": 0,
+              "total": 1,
+              "score": 0,
+              "detail": "1 of 1 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all)"
+            }
+          ]
+        },
+        "Characterization": {
+          "score": 11,
+          "reason": "",
+          "checks": [
+            {
+              "id": "subject_sex",
+              "description": "Single-organism subjects with sex recorded",
+              "passed": 0,
+              "total": 3,
+              "score": 0,
+              "detail": "3 of 3 subjects have no sex recorded"
+            },
+            {
+              "id": "subject_age",
+              "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
+              "passed": 0,
+              "total": 3,
+              "score": 0,
+              "detail": "3 of 3 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
+              "raw": {
+                "age_at_enrollment": 0,
+                "age_at_sampling_only": 0
+              }
+            },
+            {
+              "id": "biosample_anatomy",
+              "description": "Biosamples with anatomy recorded",
+              "passed": 1,
+              "total": 3,
+              "score": 33,
+              "detail": "2 of 3 biosamples have no anatomy recorded"
+            }
+          ],
+          "info": [
+            "3 subject(s) have no granularity recorded and are counted as single organisms",
+            "0 disease associations in this release (0 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease"
+          ]
+        },
+        "Pre-model Explainability": {
+          "score": 0,
+          "reason": "",
+          "checks": [
+            {
+              "id": "labeled_terms",
+              "description": "Distinct ontology term IDs with a human-readable label (from the package's own term tables, or portal-sourced in term_labels.py)",
+              "passed": 0,
+              "total": 1,
+              "score": 0,
+              "detail": "0 of 1 term IDs have a label (datapackage term table or portal); breakdown: 1 inferred ('OBI:0002117')",
+              "note": "The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata."
+            }
+          ]
+        },
+        "Ethics": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.",
+          "checks": []
+        },
+        "Sustainability": {
+          "score": 0,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_locatable",
+              "description": "Files with a persistent_id or access_url",
+              "passed": 0,
+              "total": 1,
+              "score": 0,
+              "detail": "1 of 1 files have no both a persistent_id and an access_url recorded"
+            }
+          ]
+        },
+        "Computability": {
+          "score": 50,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_format",
+              "description": "Files with a file_format",
+              "passed": 0,
+              "total": 1,
+              "score": 0,
+              "detail": "1 of 1 files have no a file_format recorded"
+            },
+            {
+              "id": "croissant_valid",
+              "description": "Croissant metadata generated and passes validate_croissant.py (yes=100 / no=0)",
+              "passed": 1,
+              "total": 1,
+              "score": 100,
+              "detail": "Croissant generated for this program's records and passed validate_croissant.py"
+            }
+          ]
+        }
+      },
+      "data_quality_notes": [
+        "project.tsv: 1 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://kidsfirstdrc.org (1).",
+        "biosample.tsv: 2 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://cfde.cloud (2)."
+      ]
+    },
+    {
+      "program": "lincs",
+      "namespace": "cfde:lincs",
+      "release": "",
+      "release_date": "",
+      "record_counts": {
+        "project": 2,
+        "subject": 2,
+        "biosample": 3,
+        "file": 1
+      },
+      "overall_score": 17,
+      "dimensions_assessed": 5,
+      "dimensions": {
+        "FAIRness": {
+          "score": 0,
+          "reason": "",
+          "checks": [
+            {
+              "id": "persistent_ids",
+              "description": "Records with a persistent ID (persistent_id field, or a persistent-identifier access_url on files)",
+              "passed": 0,
+              "total": 8,
+              "score": 0,
+              "detail": "8 of 8 records have no persistent identifier recorded (0 have one in persistent_id; 0 more files have one only in access_url; 2 persistent_id values use a non-persistent scheme and are not counted)",
+              "raw": {
+                "persistent_id_field": 0,
+                "access_url_only": 0,
+                "access_url_persistent_total": 0,
+                "persistent_id_non_persistent_scheme": 2
+              }
+            },
+            {
+              "id": "ontology_ids",
+              "description": "Ontology-coded field values that are real term IDs (PREFIX:ID), not free text",
+              "passed": 0,
+              "total": 7,
+              "score": 0,
+              "detail": "0 of 7 ontology-field values use a term ID; free text found: 'Breast', 'breast carcinoma', 'maintaining cell culture'",
+              "note": "The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata."
+            }
+          ]
+        },
+        "Provenance": {
+          "score": 12,
+          "reason": "",
+          "checks": [
+            {
+              "id": "creation_time",
+              "description": "Records (project/subject/biosample/file) with a creation_time",
+              "passed": 2,
+              "total": 8,
+              "score": 25,
+              "detail": "6 of 8 records have no a creation_time recorded"
+            },
+            {
+              "id": "file_checksums",
+              "description": "Files with a sha256 or md5 checksum",
+              "passed": 0,
+              "total": 1,
+              "score": 0,
+              "detail": "1 of 1 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all)"
+            }
+          ]
+        },
+        "Characterization": {
+          "score": 22,
+          "reason": "",
+          "checks": [
+            {
+              "id": "subject_sex",
+              "description": "Single-organism subjects with sex recorded",
+              "passed": 0,
+              "total": 2,
+              "score": 0,
+              "detail": "2 of 2 subjects have no sex recorded"
+            },
+            {
+              "id": "subject_age",
+              "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
+              "passed": 0,
+              "total": 2,
+              "score": 0,
+              "detail": "2 of 2 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
+              "raw": {
+                "age_at_enrollment": 0,
+                "age_at_sampling_only": 0
+              }
+            },
+            {
+              "id": "biosample_anatomy",
+              "description": "Biosamples with anatomy recorded",
+              "passed": 2,
+              "total": 3,
+              "score": 67,
+              "detail": "1 of 3 biosamples have no anatomy recorded"
+            }
+          ],
+          "info": [
+            "2 subject(s) have no granularity recorded and are counted as single organisms",
+            "2 disease associations in this release (2 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease"
+          ]
+        },
+        "Pre-model Explainability": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This program uses no ontology term IDs -- its ontology fields hold free text (see FAIRness), so there are no codes to look up labels for. The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata.",
+          "checks": [
+            {
+              "id": "labeled_terms",
+              "description": "Distinct ontology term IDs with a human-readable label (from the package's own term tables, or portal-sourced in term_labels.py)",
+              "passed": 0,
+              "total": 0,
+              "score": null,
+              "detail": "0 of 0 term IDs have a label (datapackage term table or portal)",
+              "note": "The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata."
+            }
+          ]
+        },
+        "Ethics": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.",
+          "checks": []
+        },
+        "Sustainability": {
+          "score": 0,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_locatable",
+              "description": "Files with a persistent_id or access_url",
+              "passed": 0,
+              "total": 1,
+              "score": 0,
+              "detail": "1 of 1 files have no both a persistent_id and an access_url recorded"
+            }
+          ]
+        },
+        "Computability": {
+          "score": 50,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_format",
+              "description": "Files with a file_format",
+              "passed": 0,
+              "total": 1,
+              "score": 0,
+              "detail": "1 of 1 files have no a file_format recorded"
+            },
+            {
+              "id": "croissant_valid",
+              "description": "Croissant metadata generated and passes validate_croissant.py (yes=100 / no=0)",
+              "passed": 1,
+              "total": 1,
+              "score": 100,
+              "detail": "Croissant generated for this program's records and passed validate_croissant.py"
+            }
+          ]
+        }
+      },
+      "data_quality_notes": [
+        "biosample.tsv: 2 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://cfde.cloud (2)."
+      ]
+    },
+    {
+      "program": "sennet",
+      "namespace": "cfde:sennet",
+      "release": "",
+      "release_date": "",
+      "record_counts": {
+        "project": 1,
+        "subject": 1,
+        "biosample": 1,
+        "file": 0
+      },
+      "overall_score": 22,
+      "dimensions_assessed": 3,
+      "dimensions": {
+        "FAIRness": {
+          "score": 0,
+          "reason": "",
+          "checks": [
+            {
+              "id": "persistent_ids",
+              "description": "Records with a persistent ID (persistent_id field, or a persistent-identifier access_url on files)",
+              "passed": 0,
+              "total": 3,
+              "score": 0,
+              "detail": "3 of 3 records have no persistent identifier recorded (0 have one in persistent_id; 0 more files have one only in access_url; 0 persistent_id values use a non-persistent scheme and are not counted)",
+              "raw": {
+                "persistent_id_field": 0,
+                "access_url_only": 0,
+                "access_url_persistent_total": 0,
+                "persistent_id_non_persistent_scheme": 0
+              }
+            },
+            {
+              "id": "ontology_ids",
+              "description": "Ontology-coded field values that are real term IDs (PREFIX:ID), not free text",
+              "passed": 0,
+              "total": 2,
+              "score": 0,
+              "detail": "0 of 2 ontology-field values use a term ID; free text found: 'Brain', 'collecting specimen from organism'",
+              "note": "The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata."
+            }
+          ]
+        },
+        "Provenance": {
+          "score": 33,
+          "reason": "",
+          "checks": [
+            {
+              "id": "creation_time",
+              "description": "Records (project/subject/biosample/file) with a creation_time",
+              "passed": 1,
+              "total": 3,
+              "score": 33,
+              "detail": "2 of 3 records have no a creation_time recorded"
+            },
+            {
+              "id": "file_checksums",
+              "description": "Files with a sha256 or md5 checksum",
+              "passed": 0,
+              "total": 0,
+              "score": null,
+              "detail": "0 of 0 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all)"
+            }
+          ]
+        },
+        "Characterization": {
+          "score": 33,
+          "reason": "",
+          "checks": [
+            {
+              "id": "subject_sex",
+              "description": "Single-organism subjects with sex recorded",
+              "passed": 0,
+              "total": 1,
+              "score": 0,
+              "detail": "1 of 1 subjects have no sex recorded"
+            },
+            {
+              "id": "subject_age",
+              "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
+              "passed": 0,
+              "total": 1,
+              "score": 0,
+              "detail": "1 of 1 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
+              "raw": {
+                "age_at_enrollment": 0,
+                "age_at_sampling_only": 0
+              }
+            },
+            {
+              "id": "biosample_anatomy",
+              "description": "Biosamples with anatomy recorded",
+              "passed": 1,
+              "total": 1,
+              "score": 100,
+              "detail": "0 of 1 biosamples have no anatomy recorded"
+            }
+          ],
+          "info": [
+            "1 subject(s) have no granularity recorded and are counted as single organisms",
+            "0 disease associations in this release (0 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease"
+          ]
+        },
+        "Pre-model Explainability": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This program uses no ontology term IDs -- its ontology fields hold free text (see FAIRness), so there are no codes to look up labels for. The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata.",
+          "checks": [
+            {
+              "id": "labeled_terms",
+              "description": "Distinct ontology term IDs with a human-readable label (from the package's own term tables, or portal-sourced in term_labels.py)",
+              "passed": 0,
+              "total": 0,
+              "score": null,
+              "detail": "0 of 0 term IDs have a label (datapackage term table or portal)",
+              "note": "The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata."
+            }
+          ]
+        },
+        "Ethics": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.",
+          "checks": []
+        },
+        "Sustainability": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This program has no file records, so there is nothing whose long-term access can be checked.",
+          "checks": [
+            {
+              "id": "file_locatable",
+              "description": "Files with a persistent_id or access_url",
+              "passed": 0,
+              "total": 0,
+              "score": null,
+              "detail": "0 of 0 files have no both a persistent_id and an access_url recorded"
+            }
+          ]
+        },
+        "Computability": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This program has no file records, so there is no data for a model to load (for reference: croissant generated for this program's records and passed validate_croissant.py).",
+          "checks": []
+        }
+      },
+      "data_quality_notes": []
+    },
+    {
+      "program": "sparc",
+      "namespace": "cfde:sparc",
+      "release": "",
+      "release_date": "",
+      "record_counts": {
+        "project": 3,
+        "subject": 3,
+        "biosample": 3,
+        "file": 1
+      },
+      "overall_score": 50,
+      "dimensions_assessed": 6,
+      "dimensions": {
+        "FAIRness": {
+          "score": 15,
+          "reason": "",
+          "checks": [
+            {
+              "id": "persistent_ids",
+              "description": "Records with a persistent ID (persistent_id field, or a persistent-identifier access_url on files)",
+              "passed": 1,
+              "total": 10,
+              "score": 10,
+              "detail": "9 of 10 records have no persistent identifier recorded (1 have one in persistent_id; 0 more files have one only in access_url; 3 persistent_id values use a non-persistent scheme and are not counted)",
+              "raw": {
+                "persistent_id_field": 1,
+                "access_url_only": 0,
+                "access_url_persistent_total": 0,
+                "persistent_id_non_persistent_scheme": 3
+              }
+            },
+            {
+              "id": "ontology_ids",
+              "description": "Ontology-coded field values that are real term IDs (PREFIX:ID), not free text",
+              "passed": 1,
+              "total": 5,
+              "score": 20,
+              "detail": "1 of 5 ontology-field values use a term ID; free text found: 'Image', 'cardiac nerve plexus', 'stomach', 'urinary bladder'",
+              "note": "The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata."
+            }
+          ]
+        },
+        "Provenance": {
+          "score": 5,
+          "reason": "",
+          "checks": [
+            {
+              "id": "creation_time",
+              "description": "Records (project/subject/biosample/file) with a creation_time",
+              "passed": 1,
+              "total": 10,
+              "score": 10,
+              "detail": "9 of 10 records have no a creation_time recorded"
+            },
+            {
+              "id": "file_checksums",
+              "description": "Files with a sha256 or md5 checksum",
+              "passed": 0,
+              "total": 1,
+              "score": 0,
+              "detail": "1 of 1 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all)"
+            }
+          ]
+        },
+        "Characterization": {
+          "score": 33,
+          "reason": "",
+          "checks": [
+            {
+              "id": "subject_sex",
+              "description": "Single-organism subjects with sex recorded",
+              "passed": 0,
+              "total": 3,
+              "score": 0,
+              "detail": "3 of 3 subjects have no sex recorded"
+            },
+            {
+              "id": "subject_age",
+              "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
+              "passed": 0,
+              "total": 3,
+              "score": 0,
+              "detail": "3 of 3 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
+              "raw": {
+                "age_at_enrollment": 0,
+                "age_at_sampling_only": 0
+              }
+            },
+            {
+              "id": "biosample_anatomy",
+              "description": "Biosamples with anatomy recorded",
+              "passed": 3,
+              "total": 3,
+              "score": 100,
+              "detail": "0 of 3 biosamples have no anatomy recorded"
+            }
+          ],
+          "info": [
+            "3 subject(s) have no granularity recorded and are counted as single organisms",
+            "0 disease associations in this release (0 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease"
+          ]
+        },
+        "Pre-model Explainability": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "labeled_terms",
+              "description": "Distinct ontology term IDs with a human-readable label (from the package's own term tables, or portal-sourced in term_labels.py)",
+              "passed": 1,
+              "total": 1,
+              "score": 100,
+              "detail": "1 of 1 term IDs have a label (datapackage term table or portal); breakdown: 1 portal ('OBI:0002119')",
+              "note": "The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata."
+            }
+          ]
+        },
+        "Ethics": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.",
+          "checks": []
+        },
+        "Sustainability": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_locatable",
+              "description": "Files with a persistent_id or access_url",
+              "passed": 1,
+              "total": 1,
+              "score": 100,
+              "detail": "0 of 1 files have no both a persistent_id and an access_url recorded"
+            }
+          ]
+        },
+        "Computability": {
+          "score": 50,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_format",
+              "description": "Files with a file_format",
+              "passed": 0,
+              "total": 1,
+              "score": 0,
+              "detail": "1 of 1 files have no a file_format recorded"
+            },
+            {
+              "id": "croissant_valid",
+              "description": "Croissant metadata generated and passes validate_croissant.py (yes=100 / no=0)",
+              "passed": 1,
+              "total": 1,
+              "score": 100,
+              "detail": "Croissant generated for this program's records and passed validate_croissant.py"
+            }
+          ]
+        }
+      },
+      "data_quality_notes": [
+        "project.tsv: 1 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://commonfund.nih.gov (1).",
+        "biosample.tsv: 2 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://cfde.cloud (2)."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,173 @@
+{
+  "source": "Clark T, et al. \"AI-readiness Criteria for Biomedical Data.\" bioRxiv 2024. doi:10.1101/2024.10.23.619844 (first posted as \"AI-readiness for Biomedical Data: Bridge2AI Recommendations\")",
+  "disclaimer": "These are simplified proxy measures for exploration, not an official evaluation.",
+  "banner": "FULL C2M2 DATAPACKAGE from data_real/kidsfirst/ - these scores reflect this one submitted release, measured with our simplified proxies.",
+  "data_dir": "/Users/omkadam/Documents/Om Kadam/PROJECTS/cfde-project/data_real/kidsfirst",
+  "programs": [
+    {
+      "program": "KFDRC",
+      "namespace": "kidsfirst:",
+      "release": "2026Q4_C2M2_datapackage.zip",
+      "release_date": "2026-09-16",
+      "record_counts": {
+        "project": 45,
+        "subject": 39156,
+        "biosample": 111300,
+        "file": 1356814
+      },
+      "overall_score": 78,
+      "dimensions_assessed": 6,
+      "dimensions": {
+        "FAIRness": {
+          "score": 62,
+          "reason": "",
+          "checks": [
+            {
+              "id": "persistent_ids",
+              "description": "Records with a persistent ID (persistent_id field, or a persistent-identifier access_url on files)",
+              "passed": 370371,
+              "total": 1507315,
+              "score": 25,
+              "detail": "1,136,944 of 1,507,315 records have no persistent identifier recorded (370,371 have one in persistent_id; 0 more files have one only in access_url; 45 persistent_id values use a non-persistent scheme and are not counted)",
+              "raw": {
+                "persistent_id_field": 370371,
+                "access_url_only": 0,
+                "access_url_persistent_total": 0,
+                "persistent_id_non_persistent_scheme": 45
+              }
+            },
+            {
+              "id": "ontology_ids",
+              "description": "Ontology-coded field values that are real term IDs (PREFIX:ID), not free text",
+              "passed": 4191203,
+              "total": 4191203,
+              "score": 100,
+              "detail": "4191203 of 4191203 ontology-field values use a term ID"
+            }
+          ]
+        },
+        "Provenance": {
+          "score": 50,
+          "reason": "",
+          "checks": [
+            {
+              "id": "creation_time",
+              "description": "Records (project/subject/biosample/file) with a creation_time",
+              "passed": 1507314,
+              "total": 1507315,
+              "score": 100,
+              "detail": "1 of 1,507,315 records have no a creation_time recorded"
+            },
+            {
+              "id": "file_checksums",
+              "description": "Files with a sha256 or md5 checksum",
+              "passed": 0,
+              "total": 1356814,
+              "score": 0,
+              "detail": "1,356,814 of 1,356,814 files have no a checksum recorded",
+              "raw": {
+                "with_sha256": 0,
+                "with_md5": 0
+              }
+            }
+          ]
+        },
+        "Characterization": {
+          "score": 58,
+          "reason": "",
+          "checks": [
+            {
+              "id": "subject_sex",
+              "description": "Single-organism subjects with sex recorded",
+              "passed": 39044,
+              "total": 39156,
+              "score": 100,
+              "detail": "112 of 39,156 subjects have no sex recorded"
+            },
+            {
+              "id": "subject_age",
+              "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
+              "passed": 7349,
+              "total": 39156,
+              "score": 19,
+              "detail": "31,807 of 39,156 subjects have no age recorded (0 have age_at_enrollment; 7,349 more have age_at_sampling on a linked biosample)",
+              "raw": {
+                "age_at_enrollment": 0,
+                "age_at_sampling_only": 7349
+              }
+            },
+            {
+              "id": "biosample_anatomy",
+              "description": "Biosamples with anatomy recorded",
+              "passed": 60726,
+              "total": 111300,
+              "score": 55,
+              "detail": "50,574 of 111,300 biosamples have no anatomy recorded"
+            }
+          ],
+          "info": [
+            "154,157 disease associations in this release (114888 in biosample_disease.tsv, 39269 in subject_disease.tsv) - not scored, since not every program studies a disease"
+          ]
+        },
+        "Pre-model Explainability": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "labeled_terms",
+              "description": "Distinct ontology term IDs with a human-readable label (from the package's own term tables, or portal-sourced in term_labels.py)",
+              "passed": 169,
+              "total": 169,
+              "score": 100,
+              "detail": "169 of 169 term IDs have a label (datapackage term table or portal); breakdown: 169 datapackage ('CL:0000057', 'DOID:0050545', 'DOID:0050567', 'DOID:0050668', 'DOID:0050834', ... (164 more))"
+            }
+          ]
+        },
+        "Ethics": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.",
+          "checks": []
+        },
+        "Sustainability": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_locatable",
+              "description": "Files with a persistent_id or access_url",
+              "passed": 1356814,
+              "total": 1356814,
+              "score": 100,
+              "detail": "0 of 1,356,814 files have no both a persistent_id and an access_url recorded"
+            }
+          ]
+        },
+        "Computability": {
+          "score": 97,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_format",
+              "description": "Files with a file_format",
+              "passed": 1280973,
+              "total": 1356814,
+              "score": 94,
+              "detail": "75,841 of 1,356,814 files have no a file_format recorded"
+            },
+            {
+              "id": "croissant_valid",
+              "description": "Croissant metadata generated and passes validate_croissant.py (yes=100 / no=0)",
+              "passed": 1,
+              "total": 1,
+              "score": 100,
+              "detail": "Croissant generated for this program's records and passed validate_croissant.py"
+            }
+          ]
+        }
+      },
+      "data_quality_notes": [
+        "project.tsv: 45 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://www.ncbi.nlm.nih.gov (44), https://kidsfirstdrc.org (1)."
+      ]
+    }
+  ]
+}

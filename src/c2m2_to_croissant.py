@@ -87,19 +87,19 @@ def build_distribution(table_name: str) -> dict:
     }
 
 
-def main():
+def build_croissant(tables: dict[str, pd.DataFrame]) -> dict:
+    """Build the Croissant document from already-loaded core tables.
+
+    Split out of main() so other tools (e.g. readiness_checker.py) can
+    generate Croissant for a subset of the data without writing a file.
+    """
     distributions = []
     recordsets = []
-    row_counts = {}
-
     for table in CORE_TABLES:
-        tsv_path = DATA_DIR / f"{table}.tsv"
-        df = pd.read_csv(tsv_path, sep="\t", dtype=str)
-        row_counts[table] = len(df)
         distributions.append(build_distribution(table))
-        recordsets.append(build_recordset(table, df))
+        recordsets.append(build_recordset(table, tables[table]))
 
-    croissant = {
+    return {
         "@context": {
             "@language": "en",
             "@vocab": "https://schema.org/",
@@ -120,6 +120,17 @@ def main():
         "distribution": distributions,
         "recordSet": recordsets,
     }
+
+
+def main():
+    tables = {}
+    row_counts = {}
+    for table in CORE_TABLES:
+        tsv_path = DATA_DIR / f"{table}.tsv"
+        tables[table] = pd.read_csv(tsv_path, sep="\t", dtype=str)
+        row_counts[table] = len(tables[table])
+
+    croissant = build_croissant(tables)
 
     out_path = OUTPUT_DIR / "croissant.json"
     with open(out_path, "w") as f:

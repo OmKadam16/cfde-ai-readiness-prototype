@@ -1,0 +1,175 @@
+{
+  "source": "Clark T, et al. \"AI-readiness Criteria for Biomedical Data.\" bioRxiv 2024. doi:10.1101/2024.10.23.619844 (first posted as \"AI-readiness for Biomedical Data: Bridge2AI Recommendations\")",
+  "disclaimer": "These are simplified proxy measures for exploration, not an official evaluation.",
+  "banner": "FULL C2M2 DATAPACKAGE from data_real/sennet/ - these scores reflect this one submitted release, measured with our simplified proxies.",
+  "data_dir": "/Users/omkadam/Documents/Om Kadam/PROJECTS/cfde-project/data_real/sennet",
+  "programs": [
+    {
+      "program": "SenNet",
+      "namespace": "tag:sennetconsortium.org,2025:",
+      "release": "sennet_c2m2_sep26.zip",
+      "release_date": "2026-09-24",
+      "record_counts": {
+        "project": 21,
+        "subject": 897,
+        "biosample": 5673,
+        "file": 154612
+      },
+      "overall_score": 94,
+      "dimensions_assessed": 6,
+      "dimensions": {
+        "FAIRness": {
+          "score": 98,
+          "reason": "",
+          "checks": [
+            {
+              "id": "persistent_ids",
+              "description": "Records with a persistent ID (persistent_id field, or a persistent-identifier access_url on files)",
+              "passed": 154612,
+              "total": 161203,
+              "score": 96,
+              "detail": "6,591 of 161,203 records have no persistent identifier recorded (0 have one in persistent_id; 154,612 more files have one only in access_url; 0 persistent_id values use a non-persistent scheme and are not counted)",
+              "raw": {
+                "persistent_id_field": 0,
+                "access_url_only": 154612,
+                "access_url_persistent_total": 154612,
+                "persistent_id_non_persistent_scheme": 0
+              }
+            },
+            {
+              "id": "ontology_ids",
+              "description": "Ontology-coded field values that are real term IDs (PREFIX:ID), not free text",
+              "passed": 628947,
+              "total": 628947,
+              "score": 100,
+              "detail": "628947 of 628947 ontology-field values use a term ID"
+            }
+          ]
+        },
+        "Provenance": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "creation_time",
+              "description": "Records (project/subject/biosample/file) with a creation_time",
+              "passed": 161182,
+              "total": 161203,
+              "score": 100,
+              "detail": "21 of 161,203 records have no a creation_time recorded"
+            },
+            {
+              "id": "file_checksums",
+              "description": "Files with a sha256 or md5 checksum",
+              "passed": 154612,
+              "total": 154612,
+              "score": 100,
+              "detail": "0 of 154,612 files have no a checksum recorded",
+              "raw": {
+                "with_sha256": 0,
+                "with_md5": 154612
+              }
+            }
+          ]
+        },
+        "Characterization": {
+          "score": 67,
+          "reason": "",
+          "checks": [
+            {
+              "id": "subject_sex",
+              "description": "Single-organism subjects with sex recorded",
+              "passed": 450,
+              "total": 897,
+              "score": 50,
+              "detail": "447 of 897 subjects have no sex recorded"
+            },
+            {
+              "id": "subject_age",
+              "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
+              "passed": 462,
+              "total": 897,
+              "score": 52,
+              "detail": "435 of 897 subjects have no age recorded (462 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
+              "raw": {
+                "age_at_enrollment": 462,
+                "age_at_sampling_only": 0
+              }
+            },
+            {
+              "id": "biosample_anatomy",
+              "description": "Biosamples with anatomy recorded",
+              "passed": 5669,
+              "total": 5673,
+              "score": 100,
+              "detail": "4 of 5,673 biosamples have no anatomy recorded"
+            }
+          ],
+          "info": [
+            "0 disease associations in this release (0 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease"
+          ]
+        },
+        "Pre-model Explainability": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "labeled_terms",
+              "description": "Distinct ontology term IDs with a human-readable label (from the package's own term tables, or portal-sourced in term_labels.py)",
+              "passed": 76,
+              "total": 76,
+              "score": 100,
+              "detail": "76 of 76 term IDs have a label (datapackage term table or portal); breakdown: 76 datapackage ('IAO:0000572', 'OBI:0000227', 'OBI:0000711', 'OBI:0001007', 'OBI:0001028', ... (71 more))"
+            }
+          ]
+        },
+        "Ethics": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.",
+          "checks": []
+        },
+        "Sustainability": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_locatable",
+              "description": "Files with a persistent_id or access_url",
+              "passed": 154612,
+              "total": 154612,
+              "score": 100,
+              "detail": "0 of 154,612 files have no both a persistent_id and an access_url recorded"
+            }
+          ]
+        },
+        "Computability": {
+          "score": 98,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_format",
+              "description": "Files with a file_format",
+              "passed": 146936,
+              "total": 154612,
+              "score": 95,
+              "detail": "7,676 of 154,612 files have no a file_format recorded"
+            },
+            {
+              "id": "croissant_valid",
+              "description": "Croissant metadata generated and passes validate_croissant.py (yes=100 / no=0)",
+              "passed": 1,
+              "total": 1,
+              "score": 100,
+              "detail": "Croissant generated for this program's records and passed validate_croissant.py"
+            }
+          ]
+        }
+      },
+      "data_quality_notes": [
+        "assay_type.tsv: 2 term ID(s) have leading/trailing whitespace ('OBI:0001271 ', 'OBI:0600020 '). As written they are not valid term IDs, and any tool that trims whitespace on one side of a join but not the other will fail to match them. The labels exist; this checker trims both sides before matching.",
+        "13,520 ontology-field value(s) in the data have leading/trailing whitespace: file.tsv assay_type: 13,520 (e.g. 'OBI:0001271 ', 'OBI:0600020 ')",
+        "Persistent IDs present, but stored in access_url instead of the C2M2 persistent_id field (154,612 of 154,612 files; 3,233 distinct identifiers, e.g. 'https://doi.org/10.60586/SNT968.LLQQ.268', 'https://doi.org/10.60586/SNT693.RHFM.739', ... (3231 more))."
+      ]
+    }
+  ]
+}

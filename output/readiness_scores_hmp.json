@@ -9,6 +9,7 @@
       "namespace": "tag:hmpdacc.org,2022-04-04:",
       "release": "HMP_C2M2_2022-06-20_datapackage.zip",
       "release_date": "2022-06-20",
+      "old_release": true,
       "record_counts": {
         "project": 24,
         "subject": 7903,
@@ -34,7 +35,8 @@
                 "access_url_only": 0,
                 "access_url_persistent_total": 0,
                 "persistent_id_non_persistent_scheme": 0
-              }
+              },
+              "why_it_matters": "Persistent identifiers let a training set be cited and re-assembled later, which supports reproducible models."
             },
             {
               "id": "ontology_ids",
@@ -42,7 +44,8 @@
               "passed": 804939,
               "total": 804939,
               "score": 100,
-              "detail": "804939 of 804939 ontology-field values use a term ID"
+              "detail": "804,939 of 804,939 ontology-field values use a term ID",
+              "why_it_matters": "Ontology term IDs let values be matched reliably across programs ('Breast' in one, 'UBERON:0000310' in another), so a model sees one concept as one feature."
             }
           ]
         },
@@ -56,7 +59,8 @@
               "passed": 0,
               "total": 310936,
               "score": 0,
-              "detail": "310,936 of 310,936 records have no a creation_time recorded"
+              "detail": "310,936 of 310,936 records have no creation_time recorded",
+              "why_it_matters": "Timestamps help identify which version of the data a model used and make batch or time effects detectable."
             },
             {
               "id": "file_checksums",
@@ -64,13 +68,15 @@
               "passed": 251136,
               "total": 251136,
               "score": 100,
-              "detail": "0 of 251,136 files have no a checksum recorded",
+              "detail": "0 of 251,136 files have no checksum recorded",
               "raw": {
                 "with_sha256": 251136,
                 "with_md5": 251136
-              }
+              },
+              "why_it_matters": "Checksums let users verify that a downloaded file is exactly the one a model was trained on."
             }
-          ]
+          ],
+          "observation": "310,936 of 310,936 records have no creation_time recorded. Timestamps help identify which version of the data a model used and make batch or time effects detectable."
         },
         "Characterization": {
           "score": 59,
@@ -82,7 +88,8 @@
               "passed": 6623,
               "total": 7903,
               "score": 84,
-              "detail": "1,280 of 7,903 subjects have no sex recorded"
+              "detail": "1,280 of 7,903 subjects have no sex recorded",
+              "why_it_matters": "Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike."
             },
             {
               "id": "subject_age",
@@ -94,7 +101,8 @@
               "raw": {
                 "age_at_enrollment": 0,
                 "age_at_sampling_only": 0
-              }
+              },
+              "why_it_matters": "Recording age lets model developers check whether results differ across age groups, such as children and adults."
             },
             {
               "id": "biosample_anatomy",
@@ -102,12 +110,14 @@
               "passed": 48510,
               "total": 51873,
               "score": 94,
-              "detail": "3,363 of 51,873 biosamples have no anatomy recorded"
+              "detail": "3,363 of 51,873 biosamples have no anatomy recorded",
+              "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
             }
           ],
           "info": [
-            "3,023 disease associations in this release (2531 in biosample_disease.tsv, 492 in subject_disease.tsv) - not scored, since not every program studies a disease"
-          ]
+            "3,023 disease associations in this release (2,531 in biosample_disease.tsv, 492 in subject_disease.tsv) - not scored, since not every program studies a disease"
+          ],
+          "observation": "7,903 of 7,903 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample). Recording age lets model developers check whether results differ across age groups, such as children and adults."
         },
         "Pre-model Explainability": {
           "score": 100,
@@ -119,7 +129,8 @@
               "passed": 146,
               "total": 146,
               "score": 100,
-              "detail": "146 of 146 term IDs have a label (datapackage term table or portal); breakdown: 146 datapackage ('DOID:4914', 'DOID:5295', 'DOID:8677', 'DOID:8778', 'DOID:8893', ... (141 more))"
+              "detail": "146 of 146 term IDs have a label (datapackage term table or portal); breakdown: 146 datapackage ('DOID:4914', 'DOID:5295', 'DOID:8677', 'DOID:8778', 'DOID:8893', ... (141 more))",
+              "why_it_matters": "Human-readable labels let reviewers sanity-check what a model's input features mean."
             }
           ]
         },
@@ -138,7 +149,8 @@
               "passed": 220615,
               "total": 251136,
               "score": 88,
-              "detail": "30,521 of 251,136 files have no both a persistent_id and an access_url recorded"
+              "detail": "30,521 of 251,136 files have no persistent_id or access_url recorded",
+              "why_it_matters": "A persistent ID or access URL on each file keeps it findable for the models and benchmarks that depend on it."
             }
           ]
         },
@@ -152,7 +164,8 @@
               "passed": 251136,
               "total": 251136,
               "score": 100,
-              "detail": "0 of 251,136 files have no a file_format recorded"
+              "detail": "0 of 251,136 files have no file_format recorded",
+              "why_it_matters": "A declared file format lets pipelines parse each file without guessing."
             },
             {
               "id": "croissant_valid",
@@ -160,7 +173,8 @@
               "passed": 1,
               "total": 1,
               "score": 100,
-              "detail": "Croissant generated for this program's records and passed validate_croissant.py"
+              "detail": "Croissant generated for this program's records and passed validate_croissant.py",
+              "why_it_matters": "Valid Croissant metadata lets ML tools discover and load the dataset automatically."
             }
           ]
         }

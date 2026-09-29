@@ -422,7 +422,7 @@ def score_fairness(prog):
     values = cells["raw"].str.strip()
     coded = is_term_id(values)
     free_text = sorted(set(values[~coded]))
-    onto_detail = f"{int(coded.sum())} of {len(values)} ontology-field values use a term ID"
+    onto_detail = f"{int(coded.sum()):,} of {len(values):,} ontology-field values use a term ID"
     if free_text:
         onto_detail += "; free text found: " + examples(free_text)
 
@@ -453,10 +453,10 @@ def score_provenance(prog):
 
     return dimension([
         check("creation_time", "Records (project/subject/biosample/file) with a creation_time",
-              with_time, total, missing_detail(with_time, total, "records", "a creation_time",
+              with_time, total, missing_detail(with_time, total, "records", "creation_time",
                                                absent_column_note(records, "creation_time"))),
         check("file_checksums", "Files with a sha256 or md5 checksum",
-              with_checksum, len(files), missing_detail(with_checksum, len(files), "files", "a checksum", note),
+              with_checksum, len(files), missing_detail(with_checksum, len(files), "files", "checksum", note),
               raw={f"with_{c}": int(filled_mask(files[c]).sum()) for c in checksum_cols}),
     ], "No records found for this program.")
 
@@ -485,7 +485,7 @@ def score_characterization(prog):
     # Disease links are reported, not scored: not every program studies a disease.
     n_links = {t: len(prog[t]) for t in DISEASE_TABLES}
     n_total = sum(n_links.values())
-    per_table = ", ".join(f"{n} in {t}.tsv" for t, n in n_links.items())
+    per_table = ", ".join(f"{n:,} in {t}.tsv" for t, n in n_links.items())
     disease_info = (f"{n_total:,} disease associations in this release ({per_table}) - not scored, "
                     "since not every program studies a disease")
 
@@ -561,7 +561,7 @@ def score_sustainability(prog):
     return dimension([
         check("file_locatable", "Files with a persistent_id or access_url",
               n_locatable, len(files),
-              missing_detail(n_locatable, len(files), "files", "both a persistent_id and an access_url")),
+              missing_detail(n_locatable, len(files), "files", "persistent_id or access_url")),
     ], "This program has no file records, so there is nothing whose long-term access can be checked.")
 
 
@@ -585,7 +585,7 @@ def score_computability(prog):
 
     return dimension([
         check("file_format", "Files with a file_format",
-              n_format, len(files), missing_detail(n_format, len(files), "files", "a file_format")),
+              n_format, len(files), missing_detail(n_format, len(files), "files", "file_format")),
         check("croissant_valid", "Croissant metadata generated and passes validate_croissant.py (yes=100 / no=0)",
               int(not errors), 1, croissant_detail),
     ])
@@ -599,6 +599,41 @@ DIMENSIONS = [
     ("Ethics", score_ethics),
     ("Sustainability", score_sustainability),
     ("Computability", score_computability),
+]
+
+# Every check behind each dimension, and where in C2M2 it reads from.
+# Used for documentation (the web app's Methods page).
+METHODS = [
+    ("FAIRness", "persistent_ids",
+     "Records with a persistent identifier (DOI, identifiers.org, ARK, DRS, Handle, PURL)",
+     "persistent_id in project, subject, biosample, file; file.access_url"),
+    ("FAIRness", "ontology_ids",
+     "Ontology-coded values that are term IDs (PREFIX:ID) rather than free text",
+     "biosample: anatomy, biofluid, sample_prep_method; file: file_format, compression_format, "
+     "data_type, assay_type, analysis_type; biosample_disease / subject_disease: disease"),
+    ("Provenance", "creation_time", "Records with a creation time",
+     "creation_time in project, subject, biosample, file"),
+    ("Provenance", "file_checksums", "Files with a sha256 or md5 checksum", "file: sha256, md5"),
+    ("Characterization", "subject_sex", "Single-organism subjects (human or animal) with sex recorded",
+     "subject: sex, granularity"),
+    ("Characterization", "subject_age",
+     "Single-organism subjects with an age recorded",
+     "subject: age_at_enrollment, granularity; biosample_from_subject: age_at_sampling"),
+    ("Characterization", "biosample_anatomy", "Biosamples with anatomy recorded", "biosample: anatomy"),
+    ("Characterization", "(info, not scored)", "Disease associations; subjects excluded from sex/age checks",
+     "biosample_disease, subject_disease; subject: granularity"),
+    ("Pre-model Explainability", "labeled_terms",
+     "Distinct term IDs used in the data that have a human-readable label",
+     "the ontology-coded columns above; the package's own term tables (anatomy.tsv, assay_type.tsv, "
+     "file_format.tsv, ...: name)"),
+    ("Ethics", "(none)", "Not assessable: the C2M2 schema has no consent, data-use, IRB or governance fields",
+     "-"),
+    ("Sustainability", "file_locatable", "Files with a persistent_id or an access_url",
+     "file: persistent_id, access_url"),
+    ("Computability", "file_format", "Files with a declared file format", "file: file_format"),
+    ("Computability", "croissant_valid",
+     "Croissant metadata generated from the records and passing validate_croissant.py",
+     "project, subject, biosample, file (all columns)"),
 ]
 
 
@@ -667,12 +702,20 @@ def data_quality_notes(prog: dict[str, pd.DataFrame]) -> list[str]:
 def score_program(namespace: str, label: str, prog: dict[str, pd.DataFrame],
                   release: str = "", release_date: str = "") -> dict:
     dims = {name: fn(prog) for name, fn in DIMENSIONS}
+    # Store the plain-English text with the numbers, so the JSON output is
+    # self-contained (the web app reads only the JSON).
+    for dim in dims.values():
+        for c in dim["checks"]:
+            c["why_it_matters"] = WHY_IT_MATTERS[c["id"]]
+        if dim["score"] != NOT_ASSESSABLE and dim["score"] < LOW_SCORE_THRESHOLD:
+            dim["observation"] = low_score_sentence(dim)
     numeric = [d["score"] for d in dims.values() if d["score"] != NOT_ASSESSABLE]
     return {
         "program": label,
         "namespace": namespace,
         "release": release,
         "release_date": release_date,
+        "old_release": is_old_release(release_date),
         "record_counts": {t: len(prog[t]) for t in CORE_TABLES},
         "overall_score": round(sum(numeric) / len(numeric)) if numeric else NOT_ASSESSABLE,
         "dimensions_assessed": len(numeric),
@@ -808,8 +851,8 @@ def render_terminal(results: list[dict], banner: str) -> str:
     return "\n".join(out)
 
 
-def top_gaps(results: list[dict], n: int = 3) -> list[str]:
-    """The n checks with the lowest average score across programs, in plain English.
+def top_gap_data(results: list[dict], n: int = 3) -> list[dict]:
+    """The n checks with the lowest average score across programs.
     Only checks measured for at least two programs, so one program's gap isn't called a pattern."""
     by_check = {}
     for r in results:
@@ -819,11 +862,23 @@ def top_gaps(results: list[dict], n: int = 3) -> list[str]:
                     by_check.setdefault(c["id"], []).append((r["program"], c))
     ranked = sorted((sum(c["score"] for _, c in entries) / len(entries), check_id, entries)
                     for check_id, entries in by_check.items() if len(entries) >= 2)
+    return [{
+        "check": check_id,
+        "description": entries[0][1]["description"],
+        "average_score": round(avg),
+        "programs": [{"program": p, "passed": c["passed"], "total": c["total"], "score": c["score"]}
+                     for p, c in entries],
+        "why_it_matters": WHY_IT_MATTERS[check_id],
+    } for avg, check_id, entries in ranked[:n]]
+
+
+def top_gaps(results: list[dict], n: int = 3) -> list[str]:
+    """top_gap_data in plain English."""
     gaps = []
-    for avg, check_id, entries in ranked[:n]:
-        per_program = "; ".join(f"{p} {c['passed']:,}/{c['total']:,} ({c['score']}%)" for p, c in entries)
-        gaps.append(f"**{entries[0][1]['description']}**: {avg:.0f}% coverage on average across {len(entries)} "
-                    f"programs ({per_program}). {WHY_IT_MATTERS[check_id]}")
+    for g in top_gap_data(results, n):
+        per_program = "; ".join(f"{p['program']} {p['passed']:,}/{p['total']:,} ({p['score']}%)" for p in g["programs"])
+        gaps.append(f"**{g['description']}**: {g['average_score']}% coverage on average across "
+                    f"{len(g['programs'])} programs ({per_program}). {g['why_it_matters']}")
     return gaps
 
 
@@ -900,12 +955,13 @@ def release_text(r: dict) -> str:
     return text + (f" - {OLD_RELEASE_FLAG}" if is_old_release(r["release_date"]) else "")
 
 
-def score_real_package(data_dir: Path, folder: Path) -> dict:
-    """A real datapackage is one DCC's submission: score all of it as one program."""
+def score_real_package(data_dir: Path, folder: Path, release: tuple[str, str] | None = None) -> dict:
+    """A real datapackage is one DCC's submission: score all of it as one program.
+    `release` is (file name, date); by default it is looked up in releases.tsv."""
     tables = load_tables(data_dir)
     prog = {name: tables[name] for name in PER_PROGRAM_TABLES}
     prog["term_names"] = tables["term_names"]
-    release, release_date = release_info(folder)
+    release, release_date = release or release_info(folder)
     return score_program(package_namespaces(tables), package_label(tables, data_dir), prog, release, release_date)
 
 
@@ -943,10 +999,20 @@ def run_compare(root: Path) -> None:
     comparison = render_comparison(results)
     OUTPUT_DIR.mkdir(exist_ok=True)
     (OUTPUT_DIR / "readiness_comparison.md").write_text(comparison + "\n")
+    # The same results as one JSON file: this is what the web app (app.py) reads.
+    with open(OUTPUT_DIR / "readiness_comparison.json", "w") as f:
+        json.dump({"source": CITATION,
+                   "disclaimer": DISCLAIMER,
+                   "generated": date.today().isoformat(),
+                   "old_release_years": OLD_RELEASE_YEARS,
+                   "old_release_flag": OLD_RELEASE_FLAG,
+                   "programs": results,
+                   "top_gaps": top_gap_data(results)}, f, indent=2)
     print()
     print(comparison)
     print()
-    print(f"Wrote {OUTPUT_DIR / 'readiness_comparison.md'} and one readiness_report_<program>.md per program")
+    print(f"Wrote {OUTPUT_DIR / 'readiness_comparison.md'}, readiness_comparison.json, "
+          "and one readiness_report_<program>.md per program")
 
 
 def main():

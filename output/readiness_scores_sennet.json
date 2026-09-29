@@ -9,6 +9,7 @@
       "namespace": "tag:sennetconsortium.org,2025:",
       "release": "sennet_c2m2_sep26.zip",
       "release_date": "2026-09-24",
+      "old_release": false,
       "record_counts": {
         "project": 21,
         "subject": 897,
@@ -34,7 +35,8 @@
                 "access_url_only": 154612,
                 "access_url_persistent_total": 154612,
                 "persistent_id_non_persistent_scheme": 0
-              }
+              },
+              "why_it_matters": "Persistent identifiers let a training set be cited and re-assembled later, which supports reproducible models."
             },
             {
               "id": "ontology_ids",
@@ -42,7 +44,8 @@
               "passed": 628947,
               "total": 628947,
               "score": 100,
-              "detail": "628947 of 628947 ontology-field values use a term ID"
+              "detail": "628,947 of 628,947 ontology-field values use a term ID",
+              "why_it_matters": "Ontology term IDs let values be matched reliably across programs ('Breast' in one, 'UBERON:0000310' in another), so a model sees one concept as one feature."
             }
           ]
         },
@@ -56,7 +59,8 @@
               "passed": 161182,
               "total": 161203,
               "score": 100,
-              "detail": "21 of 161,203 records have no a creation_time recorded"
+              "detail": "21 of 161,203 records have no creation_time recorded",
+              "why_it_matters": "Timestamps help identify which version of the data a model used and make batch or time effects detectable."
             },
             {
               "id": "file_checksums",
@@ -64,11 +68,12 @@
               "passed": 154612,
               "total": 154612,
               "score": 100,
-              "detail": "0 of 154,612 files have no a checksum recorded",
+              "detail": "0 of 154,612 files have no checksum recorded",
               "raw": {
                 "with_sha256": 0,
                 "with_md5": 154612
-              }
+              },
+              "why_it_matters": "Checksums let users verify that a downloaded file is exactly the one a model was trained on."
             }
           ]
         },
@@ -82,7 +87,8 @@
               "passed": 450,
               "total": 897,
               "score": 50,
-              "detail": "447 of 897 subjects have no sex recorded"
+              "detail": "447 of 897 subjects have no sex recorded",
+              "why_it_matters": "Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike."
             },
             {
               "id": "subject_age",
@@ -94,7 +100,8 @@
               "raw": {
                 "age_at_enrollment": 462,
                 "age_at_sampling_only": 0
-              }
+              },
+              "why_it_matters": "Recording age lets model developers check whether results differ across age groups, such as children and adults."
             },
             {
               "id": "biosample_anatomy",
@@ -102,12 +109,14 @@
               "passed": 5669,
               "total": 5673,
               "score": 100,
-              "detail": "4 of 5,673 biosamples have no anatomy recorded"
+              "detail": "4 of 5,673 biosamples have no anatomy recorded",
+              "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
             }
           ],
           "info": [
             "0 disease associations in this release (0 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease"
-          ]
+          ],
+          "observation": "447 of 897 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike."
         },
         "Pre-model Explainability": {
           "score": 100,
@@ -119,7 +128,8 @@
               "passed": 76,
               "total": 76,
               "score": 100,
-              "detail": "76 of 76 term IDs have a label (datapackage term table or portal); breakdown: 76 datapackage ('IAO:0000572', 'OBI:0000227', 'OBI:0000711', 'OBI:0001007', 'OBI:0001028', ... (71 more))"
+              "detail": "76 of 76 term IDs have a label (datapackage term table or portal); breakdown: 76 datapackage ('IAO:0000572', 'OBI:0000227', 'OBI:0000711', 'OBI:0001007', 'OBI:0001028', ... (71 more))",
+              "why_it_matters": "Human-readable labels let reviewers sanity-check what a model's input features mean."
             }
           ]
         },
@@ -138,7 +148,8 @@
               "passed": 154612,
               "total": 154612,
               "score": 100,
-              "detail": "0 of 154,612 files have no both a persistent_id and an access_url recorded"
+              "detail": "0 of 154,612 files have no persistent_id or access_url recorded",
+              "why_it_matters": "A persistent ID or access URL on each file keeps it findable for the models and benchmarks that depend on it."
             }
           ]
         },
@@ -152,7 +163,8 @@
               "passed": 146936,
               "total": 154612,
               "score": 95,
-              "detail": "7,676 of 154,612 files have no a file_format recorded"
+              "detail": "7,676 of 154,612 files have no file_format recorded",
+              "why_it_matters": "A declared file format lets pipelines parse each file without guessing."
             },
             {
               "id": "croissant_valid",
@@ -160,7 +172,8 @@
               "passed": 1,
               "total": 1,
               "score": 100,
-              "detail": "Croissant generated for this program's records and passed validate_croissant.py"
+              "detail": "Croissant generated for this program's records and passed validate_croissant.py",
+              "why_it_matters": "Valid Croissant metadata lets ML tools discover and load the dataset automatically."
             }
           ]
         }

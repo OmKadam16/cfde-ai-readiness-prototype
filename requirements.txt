@@ -8,3 +8,4 @@
 
 pandas>=2.0        # reads/writes the C2M2 .tsv tables
 networkx>=3.0       # builds and queries the knowledge graph
+streamlit>=1.64     # runs the web app (app.py): streamlit run app.py

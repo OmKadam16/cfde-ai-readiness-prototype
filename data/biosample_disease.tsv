@@ -1,0 +1,3 @@
+biosample_id_namespace	biosample_local_id	association_type	disease
+cfde:lincs	PBS-0ngPERml_24h_RepB_CollectionC1	disease_associated_with	breast carcinoma
+cfde:lincs	BMP2-20ngPERml_EGF-20ngPERml_48h_RepB_CollectionC1	disease_associated_with	breast carcinoma

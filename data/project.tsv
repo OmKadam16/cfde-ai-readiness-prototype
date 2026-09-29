@@ -1,0 +1,12 @@
+id_namespace	local_id	persistent_id	creation_time	abbreviation	name	description
+demo:proj1	proj001	https://example.org/proj/proj001	2026-01-15T00:00:00-05:00	DEMOEEG	Demo EEG Study	A small demonstration project modeling EEG biosample and file records in C2M2 format
+cfde:sparc	OT2OD023873	https://commonfund.nih.gov/sparc	2026-01-15T00:00:00-05:00	SPARC	SPARC	Real NIH Common Fund SPARC project - Stimulating Peripheral Activity to Relieve Conditions (pulled from CFDE Data Portal, biosample search)
+cfde:kidsfirst	SD_YGVA0E1C	https://kidsfirstdrc.org	2026-01-15T00:00:00-05:00	KF_STUDY	Kids First Study SD_YGVA0E1C	Real Gabriella Miller Kids First study, referenced by a real biosample in the CFDE Data Portal
+cfde:sparc	OT2OD023848			SPARC2	SPARC (P1700 series)	Real SPARC project pulled from CFDE portal (cardiac nerve plexus biosample)
+cfde:sparc	OT3OD025349			SPARC3	SPARC (stomach dataset)	Real SPARC project pulled from CFDE portal (stomach biosample)
+cfde:kidsfirst	SD_DYPMEHHF			KF2	Kids First Study SD_DYPMEHHF	Real Kids First study pulled from CFDE portal
+cfde:kidsfirst	SD_AQ9KVN5P			KF3	Kids First Study SD_AQ9KVN5P	Real Kids First study pulled from CFDE portal
+cfde:hmp	HHS			HMP	Human Microbiome Project (HHS)	Real HMP project pulled from CFDE portal (vaginal/fecal biosamples)
+cfde:lincs	MCF10A-MDD			LINCS-MDD	LINCS MCF10A-MDD	Real LINCS project pulled from CFDE portal (MCF10A breast cell line, drug-response time course)
+cfde:lincs	LINCS-2021			LINCS21	LINCS 2021 (L1000 DCIC)	Real LINCS L1000 project pulled from CFDE portal (drug perturbation profiling)
+cfde:sennet	TDA-MayoClinic-Schafer			SENNET1	TDA - Mayo Clinic - Schafer	Real SenNet project pulled from CFDE portal (brain tissue specimens)

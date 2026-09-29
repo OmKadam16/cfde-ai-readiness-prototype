@@ -1,0 +1,6 @@
+file_id_namespace	file_local_id	biosample_id_namespace	biosample_local_id
+demo:proj1	file001	demo:proj1	bio001
+demo:proj1	file002	demo:proj1	bio002
+cfde:kidsfirst	53c36003-8e82-4949-a3aa-0d17fe1e6af2	cfde:kidsfirst	QC9XMFT8
+cfde:sparc	sparc:63aec880-a5c8-4732-b425-29a37de64779	cfde:sparc	N:dataset:8912fa28-8f9c-4851-8de8-bc0c788bf67b_P1700_P1700-RAGP-S4
+cfde:lincs	L1000_LINCS_DCIC_FIBR012_MCLF015CN_6H_C12_BRD-K92317137_0.74uM_tsv_gz	cfde:lincs	L1000_LINCS_DCIC_2021_FIBR012_MCLF015CN_6H_C12_BRD-K92317137_0.74uM

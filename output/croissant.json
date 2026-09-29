@@ -1,0 +1,604 @@
+{
+  "@context": {
+    "@language": "en",
+    "@vocab": "https://schema.org/",
+    "cr": "http://mlcommons.org/croissant/",
+    "dct": "http://purl.org/dc/terms/",
+    "sc": "https://schema.org/"
+  },
+  "@type": "sc:Dataset",
+  "name": "demo-eeg-c2m2-dataset",
+  "description": "A small demonstration C2M2 datapackage (project, subject, biosample, file tables) converted into Croissant-format AI-ready metadata. Built as a prototype addressing the AI-readiness gap named in the CFDE Workbench paper.",
+  "dct:conformsTo": "http://mlcommons.org/croissant/1.0",
+  "url": "https://example.org/demo-eeg-c2m2-dataset",
+  "distribution": [
+    {
+      "@type": "cr:FileObject",
+      "@id": "project.tsv",
+      "name": "project.tsv",
+      "contentUrl": "./data/project.tsv",
+      "encodingFormat": "text/tab-separated-values"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "subject.tsv",
+      "name": "subject.tsv",
+      "contentUrl": "./data/subject.tsv",
+      "encodingFormat": "text/tab-separated-values"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "biosample.tsv",
+      "name": "biosample.tsv",
+      "contentUrl": "./data/biosample.tsv",
+      "encodingFormat": "text/tab-separated-values"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "file.tsv",
+      "name": "file.tsv",
+      "contentUrl": "./data/file.tsv",
+      "encodingFormat": "text/tab-separated-values"
+    }
+  ],
+  "recordSet": [
+    {
+      "@type": "cr:RecordSet",
+      "@id": "project",
+      "name": "project",
+      "key": {
+        "@id": "project/local_id"
+      },
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "project/id_namespace",
+          "dataType": "sc:Text",
+          "description": "Column 'id_namespace' from the C2M2 project.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "project.tsv"
+            },
+            "extract": {
+              "column": "id_namespace"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "project/local_id",
+          "dataType": "sc:Text",
+          "description": "Column 'local_id' from the C2M2 project.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "project.tsv"
+            },
+            "extract": {
+              "column": "local_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "project/persistent_id",
+          "dataType": "sc:Text",
+          "description": "Column 'persistent_id' from the C2M2 project.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "project.tsv"
+            },
+            "extract": {
+              "column": "persistent_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "project/creation_time",
+          "dataType": "sc:Text",
+          "description": "Column 'creation_time' from the C2M2 project.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "project.tsv"
+            },
+            "extract": {
+              "column": "creation_time"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "project/abbreviation",
+          "dataType": "sc:Text",
+          "description": "Column 'abbreviation' from the C2M2 project.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "project.tsv"
+            },
+            "extract": {
+              "column": "abbreviation"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "project/name",
+          "dataType": "sc:Text",
+          "description": "Column 'name' from the C2M2 project.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "project.tsv"
+            },
+            "extract": {
+              "column": "name"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "project/description",
+          "dataType": "sc:Text",
+          "description": "Column 'description' from the C2M2 project.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "project.tsv"
+            },
+            "extract": {
+              "column": "description"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "@id": "subject",
+      "name": "subject",
+      "key": {
+        "@id": "subject/local_id"
+      },
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "subject/id_namespace",
+          "dataType": "sc:Text",
+          "description": "Column 'id_namespace' from the C2M2 subject.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "subject.tsv"
+            },
+            "extract": {
+              "column": "id_namespace"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "subject/local_id",
+          "dataType": "sc:Text",
+          "description": "Column 'local_id' from the C2M2 subject.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "subject.tsv"
+            },
+            "extract": {
+              "column": "local_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "subject/project_id_namespace",
+          "dataType": "sc:Text",
+          "description": "Column 'project_id_namespace' from the C2M2 subject.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "subject.tsv"
+            },
+            "extract": {
+              "column": "project_id_namespace"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "subject/project_local_id",
+          "dataType": "sc:Text",
+          "description": "Column 'project_local_id' from the C2M2 subject.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "subject.tsv"
+            },
+            "extract": {
+              "column": "project_local_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "subject/persistent_id",
+          "dataType": "sc:Text",
+          "description": "Column 'persistent_id' from the C2M2 subject.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "subject.tsv"
+            },
+            "extract": {
+              "column": "persistent_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "subject/creation_time",
+          "dataType": "sc:Text",
+          "description": "Column 'creation_time' from the C2M2 subject.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "subject.tsv"
+            },
+            "extract": {
+              "column": "creation_time"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "subject/granularity",
+          "dataType": "sc:Text",
+          "description": "Column 'granularity' from the C2M2 subject.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "subject.tsv"
+            },
+            "extract": {
+              "column": "granularity"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "subject/sex",
+          "dataType": "sc:Text",
+          "description": "Column 'sex' from the C2M2 subject.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "subject.tsv"
+            },
+            "extract": {
+              "column": "sex"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "subject/ethnicity",
+          "dataType": "sc:Text",
+          "description": "Column 'ethnicity' from the C2M2 subject.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "subject.tsv"
+            },
+            "extract": {
+              "column": "ethnicity"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "subject/age_at_enrollment",
+          "dataType": "sc:Text",
+          "description": "Column 'age_at_enrollment' from the C2M2 subject.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "subject.tsv"
+            },
+            "extract": {
+              "column": "age_at_enrollment"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "@id": "biosample",
+      "name": "biosample",
+      "key": {
+        "@id": "biosample/local_id"
+      },
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "biosample/id_namespace",
+          "dataType": "sc:Text",
+          "description": "Column 'id_namespace' from the C2M2 biosample.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "biosample.tsv"
+            },
+            "extract": {
+              "column": "id_namespace"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "biosample/local_id",
+          "dataType": "sc:Text",
+          "description": "Column 'local_id' from the C2M2 biosample.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "biosample.tsv"
+            },
+            "extract": {
+              "column": "local_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "biosample/project_id_namespace",
+          "dataType": "sc:Text",
+          "description": "Column 'project_id_namespace' from the C2M2 biosample.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "biosample.tsv"
+            },
+            "extract": {
+              "column": "project_id_namespace"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "biosample/project_local_id",
+          "dataType": "sc:Text",
+          "description": "Column 'project_local_id' from the C2M2 biosample.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "biosample.tsv"
+            },
+            "extract": {
+              "column": "project_local_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "biosample/persistent_id",
+          "dataType": "sc:Text",
+          "description": "Column 'persistent_id' from the C2M2 biosample.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "biosample.tsv"
+            },
+            "extract": {
+              "column": "persistent_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "biosample/creation_time",
+          "dataType": "sc:Text",
+          "description": "Column 'creation_time' from the C2M2 biosample.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "biosample.tsv"
+            },
+            "extract": {
+              "column": "creation_time"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "biosample/sample_prep_method",
+          "dataType": "sc:Text",
+          "description": "Column 'sample_prep_method' from the C2M2 biosample.tsv table. Terms used in this data: OBI:0600016 ((unverified -- placeholder demo value)); collecting specimen from organism; maintaining cell culture.",
+          "source": {
+            "fileObject": {
+              "@id": "biosample.tsv"
+            },
+            "extract": {
+              "column": "sample_prep_method"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "biosample/anatomy",
+          "dataType": "sc:Text",
+          "description": "Column 'anatomy' from the C2M2 biosample.tsv table. Terms used in this data: Brain; Breast; Feces; UBERON:0000955 (brain); cardiac nerve plexus; neck; posterior fornix of vagina; stomach; urinary bladder.",
+          "source": {
+            "fileObject": {
+              "@id": "biosample.tsv"
+            },
+            "extract": {
+              "column": "anatomy"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "biosample/biofluid",
+          "dataType": "sc:Text",
+          "description": "Column 'biofluid' from the C2M2 biosample.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "biosample.tsv"
+            },
+            "extract": {
+              "column": "biofluid"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "@id": "file",
+      "name": "file",
+      "key": {
+        "@id": "file/local_id"
+      },
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "file/id_namespace",
+          "dataType": "sc:Text",
+          "description": "Column 'id_namespace' from the C2M2 file.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "file.tsv"
+            },
+            "extract": {
+              "column": "id_namespace"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "file/local_id",
+          "dataType": "sc:Text",
+          "description": "Column 'local_id' from the C2M2 file.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "file.tsv"
+            },
+            "extract": {
+              "column": "local_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "file/project_id_namespace",
+          "dataType": "sc:Text",
+          "description": "Column 'project_id_namespace' from the C2M2 file.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "file.tsv"
+            },
+            "extract": {
+              "column": "project_id_namespace"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "file/project_local_id",
+          "dataType": "sc:Text",
+          "description": "Column 'project_local_id' from the C2M2 file.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "file.tsv"
+            },
+            "extract": {
+              "column": "project_local_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "file/persistent_id",
+          "dataType": "sc:Text",
+          "description": "Column 'persistent_id' from the C2M2 file.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "file.tsv"
+            },
+            "extract": {
+              "column": "persistent_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "file/creation_time",
+          "dataType": "sc:Text",
+          "description": "Column 'creation_time' from the C2M2 file.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "file.tsv"
+            },
+            "extract": {
+              "column": "creation_time"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "file/size_in_bytes",
+          "dataType": "sc:Text",
+          "description": "Column 'size_in_bytes' from the C2M2 file.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "file.tsv"
+            },
+            "extract": {
+              "column": "size_in_bytes"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "file/filename",
+          "dataType": "sc:Text",
+          "description": "Column 'filename' from the C2M2 file.tsv table.",
+          "source": {
+            "fileObject": {
+              "@id": "file.tsv"
+            },
+            "extract": {
+              "column": "filename"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "file/file_format",
+          "dataType": "sc:Text",
+          "description": "Column 'file_format' from the C2M2 file.tsv table. Terms used in this data: EDAM:format_3752 (CSV).",
+          "source": {
+            "fileObject": {
+              "@id": "file.tsv"
+            },
+            "extract": {
+              "column": "file_format"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "file/data_type",
+          "dataType": "sc:Text",
+          "description": "Column 'data_type' from the C2M2 file.tsv table. Terms used in this data: EDAM:data_3858 ((unverified -- placeholder demo value)); Image.",
+          "source": {
+            "fileObject": {
+              "@id": "file.tsv"
+            },
+            "extract": {
+              "column": "data_type"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "file/assay_type",
+          "dataType": "sc:Text",
+          "description": "Column 'assay_type' from the C2M2 file.tsv table. Terms used in this data: OBI:0000487 ((unverified -- placeholder demo value)); OBI:0002117 (amplicon sequencing assay); OBI:0002119 (microscopy assay).",
+          "source": {
+            "fileObject": {
+              "@id": "file.tsv"
+            },
+            "extract": {
+              "column": "assay_type"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+id_namespace	local_id	project_id_namespace	project_local_id	persistent_id	creation_time	sample_prep_method	anatomy	biofluid
+demo:proj1	bio001	demo:proj1	proj001	https://example.org/bio/bio001	2026-01-17T00:00:00-05:00	OBI:0600016	UBERON:0000955	
+demo:proj1	bio002	demo:proj1	proj001	https://example.org/bio/bio002	2026-01-17T00:00:00-05:00	OBI:0600016	UBERON:0000955	
+cfde:kidsfirst	QC9XMFT8	cfde:kidsfirst	SD_YGVA0E1C	https://cfde.cloud/data/processed/entity/biosample/1633C799-C8E5-58A5-98CF-3B40270C5F5F	2022-10-31T16:14:44.769735		neck	
+cfde:sparc	N:dataset:9aaa206c-a49d-4c3f-b1e3-1aca9eb3208a_cat12_default	cfde:sparc	OT2OD023873	https://cfde.cloud/data/processed/entity/biosample/AC31E18C-1458-56A4-B1B0-8F33E0189357			urinary bladder	
+cfde:sparc	N:dataset:8912fa28-8f9c-4851-8de8-bc0c788bf67b_P1700_P1700-RAGP-S4	cfde:sparc	OT2OD023848	https://cfde.cloud/data/processed/entity/biosample/A35EBF63-BDD0-5FA5-9B8F-98A8ACD4F8A4			cardiac nerve plexus	
+cfde:kidsfirst	78WMYFPB	cfde:kidsfirst	SD_DYPMEHHF		2018-08-02T21:04:24.953043			
+cfde:kidsfirst	M3Z66SG8	cfde:kidsfirst	SD_AQ9KVN5P	https://cfde.cloud/data/processed/entity/biosample/F94C23B2-D0D2-5F84-AC1E-33A46633E079	2021-10-21T23:42:04.813261			
+cfde:sparc	N:dataset:c46429b9-6db2-40ad-86e5-36ed759a1ee7_default_default	cfde:sparc	OT3OD025349				stomach	
+cfde:hmp	SRS011584	cfde:hmp	HHS	https://cfde.cloud/data/processed/entity/biosample/01B5169E-7419-5C83-97DD-9E77BD3336FB			posterior fornix of vagina	
+cfde:hmp	SRS016954	cfde:hmp	HHS	https://cfde.cloud/data/processed/entity/biosample/70234CB3-6F6D-5EF3-ADCA-DC07CC84DDB4			Feces	
+cfde:lincs	PBS-0ngPERml_24h_RepB_CollectionC1	cfde:lincs	MCF10A-MDD	https://cfde.cloud/data/processed/entity/biosample/0F285614-64CC-57B5-B4BB-A01DAB7B84DC	2019-12-09T00:00:00.000000	maintaining cell culture	Breast	
+cfde:lincs	BMP2-20ngPERml_EGF-20ngPERml_48h_RepB_CollectionC1	cfde:lincs	MCF10A-MDD	https://cfde.cloud/data/processed/entity/biosample/CE39B7EC-EC43-51F0-BE48-D50846C74927	2019-12-09T00:00:00.000000	maintaining cell culture	Breast	
+cfde:lincs	L1000_LINCS_DCIC_2021_FIBR012_MCLF015CN_6H_C12_BRD-K92317137_0.74uM	cfde:lincs	LINCS-2021			maintaining cell culture		
+cfde:sennet	SNT395.BKBD.366	cfde:sennet	TDA-MayoClinic-Schafer		2026-03-20T16:28:26.242000	collecting specimen from organism	Brain	

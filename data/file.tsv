@@ -1,0 +1,6 @@
+id_namespace	local_id	project_id_namespace	project_local_id	persistent_id	creation_time	size_in_bytes	filename	file_format	data_type	assay_type
+demo:proj1	file001	demo:proj1	proj001	https://example.org/file/file001	2026-01-18T00:00:00-05:00	2048000	subj001_eeg_raw.edf	EDAM:format_3752	EDAM:data_3858	OBI:0000487
+demo:proj1	file002	demo:proj1	proj001	https://example.org/file/file002	2026-01-18T00:00:00-05:00	1987000	subj002_eeg_raw.edf	EDAM:format_3752	EDAM:data_3858	OBI:0000487
+cfde:kidsfirst	53c36003-8e82-4949-a3aa-0d17fe1e6af2	cfde:kidsfirst	SD_YGVA0E1C				amplicon37_gene_list.tsv			OBI:0002117
+cfde:sparc	sparc:63aec880-a5c8-4732-b425-29a37de64779	cfde:sparc	OT2OD023848	sparc.drs:package/63aec880-a5c8-4732-b425-29a37de64779	2022-02-15T20:15:08.000000	1153434	primary__sub-P1700__sam-P1700-RAGP-S4__P1700_RAGP_(Series7)S4S4_TH_sec3.tif		Image	OBI:0002119
+cfde:lincs	L1000_LINCS_DCIC_FIBR012_MCLF015CN_6H_C12_BRD-K92317137_0.74uM_tsv_gz	cfde:lincs	LINCS-2021				L1000 LINCS DCIC FIBR012 MCLF015CN 6H C12 BRD-K92317137 0.74uM.tsv.gz			

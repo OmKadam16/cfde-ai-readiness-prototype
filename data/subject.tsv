@@ -1,0 +1,14 @@
+id_namespace	local_id	project_id_namespace	project_local_id	persistent_id	creation_time	granularity	sex	ethnicity	age_at_enrollment
+demo:proj1	subj001	demo:proj1	proj001	https://example.org/subj/subj001	2026-01-16T00:00:00-05:00	cfde_subject_granularity:0	female	not reported	34.00
+demo:proj1	subj002	demo:proj1	proj001	https://example.org/subj/subj002	2026-01-16T00:00:00-05:00	cfde_subject_granularity:0	male	not reported	41.00
+cfde:kidsfirst	5F58RQJC	cfde:kidsfirst	SD_YGVA0E1C						
+cfde:sparc	N:dataset:9aaa206c-a49d-4c3f-b1e3-1aca9eb3208a_cat12	cfde:sparc	OT2OD023873						
+cfde:sparc	N:dataset:8912fa28-8f9c-4851-8de8-bc0c788bf67b_P1700	cfde:sparc	OT2OD023848						
+cfde:kidsfirst	F8GBEBH4	cfde:kidsfirst	SD_DYPMEHHF						
+cfde:kidsfirst	RCGXBN7S	cfde:kidsfirst	SD_AQ9KVN5P						
+cfde:sparc	N:dataset:c46429b9-6db2-40ad-86e5-36ed759a1ee7_default	cfde:sparc	OT3OD025349						
+cfde:hmp	159247771	cfde:hmp	HHS						
+cfde:hmp	159611913	cfde:hmp	HHS						
+cfde:lincs	MCF10A	cfde:lincs	MCF10A-MDD						
+cfde:lincs	MCLF015CN	cfde:lincs	LINCS-2021						
+cfde:sennet	SNT847.GRKS.452	cfde:sennet	TDA-MayoClinic-Schafer						

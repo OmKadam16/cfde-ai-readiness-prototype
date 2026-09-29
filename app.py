@@ -44,7 +44,10 @@ MAX_UNZIPPED_MB = 300
 DIMENSION_NAMES = [name for name, _ in rc.DIMENSIONS]
 SCORED_DIMENSIONS = [d for d in DIMENSION_NAMES if d != "Ethics"]  # Ethics: not measurable from C2M2
 SHORT_DIMENSION = {"Pre-model Explainability": "Explainability"}
-DISPLAY_NAME = {"KFDRC": "Kids First"}
+# Readable program names (e.g. "Kids First" rather than the package's "KFDRC"),
+# taken from releases.tsv and matched on the release file each result came from.
+RELEASES = pd.read_csv(ROOT / "releases.tsv", sep="\t", dtype=str)
+DISPLAY_NAME = dict(zip(RELEASES["release_file"], RELEASES["program"]))
 
 # ---------------------------------------------------------------------------
 # Colour: one sequential blue scale for scores, gray for n/a. No red/green.
@@ -82,6 +85,7 @@ CHECK_INFO = {
     "croissant_valid": ("Croissant metadata", "checks", "Make the generated Croissant metadata pass validation"),
 }
 CHECK_SOURCE = {check_id: source for _, check_id, _, source in rc.METHODS}
+NUMBER_WORDS = {2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
 LEVEL_NOUN = {"subject": "subjects", "biosample": "biosamples", "file": "files"}
 
 
@@ -91,8 +95,15 @@ def load_comparison() -> dict:
         return json.load(f)
 
 
+def finder_noun(level: str, chosen: list[str]) -> str:
+    """What the counts are out of: sex/age subject counts are out of single-organism subjects."""
+    if level == "subject" and rc.ORGANISM_REQUIREMENTS & set(chosen):
+        return "single-organism subjects"
+    return LEVEL_NOUN[level]
+
+
 def name(r: dict) -> str:
-    return DISPLAY_NAME.get(r["program"], r["program"])
+    return DISPLAY_NAME.get(r.get("release", ""), r["program"])
 
 
 def score_of(r: dict, dim: str):
@@ -193,7 +204,7 @@ def radar_chart(programs: list[dict], highlight: str):
     show_chart(spec, rows, width="content")
 
 
-def track_bars(rows: list[dict], y_title: str, label_field: str, height_per_row: int = 44, label_room: int = 250):
+def track_bars(rows: list[dict], y_title: str, label_field: str, height_per_row: int = 44, label_room: int = 45):
     """Horizontal 0-100 bars on a gray track, with a text label to the right of each track."""
     order = [r["row"] for r in rows]
     y = {"field": "row", "type": "nominal", "sort": order, "title": None,
@@ -232,11 +243,13 @@ def coverage_heatmap(programs: list[dict]):
     # Gaps between cells come from band padding, so they show the page background in either theme.
     band = {"paddingInner": 0.08}
     enc = {"x": {"field": "Field", "type": "nominal", "sort": fields, "title": None, "scale": band,
+                 # Multi-word headers on two lines, so all 8 fit side by side without Vega hiding any.
                  "axis": {"orient": "top", "labelAngle": 0, "labelFontSize": 13, "labelLimit": 160,
+                          "labelExpr": "split(datum.label, ' ')", "labelOverlap": False,
                           "ticks": False, "domain": False}},
            "y": {"field": "Program", "type": "nominal", "sort": [name(r) for r in programs], "title": None,
                  "scale": band,
-                 "axis": {"labelFontSize": 13, "ticks": False, "domain": False}}}
+                 "axis": {"labelFontSize": 13, "labelLimit": 200, "ticks": False, "domain": False}}}
     tooltip = [{"field": "Program"}, {"field": "Field"}, {"field": "Records"},
                {"field": "Source", "title": "C2M2 column(s)"}]
     spec = {
@@ -280,8 +293,13 @@ def top_fixes(r: dict, n: int = 3) -> list[dict]:
     return sorted(fixes, key=lambda f: -f["gain"])[:n]
 
 
+CARDS_PER_ROW = 4  # wide enough for "Metabolomics Workbench" and the caption at 1100px
+
+
 def score_cards(programs: list[dict]):
-    for col, r in zip(st.columns(len(programs)), programs):
+    rows = [programs[i:i + CARDS_PER_ROW] for i in range(0, len(programs), CARDS_PER_ROW)]
+    cards = [(col, r) for row in rows for col, r in zip(st.columns(CARDS_PER_ROW), row)]
+    for col, r in cards:
         with col.container(border=True):
             st.markdown(f"**{name(r)}**")
             st.metric("Score", r["overall_score"], help="Overall score, 0-100")
@@ -373,7 +391,7 @@ def overview():
                 f"{len(programs)} CFDE programs, scored 0-100 on six measurable dimensions.")
     score_cards(programs)
 
-    st.markdown("### Six dimensions, five programs")
+    st.markdown(f"### Six dimensions, {NUMBER_WORDS.get(len(programs), len(programs))} programs")
     names = [name(r) for r in programs]
     highlight = st.segmented_control("Highlight a program", names, default=names[0], key="radar_program") or names[0]
     st.caption(f"{highlight} in blue with its scores; the other programs in gray (hover a point for its name). "
@@ -381,6 +399,7 @@ def overview():
     radar_chart(programs, highlight)
 
     st.markdown("### 3 key findings")
+    program_name = {r["program"]: name(r) for r in programs}.get
     for col, gap in zip(st.columns(3), data["top_gaps"]):
         label, unit, _ = CHECK_INFO.get(gap["check"], (gap["description"], "records", ""))
         low = min(gap["programs"], key=lambda p: p["score"])
@@ -390,8 +409,8 @@ def overview():
                         unsafe_allow_html=True)
             st.markdown(f"**{label}: recorded for {gap['average_score']}% of {unit} on average**")
             st.caption(f"Across {len(gap['programs'])} programs, from {low['score']}% "
-                       f"({DISPLAY_NAME.get(low['program'], low['program'])}) to {high['score']}% "
-                       f"({DISPLAY_NAME.get(high['program'], high['program'])}). {gap['why_it_matters']}")
+                       f"({program_name(low['program'])}) to {high['score']}% "
+                       f"({program_name(high['program'])}). {gap['why_it_matters']}")
     footer()
 
 
@@ -442,19 +461,27 @@ def finder_page():
     else:
         level = st.radio("Count", levels, format_func=lambda lv: LEVEL_NOUN[lv], horizontal=True, key="finder_level")
 
+    organism_rule = bool(rc.ORGANISM_REQUIREMENTS & set(chosen))
+    noun = finder_noun(level, chosen)
+    if organism_rule:
+        st.caption("Sex and age count only for single-organism subjects (human or animal), the same rule as the "
+                   "scores and Field coverage. Cell lines, microbiomes and synthetic subjects - and biosamples or "
+                   "files linked only to them - don't meet a sex or age requirement.")
+
     rows = []
     for r in programs:
         met, total = rc.count_meeting(r["combinations"], level, chosen)
         pct = 100 * met / total if total else 0
         rows.append({"row": name(r), "pct": pct, "met": met, "total": total,
-                     "label": f"{met:,} of {total:,} {LEVEL_NOUN[level]}" + (f" ({pct:.0f}%)" if total else "")})
+                     # The unit is in the heading above, so the bar labels stay short enough to fit.
+                     "label": f"{met:,} of {total:,}" + (f" ({pct:.0f}%)" if total else "")})
     rows.sort(key=lambda row: (-row["pct"], -row["met"]))
     wanted = " and ".join(labels[c].lower().replace(" ids", " IDs") for c in chosen)
-    st.markdown(f"##### {LEVEL_NOUN[level].capitalize()} with {wanted}")
-    track_bars(rows, f"% of {LEVEL_NOUN[level]}", "label")
+    st.markdown(f"##### {noun[0].upper() + noun[1:]} with {wanted}")
+    track_bars(rows, f"% of {noun}", "label")
     with st.expander("Show as text"):
         for row in rows:
-            st.markdown(f"- **{row['row']}:** {row['met']:,} of {row['total']:,} {LEVEL_NOUN[level]} have {wanted}")
+            st.markdown(f"- **{row['row']}:** {row['met']:,} of {row['total']:,} {noun} have {wanted}")
     with st.expander("How requirements are counted"):
         st.markdown(data["combination_rules"])
         st.markdown("SenNet's files are not linked to individual biosamples or subjects in its C2M2 release "

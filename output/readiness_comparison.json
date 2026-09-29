@@ -13,8 +13,296 @@
     "persistent_id": "Persistent IDs",
     "file_format": "File format"
   },
-  "combination_rules": "A record meets a requirement if it, or a record it is directly linked to, has the value. Subjects: sex and age are their own (age also counts age_at_sampling on any of their biosamples); anatomy and disease count if any of their biosamples has them (disease also via subject_disease). Biosamples: anatomy is their own; sex, age and disease also come from their subject (biosample_from_subject). Files: sex, age, anatomy and disease come from the biosamples and subjects they describe (file_describes_biosample, file_describes_subject); checksums and file format are the file's own. Persistent IDs are always the record's own. Records are linked only through these C2M2 link tables, not through collections. Sex and age count for every subject here, not only single organisms.",
+  "combination_rules": "A record meets a requirement if it, or a record it is directly linked to, has the value. Subjects: sex and age are their own (age also counts age_at_sampling on any of their biosamples); anatomy and disease count if any of their biosamples has them (disease also via subject_disease). Biosamples: anatomy is their own; sex, age and disease also come from their subject (biosample_from_subject). Files: sex, age, anatomy and disease come from the biosamples and subjects they describe (file_describes_biosample, file_describes_subject); checksums and file format are the file's own. Persistent IDs are always the record's own. Records are linked only through these C2M2 link tables, not through collections. Sex and age count only for single-organism subjects (human or animal), the same rule as the scores and Field coverage: when sex or age is required, subject counts are out of single-organism subjects, and a biosample or file linked only to cell lines, microbiomes or synthetic subjects does not meet it.",
   "programs": [
+    {
+      "program": "ERCC_DCC",
+      "namespace": "ERCC-exRNA",
+      "release": "CFDE08272026_C2M2.zip",
+      "release_date": "2026-08-28",
+      "old_release": false,
+      "record_counts": {
+        "project": 78,
+        "subject": 8584,
+        "biosample": 14765,
+        "file": 336426
+      },
+      "overall_score": 91,
+      "dimensions_assessed": 6,
+      "dimensions": {
+        "FAIRness": {
+          "score": 50,
+          "reason": "",
+          "checks": [
+            {
+              "id": "persistent_ids",
+              "description": "Records with a persistent ID (persistent_id field, or a persistent-identifier access_url on files)",
+              "passed": 0,
+              "total": 359853,
+              "score": 0,
+              "detail": "359,853 of 359,853 records have no persistent identifier recorded (0 have one in persistent_id; 0 more files have one only in access_url; 0 persistent_id values use a non-persistent scheme and are not counted)",
+              "raw": {
+                "persistent_id_field": 0,
+                "access_url_only": 0,
+                "access_url_persistent_total": 0,
+                "persistent_id_non_persistent_scheme": 0
+              },
+              "why_it_matters": "Persistent identifiers let a training set be cited and re-assembled later, which supports reproducible models."
+            },
+            {
+              "id": "ontology_ids",
+              "description": "Ontology-coded field values that are real term IDs (PREFIX:ID), not free text",
+              "passed": 1428946,
+              "total": 1428946,
+              "score": 100,
+              "detail": "1,428,946 of 1,428,946 ontology-field values use a term ID",
+              "why_it_matters": "Ontology term IDs let values be matched reliably across programs ('Breast' in one, 'UBERON:0000310' in another), so a model sees one concept as one feature."
+            }
+          ],
+          "observation": "359,853 of 359,853 records have no persistent identifier recorded (0 have one in persistent_id; 0 more files have one only in access_url; 0 persistent_id values use a non-persistent scheme and are not counted). Persistent identifiers let a training set be cited and re-assembled later, which supports reproducible models."
+        },
+        "Provenance": {
+          "score": 98,
+          "reason": "",
+          "checks": [
+            {
+              "id": "creation_time",
+              "description": "Records (project/subject/biosample/file) with a creation_time",
+              "passed": 350633,
+              "total": 359853,
+              "score": 97,
+              "detail": "9,220 of 359,853 records have no creation_time recorded",
+              "why_it_matters": "Timestamps help identify which version of the data a model used and make batch or time effects detectable."
+            },
+            {
+              "id": "file_checksums",
+              "description": "Files with a sha256 or md5 checksum",
+              "passed": 336426,
+              "total": 336426,
+              "score": 100,
+              "detail": "0 of 336,426 files have no checksum recorded",
+              "raw": {
+                "with_sha256": 0,
+                "with_md5": 336426
+              },
+              "why_it_matters": "Checksums let users verify that a downloaded file is exactly the one a model was trained on."
+            }
+          ]
+        },
+        "Characterization": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "subject_sex",
+              "description": "Single-organism subjects with sex recorded",
+              "passed": 8580,
+              "total": 8580,
+              "score": 100,
+              "detail": "0 of 8,580 subjects have no sex recorded",
+              "why_it_matters": "Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike."
+            },
+            {
+              "id": "subject_age",
+              "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
+              "passed": 8580,
+              "total": 8580,
+              "score": 100,
+              "detail": "0 of 8,580 subjects have no age recorded (8,580 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
+              "raw": {
+                "age_at_enrollment": 8580,
+                "age_at_sampling_only": 0
+              },
+              "why_it_matters": "Recording age lets model developers check whether results differ across age groups, such as children and adults."
+            },
+            {
+              "id": "biosample_anatomy",
+              "description": "Biosamples with anatomy recorded",
+              "passed": 14765,
+              "total": 14765,
+              "score": 100,
+              "detail": "0 of 14,765 biosamples have no anatomy recorded",
+              "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
+            }
+          ],
+          "info": [
+            "4 cell-line subjects excluded from sex/age checks (these checks apply to single-organism subjects, human or animal)",
+            "4,961 disease associations in this release (3,125 in biosample_disease.tsv, 1,836 in subject_disease.tsv) - not scored, since not every program studies a disease"
+          ]
+        },
+        "Pre-model Explainability": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "labeled_terms",
+              "description": "Distinct ontology term IDs with a human-readable label (from the package's own term tables, or portal-sourced in term_labels.py)",
+              "passed": 124,
+              "total": 124,
+              "score": 100,
+              "detail": "124 of 124 term IDs have a label (datapackage term table or portal); breakdown: 124 datapackage ('CL:0000081', 'CL:0000125', 'DOID:0080199', 'DOID:0080832', 'DOID:0081445', ... (119 more))",
+              "why_it_matters": "Human-readable labels let reviewers sanity-check what a model's input features mean."
+            }
+          ]
+        },
+        "Ethics": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.",
+          "checks": []
+        },
+        "Sustainability": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_locatable",
+              "description": "Files with a persistent_id or access_url",
+              "passed": 336426,
+              "total": 336426,
+              "score": 100,
+              "detail": "0 of 336,426 files have no persistent_id or access_url recorded",
+              "why_it_matters": "A persistent ID or access URL on each file keeps it findable for the models and benchmarks that depend on it."
+            }
+          ]
+        },
+        "Computability": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_format",
+              "description": "Files with a file_format",
+              "passed": 336426,
+              "total": 336426,
+              "score": 100,
+              "detail": "0 of 336,426 files have no file_format recorded",
+              "why_it_matters": "A declared file format lets pipelines parse each file without guessing."
+            },
+            {
+              "id": "croissant_valid",
+              "description": "Croissant metadata generated and passes validate_croissant.py (yes=100 / no=0)",
+              "passed": 1,
+              "total": 1,
+              "score": 100,
+              "detail": "Croissant generated for this program's records and passed validate_croissant.py",
+              "why_it_matters": "Valid Croissant metadata lets ML tools discover and load the dataset automatically."
+            }
+          ]
+        }
+      },
+      "data_quality_notes": [
+        "subject.tsv: 1,223 single-organism subject(s) have sex recorded as Indeterminate (cfde_subject_sex:0). This is a valid C2M2 value, so they count as having sex recorded, but it does not say which sex. All sex values used: Female 7,357, Indeterminate 1,223.",
+        "subject.tsv: 1,508 of 8,580 recorded age_at_enrollment values are exactly 0 (under one year old). If 0 is used for \"unknown\", leaving the field empty would keep it from being read as an age.",
+        "biosample_from_subject.tsv: 3,446 of 14,818 recorded age_at_sampling values are exactly 0 (under one year old). If 0 is used for \"unknown\", leaving the field empty would keep it from being read as an age."
+      ],
+      "field_coverage": [
+        {
+          "field": "sex",
+          "label": "Sex",
+          "columns": "subject.sex",
+          "unit": "single-organism subjects",
+          "passed": 8580,
+          "total": 8580
+        },
+        {
+          "field": "age",
+          "label": "Age",
+          "columns": "subject.age_at_enrollment, biosample_from_subject.age_at_sampling",
+          "unit": "single-organism subjects",
+          "passed": 8580,
+          "total": 8580
+        },
+        {
+          "field": "anatomy",
+          "label": "Anatomy",
+          "columns": "biosample.anatomy",
+          "unit": "biosamples",
+          "passed": 14765,
+          "total": 14765
+        },
+        {
+          "field": "disease",
+          "label": "Disease link",
+          "columns": "biosample_disease, subject_disease (via biosample_from_subject)",
+          "unit": "biosamples",
+          "passed": 3203,
+          "total": 14765
+        },
+        {
+          "field": "persistent_id",
+          "label": "Persistent ID",
+          "columns": "persistent_id (all records), file.access_url",
+          "unit": "records",
+          "passed": 0,
+          "total": 359853
+        },
+        {
+          "field": "checksum",
+          "label": "Checksum",
+          "columns": "file.sha256, file.md5",
+          "unit": "files",
+          "passed": 336426,
+          "total": 336426
+        },
+        {
+          "field": "file_format",
+          "label": "File format",
+          "columns": "file.file_format",
+          "unit": "files",
+          "passed": 336426,
+          "total": 336426
+        },
+        {
+          "field": "creation_time",
+          "label": "Creation time",
+          "columns": "creation_time (all records)",
+          "unit": "records",
+          "passed": 350633,
+          "total": 359853
+        }
+      ],
+      "combinations": {
+        "requirements": [
+          "sex",
+          "age",
+          "anatomy",
+          "disease",
+          "checksum",
+          "persistent_id",
+          "file_format",
+          "single_organism"
+        ],
+        "levels": {
+          "subject": {
+            "total": 8584,
+            "patterns": {
+              "00110000": 4,
+              "11100001": 6746,
+              "11110001": 1834
+            }
+          },
+          "biosample": {
+            "total": 14765,
+            "patterns": {
+              "00110000": 4,
+              "11100000": 11562,
+              "11110000": 3199
+            }
+          },
+          "file": {
+            "total": 336426,
+            "patterns": {
+              "00001010": 4523,
+              "00111010": 127,
+              "11001010": 159,
+              "11011010": 2,
+              "11101010": 240705,
+              "11111010": 90910
+            }
+          }
+        }
+      }
+    },
     {
       "program": "HMP",
       "namespace": "tag:hmpdacc.org,2022-04-04:",
@@ -265,47 +553,48 @@
           "disease",
           "checksum",
           "persistent_id",
-          "file_format"
+          "file_format",
+          "single_organism"
         ],
         "levels": {
           "subject": {
             "total": 7903,
             "patterns": {
-              "0000000": 190,
-              "0010000": 1087,
-              "0011000": 3,
-              "1000000": 410,
-              "1001000": 166,
-              "1010000": 5724,
-              "1011000": 323
+              "00000001": 190,
+              "00100001": 1087,
+              "00110001": 3,
+              "10000001": 410,
+              "10010001": 166,
+              "10100001": 5724,
+              "10110001": 323
             }
           },
           "biosample": {
             "total": 51873,
             "patterns": {
-              "0000000": 1362,
-              "0010000": 18335,
-              "0011000": 13,
-              "1000000": 1692,
-              "1001000": 309,
-              "1010000": 27953,
-              "1011000": 2209
+              "00000000": 1362,
+              "00100000": 18335,
+              "00110000": 13,
+              "10000000": 1692,
+              "10010000": 309,
+              "10100000": 27953,
+              "10110000": 2209
             }
           },
           "file": {
             "total": 251136,
             "patterns": {
-              "0000101": 4208,
-              "0000111": 1525,
-              "0010101": 13788,
-              "0010111": 102023,
-              "0011111": 104,
-              "1000101": 1397,
-              "1000111": 1891,
-              "1001111": 1015,
-              "1010101": 11128,
-              "1010111": 103815,
-              "1011111": 10242
+              "00001010": 4208,
+              "00001110": 1525,
+              "00101010": 13788,
+              "00101110": 102023,
+              "00111110": 104,
+              "10001010": 1397,
+              "10001110": 1891,
+              "10011110": 1015,
+              "10101010": 11128,
+              "10101110": 103815,
+              "10111110": 10242
             }
           }
         }
@@ -488,7 +777,8 @@
         }
       },
       "data_quality_notes": [
-        "project.tsv: 45 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://www.ncbi.nlm.nih.gov (44), https://kidsfirstdrc.org (1)."
+        "project.tsv: 45 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://www.ncbi.nlm.nih.gov (44), https://kidsfirstdrc.org (1).",
+        "subject.tsv: 348 single-organism subject(s) have sex recorded as Indeterminate (cfde_subject_sex:0). This is a valid C2M2 value, so they count as having sex recorded, but it does not say which sex. All sex values used: Male 20,186, Female 18,510, Indeterminate 348."
       ],
       "field_coverage": [
         {
@@ -564,87 +854,88 @@
           "disease",
           "checksum",
           "persistent_id",
-          "file_format"
+          "file_format",
+          "single_organism"
         ],
         "levels": {
           "subject": {
             "total": 39156,
             "patterns": {
-              "0000000": 1,
-              "0001000": 15,
-              "0011000": 2,
-              "0101000": 45,
-              "0111000": 49,
-              "1000000": 3151,
-              "1001000": 26851,
-              "1010000": 830,
-              "1011000": 957,
-              "1100000": 146,
-              "1101000": 2272,
-              "1110000": 388,
-              "1111000": 4449
+              "00000001": 1,
+              "00010001": 15,
+              "00110001": 2,
+              "01010001": 45,
+              "01110001": 49,
+              "10000001": 3151,
+              "10010001": 26851,
+              "10100001": 830,
+              "10110001": 957,
+              "11000001": 146,
+              "11010001": 2272,
+              "11100001": 388,
+              "11110001": 4449
             }
           },
           "biosample": {
             "total": 111300,
             "patterns": {
-              "0000000": 1,
-              "0001000": 23,
-              "0011000": 10,
-              "0101000": 95,
-              "0111000": 288,
-              "1000000": 3767,
-              "1001000": 34490,
-              "1010000": 831,
-              "1011000": 1290,
-              "1100000": 183,
-              "1101000": 12015,
-              "1110000": 451,
-              "1111000": 57856
+              "00000000": 1,
+              "00010000": 23,
+              "00110000": 10,
+              "01010000": 95,
+              "01110000": 288,
+              "10000000": 3767,
+              "10010000": 34490,
+              "10100000": 831,
+              "10110000": 1290,
+              "11000000": 183,
+              "11010000": 12015,
+              "11100000": 451,
+              "11110000": 57856
             }
           },
           "file": {
             "total": 1356814,
             "patterns": {
-              "0000001": 4,
-              "0000010": 1,
-              "0000011": 14,
-              "0001001": 162,
-              "0001010": 2,
-              "0001011": 36,
-              "0011001": 4,
-              "0011011": 2,
-              "0101000": 35,
-              "0101001": 537,
-              "0111000": 64,
-              "0111001": 703,
-              "1000000": 243,
-              "1000001": 47626,
-              "1000010": 4602,
-              "1000011": 35204,
-              "1001000": 13378,
-              "1001001": 474828,
-              "1001010": 18918,
-              "1001011": 254484,
-              "1010000": 12,
-              "1010001": 6718,
-              "1011000": 20,
-              "1011001": 11926,
-              "1011010": 1699,
-              "1011011": 29826,
-              "1100000": 64,
-              "1100001": 3192,
-              "1100010": 146,
-              "1101000": 4658,
-              "1101001": 77799,
-              "1101010": 965,
-              "1101011": 13187,
-              "1110000": 1052,
-              "1110001": 19565,
-              "1111000": 29619,
-              "1111001": 294234,
-              "1111010": 363,
-              "1111011": 10922
+              "00000010": 4,
+              "00000100": 1,
+              "00000110": 14,
+              "00010010": 162,
+              "00010100": 2,
+              "00010110": 36,
+              "00110010": 4,
+              "00110110": 2,
+              "01010000": 35,
+              "01010010": 537,
+              "01110000": 64,
+              "01110010": 703,
+              "10000000": 243,
+              "10000010": 47626,
+              "10000100": 4602,
+              "10000110": 35204,
+              "10010000": 13378,
+              "10010010": 474828,
+              "10010100": 18918,
+              "10010110": 254484,
+              "10100000": 12,
+              "10100010": 6718,
+              "10110000": 20,
+              "10110010": 11926,
+              "10110100": 1699,
+              "10110110": 29826,
+              "11000000": 64,
+              "11000010": 3192,
+              "11000100": 146,
+              "11010000": 4658,
+              "11010010": 77799,
+              "11010100": 965,
+              "11010110": 13187,
+              "11100000": 1052,
+              "11100010": 19565,
+              "11110000": 29619,
+              "11110010": 294234,
+              "11110100": 363,
+              "11110110": 10922
             }
           }
         }
@@ -904,33 +1195,325 @@
           "disease",
           "checksum",
           "persistent_id",
-          "file_format"
+          "file_format",
+          "single_organism"
         ],
         "levels": {
           "subject": {
             "total": 1966,
             "patterns": {
-              "0000000": 226,
-              "0010000": 1543,
-              "0011000": 197
+              "00000000": 226,
+              "00100000": 1268,
+              "00100001": 275,
+              "00110000": 197
             }
           },
           "biosample": {
             "total": 1466796,
             "patterns": {
-              "0000000": 15190,
-              "0010000": 240512,
-              "0011000": 1211094
+              "00000000": 15190,
+              "00100000": 240512,
+              "00110000": 1211094
             }
           },
           "file": {
             "total": 1495871,
             "patterns": {
-              "0000101": 41111,
-              "0000111": 15118,
-              "0010111": 228905,
-              "0011101": 7,
-              "0011111": 1210730
+              "00001010": 41111,
+              "00001110": 15118,
+              "00101110": 228905,
+              "00111010": 7,
+              "00111110": 1210730
+            }
+          }
+        }
+      }
+    },
+    {
+      "program": "MW",
+      "namespace": "https://www.metabolomicsworkbench.org/",
+      "release": "MW_submission_packet_20260914.zip",
+      "release_date": "2026-09-14",
+      "old_release": false,
+      "record_counts": {
+        "project": 2891,
+        "subject": 4551,
+        "biosample": 476563,
+        "file": 8366
+      },
+      "overall_score": 68,
+      "dimensions_assessed": 6,
+      "dimensions": {
+        "FAIRness": {
+          "score": 50,
+          "reason": "",
+          "checks": [
+            {
+              "id": "persistent_ids",
+              "description": "Records with a persistent ID (persistent_id field, or a persistent-identifier access_url on files)",
+              "passed": 2890,
+              "total": 492371,
+              "score": 1,
+              "detail": "489,481 of 492,371 records have no persistent identifier recorded (2,890 have one in persistent_id; 0 more files have one only in access_url; 476,563 persistent_id values use a non-persistent scheme and are not counted)",
+              "raw": {
+                "persistent_id_field": 2890,
+                "access_url_only": 0,
+                "access_url_persistent_total": 0,
+                "persistent_id_non_persistent_scheme": 476563
+              },
+              "why_it_matters": "Persistent identifiers let a training set be cited and re-assembled later, which supports reproducible models."
+            },
+            {
+              "id": "ontology_ids",
+              "description": "Ontology-coded field values that are real term IDs (PREFIX:ID), not free text",
+              "passed": 419648,
+              "total": 419648,
+              "score": 100,
+              "detail": "419,648 of 419,648 ontology-field values use a term ID",
+              "why_it_matters": "Ontology term IDs let values be matched reliably across programs ('Breast' in one, 'UBERON:0000310' in another), so a model sees one concept as one feature."
+            }
+          ],
+          "observation": "489,481 of 492,371 records have no persistent identifier recorded (2,890 have one in persistent_id; 0 more files have one only in access_url; 476,563 persistent_id values use a non-persistent scheme and are not counted). Persistent identifiers let a training set be cited and re-assembled later, which supports reproducible models."
+        },
+        "Provenance": {
+          "score": 50,
+          "reason": "",
+          "checks": [
+            {
+              "id": "creation_time",
+              "description": "Records (project/subject/biosample/file) with a creation_time",
+              "passed": 0,
+              "total": 492371,
+              "score": 0,
+              "detail": "492,371 of 492,371 records have no creation_time recorded",
+              "why_it_matters": "Timestamps help identify which version of the data a model used and make batch or time effects detectable."
+            },
+            {
+              "id": "file_checksums",
+              "description": "Files with a sha256 or md5 checksum",
+              "passed": 8366,
+              "total": 8366,
+              "score": 100,
+              "detail": "0 of 8,366 files have no checksum recorded",
+              "raw": {
+                "with_sha256": 0,
+                "with_md5": 8366
+              },
+              "why_it_matters": "Checksums let users verify that a downloaded file is exactly the one a model was trained on."
+            }
+          ],
+          "observation": "492,371 of 492,371 records have no creation_time recorded. Timestamps help identify which version of the data a model used and make batch or time effects detectable."
+        },
+        "Characterization": {
+          "score": 9,
+          "reason": "",
+          "checks": [
+            {
+              "id": "subject_sex",
+              "description": "Single-organism subjects with sex recorded",
+              "passed": 0,
+              "total": 3673,
+              "score": 0,
+              "detail": "3,673 of 3,673 subjects have no sex recorded",
+              "why_it_matters": "Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike."
+            },
+            {
+              "id": "subject_age",
+              "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
+              "passed": 0,
+              "total": 3673,
+              "score": 0,
+              "detail": "3,673 of 3,673 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
+              "raw": {
+                "age_at_enrollment": 0,
+                "age_at_sampling_only": 0
+              },
+              "why_it_matters": "Recording age lets model developers check whether results differ across age groups, such as children and adults."
+            },
+            {
+              "id": "biosample_anatomy",
+              "description": "Biosamples with anatomy recorded",
+              "passed": 125384,
+              "total": 476563,
+              "score": 26,
+              "detail": "351,179 of 476,563 biosamples have no anatomy recorded",
+              "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
+            }
+          ],
+          "info": [
+            "818 cell-line and 38 synthetic and 22 microbiome subjects excluded from sex/age checks (these checks apply to single-organism subjects, human or animal)",
+            "2,525 disease associations in this release (0 in biosample_disease.tsv, 2,525 in subject_disease.tsv) - not scored, since not every program studies a disease"
+          ],
+          "observation": "3,673 of 3,673 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike."
+        },
+        "Pre-model Explainability": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "labeled_terms",
+              "description": "Distinct ontology term IDs with a human-readable label (from the package's own term tables, or portal-sourced in term_labels.py)",
+              "passed": 459,
+              "total": 459,
+              "score": 100,
+              "detail": "459 of 459 term IDs have a label (datapackage term table or portal); breakdown: 459 datapackage ('CL:0000000', 'CL:0000019', 'CL:0000034', 'CL:0000037', 'CL:0000047', ... (454 more))",
+              "why_it_matters": "Human-readable labels let reviewers sanity-check what a model's input features mean."
+            }
+          ]
+        },
+        "Ethics": {
+          "score": "NOT ASSESSABLE",
+          "reason": "This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.",
+          "checks": []
+        },
+        "Sustainability": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_locatable",
+              "description": "Files with a persistent_id or access_url",
+              "passed": 8366,
+              "total": 8366,
+              "score": 100,
+              "detail": "0 of 8,366 files have no persistent_id or access_url recorded",
+              "why_it_matters": "A persistent ID or access URL on each file keeps it findable for the models and benchmarks that depend on it."
+            }
+          ]
+        },
+        "Computability": {
+          "score": 100,
+          "reason": "",
+          "checks": [
+            {
+              "id": "file_format",
+              "description": "Files with a file_format",
+              "passed": 8364,
+              "total": 8366,
+              "score": 100,
+              "detail": "2 of 8,366 files have no file_format recorded",
+              "why_it_matters": "A declared file format lets pipelines parse each file without guessing."
+            },
+            {
+              "id": "croissant_valid",
+              "description": "Croissant metadata generated and passes validate_croissant.py (yes=100 / no=0)",
+              "passed": 1,
+              "total": 1,
+              "score": 100,
+              "detail": "Croissant generated for this program's records and passed validate_croissant.py",
+              "why_it_matters": "Valid Croissant metadata lets ML tools discover and load the dataset automatically."
+            }
+          ]
+        }
+      },
+      "data_quality_notes": [
+        "biosample.tsv: 476,563 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://www.metabolomicsworkbench.org (476,563)."
+      ],
+      "field_coverage": [
+        {
+          "field": "sex",
+          "label": "Sex",
+          "columns": "subject.sex",
+          "unit": "single-organism subjects",
+          "passed": 0,
+          "total": 3673
+        },
+        {
+          "field": "age",
+          "label": "Age",
+          "columns": "subject.age_at_enrollment, biosample_from_subject.age_at_sampling",
+          "unit": "single-organism subjects",
+          "passed": 0,
+          "total": 3673
+        },
+        {
+          "field": "anatomy",
+          "label": "Anatomy",
+          "columns": "biosample.anatomy",
+          "unit": "biosamples",
+          "passed": 125384,
+          "total": 476563
+        },
+        {
+          "field": "disease",
+          "label": "Disease link",
+          "columns": "biosample_disease, subject_disease (via biosample_from_subject)",
+          "unit": "biosamples",
+          "passed": 243145,
+          "total": 476563
+        },
+        {
+          "field": "persistent_id",
+          "label": "Persistent ID",
+          "columns": "persistent_id (all records), file.access_url",
+          "unit": "records",
+          "passed": 2890,
+          "total": 492371
+        },
+        {
+          "field": "checksum",
+          "label": "Checksum",
+          "columns": "file.sha256, file.md5",
+          "unit": "files",
+          "passed": 8366,
+          "total": 8366
+        },
+        {
+          "field": "file_format",
+          "label": "File format",
+          "columns": "file.file_format",
+          "unit": "files",
+          "passed": 8364,
+          "total": 8366
+        },
+        {
+          "field": "creation_time",
+          "label": "Creation time",
+          "columns": "creation_time (all records)",
+          "unit": "records",
+          "passed": 0,
+          "total": 492371
+        }
+      ],
+      "combinations": {
+        "requirements": [
+          "sex",
+          "age",
+          "anatomy",
+          "disease",
+          "checksum",
+          "persistent_id",
+          "file_format",
+          "single_organism"
+        ],
+        "levels": {
+          "subject": {
+            "total": 4551,
+            "patterns": {
+              "00000000": 102,
+              "00000001": 995,
+              "00010000": 184,
+              "00010001": 937,
+              "00100000": 195,
+              "00100001": 832,
+              "00110000": 397,
+              "00110001": 909
+            }
+          },
+          "biosample": {
+            "total": 476563,
+            "patterns": {
+              "00000000": 168996,
+              "00010000": 182183,
+              "00100000": 64422,
+              "00110000": 60962
+            }
+          },
+          "file": {
+            "total": 8366,
+            "patterns": {
+              "00001000": 2,
+              "00001010": 8364
             }
           }
         }
@@ -1189,33 +1772,34 @@
           "disease",
           "checksum",
           "persistent_id",
-          "file_format"
+          "file_format",
+          "single_organism"
         ],
         "levels": {
           "subject": {
             "total": 897,
             "patterns": {
-              "0000000": 6,
-              "0010000": 429,
-              "0110000": 12,
-              "1100000": 2,
-              "1110000": 448
+              "00000001": 6,
+              "00100001": 429,
+              "01100001": 12,
+              "11000001": 2,
+              "11100001": 448
             }
           },
           "biosample": {
             "total": 5673,
             "patterns": {
-              "0000000": 4,
-              "0010000": 2106,
-              "0110000": 94,
-              "1110000": 3469
+              "00000000": 4,
+              "00100000": 2106,
+              "01100000": 94,
+              "11100000": 3469
             }
           },
           "file": {
             "total": 154612,
             "patterns": {
-              "0000110": 7676,
-              "0000111": 146936
+              "00001100": 7676,
+              "00001110": 146936
             }
           }
         }
@@ -1472,30 +2056,31 @@
           "disease",
           "checksum",
           "persistent_id",
-          "file_format"
+          "file_format",
+          "single_organism"
         ],
         "levels": {
           "subject": {
             "total": 4597,
             "patterns": {
-              "0000000": 6,
-              "0010000": 4591
+              "00000001": 6,
+              "00100001": 4591
             }
           },
           "biosample": {
             "total": 9212,
             "patterns": {
-              "0000000": 6,
-              "0010000": 9206
+              "00000000": 6,
+              "00100000": 9206
             }
           },
           "file": {
             "total": 175471,
             "patterns": {
-              "0000110": 1,
-              "0000111": 9249,
-              "0010110": 1678,
-              "0010111": 164543
+              "00001100": 1,
+              "00001110": 9249,
+              "00101100": 1678,
+              "00101110": 164543
             }
           }
         }
@@ -1506,8 +2091,14 @@
     {
       "check": "subject_age",
       "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
-      "average_score": 14,
+      "average_score": 24,
       "programs": [
+        {
+          "program": "ERCC_DCC",
+          "passed": 8580,
+          "total": 8580,
+          "score": 100
+        },
         {
           "program": "HMP",
           "passed": 0,
@@ -1524,6 +2115,12 @@
           "program": "LINCS",
           "passed": 0,
           "total": 275,
+          "score": 0
+        },
+        {
+          "program": "MW",
+          "passed": 0,
+          "total": 3673,
           "score": 0
         },
         {
@@ -1544,8 +2141,14 @@
     {
       "check": "subject_sex",
       "description": "Single-organism subjects with sex recorded",
-      "average_score": 47,
+      "average_score": 48,
       "programs": [
+        {
+          "program": "ERCC_DCC",
+          "passed": 8580,
+          "total": 8580,
+          "score": 100
+        },
         {
           "program": "HMP",
           "passed": 6623,
@@ -1562,6 +2165,12 @@
           "program": "LINCS",
           "passed": 0,
           "total": 275,
+          "score": 0
+        },
+        {
+          "program": "MW",
+          "passed": 0,
+          "total": 3673,
           "score": 0
         },
         {
@@ -1582,8 +2191,14 @@
     {
       "check": "persistent_ids",
       "description": "Records with a persistent ID (persistent_id field, or a persistent-identifier access_url on files)",
-      "average_score": 67,
+      "average_score": 48,
       "programs": [
+        {
+          "program": "ERCC_DCC",
+          "passed": 0,
+          "total": 359853,
+          "score": 0
+        },
         {
           "program": "HMP",
           "passed": 220615,
@@ -1601,6 +2216,12 @@
           "passed": 1454753,
           "total": 2964650,
           "score": 49
+        },
+        {
+          "program": "MW",
+          "passed": 2890,
+          "total": 492371,
+          "score": 1
         },
         {
           "program": "SenNet",

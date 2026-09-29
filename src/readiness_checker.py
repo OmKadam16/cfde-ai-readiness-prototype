@@ -127,6 +127,19 @@ PERSISTENT_ID_PATTERN = re.compile(
 # draft-C2M2_specification/README.md). Sex and age are only checked for
 # single organisms -- humans and animals alike.
 SINGLE_ORGANISM = "cfde_subject_granularity:0"
+# Data quality note threshold: mention ages of exactly 0 when they are at least
+# this share of the recorded ages.
+ZERO_AGE_SHARE = 0.05
+# CFDE sex vocabulary (nih-cfde/c2m2, internal_CFDE_CV_reference_tables/subject_sex.tsv).
+INDETERMINATE_SEX = "cfde_subject_sex:0"
+SEX_NAMES = {
+    "cfde_subject_sex:0": "Indeterminate",
+    "cfde_subject_sex:1": "Female",
+    "cfde_subject_sex:2": "Male",
+    "cfde_subject_sex:3": "Intersex",
+    "cfde_subject_sex:4": "Transsexual (MTF)",
+    "cfde_subject_sex:5": "Transsexual (FTM)",
+}
 GRANULARITY_NAMES = {
     "cfde_subject_granularity:0": "single-organism",
     "cfde_subject_granularity:1": "symbiont-system",
@@ -378,6 +391,14 @@ def value_scheme(value: str) -> str:
     return match.group(1) if match else "(no scheme)"
 
 
+def organism_mask(subjects: pd.DataFrame) -> pd.Series:
+    """True for single-organism subjects (or subjects with no granularity recorded)."""
+    if "granularity" not in subjects.columns:
+        return pd.Series(True, index=subjects.index)
+    granularity = subjects["granularity"].astype("string").str.strip()
+    return (granularity == SINGLE_ORGANISM).fillna(False).astype(bool) | ~filled_mask(subjects["granularity"])
+
+
 def organism_subjects(subjects: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     """Subjects whose sex and age are checked: single organisms (human or animal).
     Cell lines, microbiomes, synthetic entities etc. are excluded and reported.
@@ -386,9 +407,9 @@ def organism_subjects(subjects: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     if "granularity" not in subjects.columns:
         return subjects, (["subject.tsv has no granularity column, so all subjects are treated as single organisms"]
                           if len(subjects) else [])
+    keep = organism_mask(subjects)
     granularity = subjects["granularity"].astype("string").str.strip()
     blank = ~filled_mask(subjects["granularity"])
-    keep = (granularity == SINGLE_ORGANISM).fillna(False).astype(bool) | blank
     info = []
     excluded = granularity[~keep].value_counts()
     if len(excluded):
@@ -670,8 +691,15 @@ COMBINATION_RULES = (
     "(biosample_from_subject). Files: sex, age, anatomy and disease come from the biosamples and "
     "subjects they describe (file_describes_biosample, file_describes_subject); checksums and file "
     "format are the file's own. Persistent IDs are always the record's own. Records are linked only "
-    "through these C2M2 link tables, not through collections. Sex and age count for every subject "
-    "here, not only single organisms.")
+    "through these C2M2 link tables, not through collections. Sex and age count only for "
+    "single-organism subjects (human or animal), the same rule as the scores and Field coverage: "
+    "when sex or age is required, subject counts are out of single-organism subjects, and a "
+    "biosample or file linked only to cell lines, microbiomes or synthetic subjects does not meet it.")
+
+# Extra per-subject bit stored after the requirements: is this a single-organism
+# subject? Not a requirement a user picks; it sets the denominator for sex/age.
+SINGLE_ORGANISM_BIT = "single_organism"
+ORGANISM_REQUIREMENTS = {"sex", "age"}
 
 
 def record_index(df: pd.DataFrame) -> pd.MultiIndex:
@@ -716,8 +744,9 @@ def combination_counts(prog: dict[str, pd.DataFrame]) -> dict:
         return flags
 
     # Each record's own values.
-    s_sex = column_mask(subjects, "sex").to_numpy()
-    s_age = column_mask(subjects, "age_at_enrollment").to_numpy() | flagged(n_s, bs_s[sampled])
+    s_org = organism_mask(subjects).to_numpy()
+    s_sex = column_mask(subjects, "sex").to_numpy() & s_org
+    s_age = (column_mask(subjects, "age_at_enrollment").to_numpy() | flagged(n_s, bs_s[sampled])) & s_org
     s_disease = flagged(n_s, positions(s_idx, prog["subject_disease"], "subject"))
     s_pid = is_persistent(subjects, "persistent_id").to_numpy()
     b_anatomy = column_mask(biosamples, "anatomy").to_numpy()
@@ -731,11 +760,13 @@ def combination_counts(prog: dict[str, pd.DataFrame]) -> dict:
         "anatomy": any_linked(n_s, bs_s, bs_b, b_anatomy),
         "disease": s_disease | any_linked(n_s, bs_s, bs_b, b_disease),
         "persistent_id": s_pid,
+        SINGLE_ORGANISM_BIT: s_org,
     }
     # Biosample level: sex, age and disease also from the biosample's subject.
     biosample_level = {
         "sex": any_linked(n_b, bs_b, bs_s, subject_level["sex"]),
-        "age": b_age | any_linked(n_b, bs_b, bs_s, subject_level["age"]),
+        # age_at_sampling counts only when the biosample's subject is a single organism.
+        "age": (b_age & any_linked(n_b, bs_b, bs_s, s_org)) | any_linked(n_b, bs_b, bs_s, subject_level["age"]),
         "anatomy": b_anatomy,
         "disease": b_disease | any_linked(n_b, bs_b, bs_s, subject_level["disease"]),
         "persistent_id": b_pid,
@@ -750,7 +781,7 @@ def combination_counts(prog: dict[str, pd.DataFrame]) -> dict:
     file_level["persistent_id"] = (is_persistent(files, "persistent_id") | is_persistent(files, "access_url")).to_numpy()
     file_level["file_format"] = column_mask(files, "file_format").to_numpy()
 
-    order = [r for r, _ in REQUIREMENTS]
+    order = [r for r, _ in REQUIREMENTS] + [SINGLE_ORGANISM_BIT]
 
     def patterns(level: dict, n: int) -> dict:
         """How many records share each combination, as bit strings in REQUIREMENTS order."""
@@ -777,6 +808,10 @@ def count_meeting(combinations: dict, level: str, required: list[str]) -> tuple[
     data = combinations["levels"][level]
     positions = [order.index(r) for r in required]
     met = sum(n for bits, n in data["patterns"].items() if all(bits[i] == "1" for i in positions))
+    # Sex and age apply to single-organism subjects only, so they are counted out of those.
+    if level == "subject" and ORGANISM_REQUIREMENTS & set(required):
+        org = order.index(SINGLE_ORGANISM_BIT)
+        return met, sum(n for bits, n in data["patterns"].items() if bits[org] == "1")
     return met, data["total"]
 
 
@@ -866,6 +901,32 @@ def data_quality_notes(prog: dict[str, pd.DataFrame]) -> list[str]:
         found.append("Persistent IDs present, but stored in access_url instead of the C2M2 persistent_id field "
                      f"({int(only_in_access_url.sum()):,} of {len(prog['file']):,} files; "
                      f"{urls.nunique():,} distinct identifiers, e.g. {examples(urls.unique(), 2)}).")
+
+    # 6. Sex recorded as "Indeterminate" (cfde_subject_sex:0). It is a valid
+    #    C2M2 value, so it counts as recorded, but it carries no sex information.
+    organisms, _ = organism_subjects(prog["subject"])
+    if "sex" in organisms.columns:
+        sex = organisms["sex"].astype("string").str.strip()
+        indeterminate = int((sex == INDETERMINATE_SEX).sum())
+        if indeterminate:
+            counts = sex[filled_mask(organisms["sex"])].value_counts()
+            found.append(f"subject.tsv: {indeterminate:,} single-organism subject(s) have sex recorded as "
+                         f"Indeterminate ({INDETERMINATE_SEX}). This is a valid C2M2 value, so they count as "
+                         "having sex recorded, but it does not say which sex. All sex values used: "
+                         + ", ".join(f"{SEX_NAMES.get(v, v)} {n:,}" for v, n in counts.items()) + ".")
+
+    # 7. Ages of exactly 0. C2M2 ages are in years, so 0 means under one year
+    #    old; when it is common, it is worth confirming it is not a stand-in
+    #    for "unknown". Only noted when it is a notable share of recorded ages,
+    #    since infants are expected in some studies (e.g. pediatric ones).
+    for table, column in [("subject", "age_at_enrollment"), ("biosample_from_subject", "age_at_sampling")]:
+        df = organisms if table == "subject" else prog[table]
+        if column in df.columns:
+            zero = int((pd.to_numeric(df[column], errors="coerce") == 0).sum())
+            if zero and zero >= ZERO_AGE_SHARE * int(column_mask(df, column).sum()):
+                found.append(f"{table}.tsv: {zero:,} of {int(column_mask(df, column).sum()):,} recorded "
+                             f"{column} values are exactly 0 (under one year old). If 0 is used for "
+                             "\"unknown\", leaving the field empty would keep it from being read as an age.")
     return found
 
 

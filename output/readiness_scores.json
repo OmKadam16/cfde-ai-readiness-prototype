@@ -237,19 +237,20 @@
           "disease",
           "checksum",
           "persistent_id",
-          "file_format"
+          "file_format",
+          "single_organism"
         ],
         "levels": {
           "subject": {
             "total": 2,
             "patterns": {
-              "0010000": 2
+              "00100001": 2
             }
           },
           "biosample": {
             "total": 2,
             "patterns": {
-              "0010000": 2
+              "00100000": 2
             }
           },
           "file": {
@@ -515,27 +516,28 @@
           "disease",
           "checksum",
           "persistent_id",
-          "file_format"
+          "file_format",
+          "single_organism"
         ],
         "levels": {
           "subject": {
             "total": 3,
             "patterns": {
-              "0000000": 2,
-              "0010000": 1
+              "00000001": 2,
+              "00100001": 1
             }
           },
           "biosample": {
             "total": 3,
             "patterns": {
-              "0000000": 2,
-              "0010000": 1
+              "00000000": 2,
+              "00100000": 1
             }
           },
           "file": {
             "total": 1,
             "patterns": {
-              "0010000": 1
+              "00100000": 1
             }
           }
         }
@@ -795,27 +797,28 @@
           "disease",
           "checksum",
           "persistent_id",
-          "file_format"
+          "file_format",
+          "single_organism"
         ],
         "levels": {
           "subject": {
             "total": 2,
             "patterns": {
-              "0000000": 1,
-              "0011000": 1
+              "00000001": 1,
+              "00110001": 1
             }
           },
           "biosample": {
             "total": 3,
             "patterns": {
-              "0000000": 1,
-              "0011000": 2
+              "00000000": 1,
+              "00110000": 2
             }
           },
           "file": {
             "total": 1,
             "patterns": {
-              "0000000": 1
+              "00000000": 1
             }
           }
         }
@@ -1052,19 +1055,20 @@
           "disease",
           "checksum",
           "persistent_id",
-          "file_format"
+          "file_format",
+          "single_organism"
         ],
         "levels": {
           "subject": {
             "total": 1,
             "patterns": {
-              "0010000": 1
+              "00100001": 1
             }
           },
           "biosample": {
             "total": 1,
             "patterns": {
-              "0010000": 1
+              "00100000": 1
             }
           },
           "file": {
@@ -1328,25 +1332,26 @@
           "disease",
           "checksum",
           "persistent_id",
-          "file_format"
+          "file_format",
+          "single_organism"
         ],
         "levels": {
           "subject": {
             "total": 3,
             "patterns": {
-              "0010000": 3
+              "00100001": 3
             }
           },
           "biosample": {
             "total": 3,
             "patterns": {
-              "0010000": 3
+              "00100000": 3
             }
           },
           "file": {
             "total": 1,
             "patterns": {
-              "0010010": 1
+              "00100100": 1
             }
           }
         }

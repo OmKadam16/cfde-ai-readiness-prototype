@@ -55,4 +55,5 @@ Release: `2026Q4_C2M2_datapackage.zip` (2026-09-16)
 
 ### Data quality notes (not scored)
 - project.tsv: 45 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://www.ncbi.nlm.nih.gov (44), https://kidsfirstdrc.org (1).
+- subject.tsv: 348 single-organism subject(s) have sex recorded as Indeterminate (cfde_subject_sex:0). This is a valid C2M2 value, so they count as having sex recorded, but it does not say which sex. All sex values used: Male 20,186, Female 18,510, Indeterminate 348.
 

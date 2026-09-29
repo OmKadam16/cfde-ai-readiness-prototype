@@ -1,53 +1,54 @@
 {
   "source": "Clark T, et al. \"AI-readiness Criteria for Biomedical Data.\" bioRxiv 2024. doi:10.1101/2024.10.23.619844 (first posted as \"AI-readiness for Biomedical Data: Bridge2AI Recommendations\")",
   "disclaimer": "These are simplified proxy measures for exploration, not an official evaluation.",
-  "banner": "FULL C2M2 DATAPACKAGE from data_real/hmp/ - these scores reflect this one submitted release, measured with our simplified proxies.",
-  "data_dir": "/Users/omkadam/Documents/Om Kadam/PROJECTS/cfde-project/data_real/hmp/merged/data",
+  "banner": "FULL C2M2 DATAPACKAGE from data_real/metabolomics/ - these scores reflect this one submitted release, measured with our simplified proxies.",
+  "data_dir": "/Users/omkadam/Documents/Om Kadam/PROJECTS/cfde-project/data_real/metabolomics/MW_submission_packet_20260914",
   "programs": [
     {
-      "program": "HMP",
-      "namespace": "tag:hmpdacc.org,2022-04-04:",
-      "release": "HMP_C2M2_2022-06-20_datapackage.zip",
-      "release_date": "2022-06-20",
-      "old_release": true,
+      "program": "MW",
+      "namespace": "https://www.metabolomicsworkbench.org/",
+      "release": "MW_submission_packet_20260914.zip",
+      "release_date": "2026-09-14",
+      "old_release": false,
       "record_counts": {
-        "project": 24,
-        "subject": 7903,
-        "biosample": 51873,
-        "file": 251136
+        "project": 2891,
+        "subject": 4551,
+        "biosample": 476563,
+        "file": 8366
       },
-      "overall_score": 80,
+      "overall_score": 68,
       "dimensions_assessed": 6,
       "dimensions": {
         "FAIRness": {
-          "score": 86,
+          "score": 50,
           "reason": "",
           "checks": [
             {
               "id": "persistent_ids",
               "description": "Records with a persistent ID (persistent_id field, or a persistent-identifier access_url on files)",
-              "passed": 220615,
-              "total": 310936,
-              "score": 71,
-              "detail": "90,321 of 310,936 records have no persistent identifier recorded (220,615 have one in persistent_id; 0 more files have one only in access_url; 0 persistent_id values use a non-persistent scheme and are not counted)",
+              "passed": 2890,
+              "total": 492371,
+              "score": 1,
+              "detail": "489,481 of 492,371 records have no persistent identifier recorded (2,890 have one in persistent_id; 0 more files have one only in access_url; 476,563 persistent_id values use a non-persistent scheme and are not counted)",
               "raw": {
-                "persistent_id_field": 220615,
+                "persistent_id_field": 2890,
                 "access_url_only": 0,
                 "access_url_persistent_total": 0,
-                "persistent_id_non_persistent_scheme": 0
+                "persistent_id_non_persistent_scheme": 476563
               },
               "why_it_matters": "Persistent identifiers let a training set be cited and re-assembled later, which supports reproducible models."
             },
             {
               "id": "ontology_ids",
               "description": "Ontology-coded field values that are real term IDs (PREFIX:ID), not free text",
-              "passed": 804939,
-              "total": 804939,
+              "passed": 419648,
+              "total": 419648,
               "score": 100,
-              "detail": "804,939 of 804,939 ontology-field values use a term ID",
+              "detail": "419,648 of 419,648 ontology-field values use a term ID",
               "why_it_matters": "Ontology term IDs let values be matched reliably across programs ('Breast' in one, 'UBERON:0000310' in another), so a model sees one concept as one feature."
             }
-          ]
+          ],
+          "observation": "489,481 of 492,371 records have no persistent identifier recorded (2,890 have one in persistent_id; 0 more files have one only in access_url; 476,563 persistent_id values use a non-persistent scheme and are not counted). Persistent identifiers let a training set be cited and re-assembled later, which supports reproducible models."
         },
         "Provenance": {
           "score": 50,
@@ -57,47 +58,47 @@
               "id": "creation_time",
               "description": "Records (project/subject/biosample/file) with a creation_time",
               "passed": 0,
-              "total": 310936,
+              "total": 492371,
               "score": 0,
-              "detail": "310,936 of 310,936 records have no creation_time recorded",
+              "detail": "492,371 of 492,371 records have no creation_time recorded",
               "why_it_matters": "Timestamps help identify which version of the data a model used and make batch or time effects detectable."
             },
             {
               "id": "file_checksums",
               "description": "Files with a sha256 or md5 checksum",
-              "passed": 251136,
-              "total": 251136,
+              "passed": 8366,
+              "total": 8366,
               "score": 100,
-              "detail": "0 of 251,136 files have no checksum recorded",
+              "detail": "0 of 8,366 files have no checksum recorded",
               "raw": {
-                "with_sha256": 251136,
-                "with_md5": 251136
+                "with_sha256": 0,
+                "with_md5": 8366
               },
               "why_it_matters": "Checksums let users verify that a downloaded file is exactly the one a model was trained on."
             }
           ],
-          "observation": "310,936 of 310,936 records have no creation_time recorded. Timestamps help identify which version of the data a model used and make batch or time effects detectable."
+          "observation": "492,371 of 492,371 records have no creation_time recorded. Timestamps help identify which version of the data a model used and make batch or time effects detectable."
         },
         "Characterization": {
-          "score": 59,
+          "score": 9,
           "reason": "",
           "checks": [
             {
               "id": "subject_sex",
               "description": "Single-organism subjects with sex recorded",
-              "passed": 6623,
-              "total": 7903,
-              "score": 84,
-              "detail": "1,280 of 7,903 subjects have no sex recorded",
+              "passed": 0,
+              "total": 3673,
+              "score": 0,
+              "detail": "3,673 of 3,673 subjects have no sex recorded",
               "why_it_matters": "Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike."
             },
             {
               "id": "subject_age",
               "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
               "passed": 0,
-              "total": 7903,
+              "total": 3673,
               "score": 0,
-              "detail": "7,903 of 7,903 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
+              "detail": "3,673 of 3,673 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
               "raw": {
                 "age_at_enrollment": 0,
                 "age_at_sampling_only": 0
@@ -107,17 +108,18 @@
             {
               "id": "biosample_anatomy",
               "description": "Biosamples with anatomy recorded",
-              "passed": 48510,
-              "total": 51873,
-              "score": 94,
-              "detail": "3,363 of 51,873 biosamples have no anatomy recorded",
+              "passed": 125384,
+              "total": 476563,
+              "score": 26,
+              "detail": "351,179 of 476,563 biosamples have no anatomy recorded",
               "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
             }
           ],
           "info": [
-            "3,023 disease associations in this release (2,531 in biosample_disease.tsv, 492 in subject_disease.tsv) - not scored, since not every program studies a disease"
+            "818 cell-line and 38 synthetic and 22 microbiome subjects excluded from sex/age checks (these checks apply to single-organism subjects, human or animal)",
+            "2,525 disease associations in this release (0 in biosample_disease.tsv, 2,525 in subject_disease.tsv) - not scored, since not every program studies a disease"
           ],
-          "observation": "7,903 of 7,903 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample). Recording age lets model developers check whether results differ across age groups, such as children and adults."
+          "observation": "3,673 of 3,673 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike."
         },
         "Pre-model Explainability": {
           "score": 100,
@@ -126,10 +128,10 @@
             {
               "id": "labeled_terms",
               "description": "Distinct ontology term IDs with a human-readable label (from the package's own term tables, or portal-sourced in term_labels.py)",
-              "passed": 146,
-              "total": 146,
+              "passed": 459,
+              "total": 459,
               "score": 100,
-              "detail": "146 of 146 term IDs have a label (datapackage term table or portal); breakdown: 146 datapackage ('DOID:4914', 'DOID:5295', 'DOID:8677', 'DOID:8778', 'DOID:8893', ... (141 more))",
+              "detail": "459 of 459 term IDs have a label (datapackage term table or portal); breakdown: 459 datapackage ('CL:0000000', 'CL:0000019', 'CL:0000034', 'CL:0000037', 'CL:0000047', ... (454 more))",
               "why_it_matters": "Human-readable labels let reviewers sanity-check what a model's input features mean."
             }
           ]
@@ -140,16 +142,16 @@
           "checks": []
         },
         "Sustainability": {
-          "score": 88,
+          "score": 100,
           "reason": "",
           "checks": [
             {
               "id": "file_locatable",
               "description": "Files with a persistent_id or access_url",
-              "passed": 220615,
-              "total": 251136,
-              "score": 88,
-              "detail": "30,521 of 251,136 files have no persistent_id or access_url recorded",
+              "passed": 8366,
+              "total": 8366,
+              "score": 100,
+              "detail": "0 of 8,366 files have no persistent_id or access_url recorded",
               "why_it_matters": "A persistent ID or access URL on each file keeps it findable for the models and benchmarks that depend on it."
             }
           ]
@@ -161,10 +163,10 @@
             {
               "id": "file_format",
               "description": "Files with a file_format",
-              "passed": 251136,
-              "total": 251136,
+              "passed": 8364,
+              "total": 8366,
               "score": 100,
-              "detail": "0 of 251,136 files have no file_format recorded",
+              "detail": "2 of 8,366 files have no file_format recorded",
               "why_it_matters": "A declared file format lets pipelines parse each file without guessing."
             },
             {
@@ -179,15 +181,17 @@
           ]
         }
       },
-      "data_quality_notes": [],
+      "data_quality_notes": [
+        "biosample.tsv: 476,563 persistent_id value(s) use a scheme that is not on the persistent-identifier list (DOI, identifiers.org, ARK, DRS, Handle, PURL), so they are not counted as persistent IDs. Schemes seen: https://www.metabolomicsworkbench.org (476,563)."
+      ],
       "field_coverage": [
         {
           "field": "sex",
           "label": "Sex",
           "columns": "subject.sex",
           "unit": "single-organism subjects",
-          "passed": 6623,
-          "total": 7903
+          "passed": 0,
+          "total": 3673
         },
         {
           "field": "age",
@@ -195,47 +199,47 @@
           "columns": "subject.age_at_enrollment, biosample_from_subject.age_at_sampling",
           "unit": "single-organism subjects",
           "passed": 0,
-          "total": 7903
+          "total": 3673
         },
         {
           "field": "anatomy",
           "label": "Anatomy",
           "columns": "biosample.anatomy",
           "unit": "biosamples",
-          "passed": 48510,
-          "total": 51873
+          "passed": 125384,
+          "total": 476563
         },
         {
           "field": "disease",
           "label": "Disease link",
           "columns": "biosample_disease, subject_disease (via biosample_from_subject)",
           "unit": "biosamples",
-          "passed": 2531,
-          "total": 51873
+          "passed": 243145,
+          "total": 476563
         },
         {
           "field": "persistent_id",
           "label": "Persistent ID",
           "columns": "persistent_id (all records), file.access_url",
           "unit": "records",
-          "passed": 220615,
-          "total": 310936
+          "passed": 2890,
+          "total": 492371
         },
         {
           "field": "checksum",
           "label": "Checksum",
           "columns": "file.sha256, file.md5",
           "unit": "files",
-          "passed": 251136,
-          "total": 251136
+          "passed": 8366,
+          "total": 8366
         },
         {
           "field": "file_format",
           "label": "File format",
           "columns": "file.file_format",
           "unit": "files",
-          "passed": 251136,
-          "total": 251136
+          "passed": 8364,
+          "total": 8366
         },
         {
           "field": "creation_time",
@@ -243,7 +247,7 @@
           "columns": "creation_time (all records)",
           "unit": "records",
           "passed": 0,
-          "total": 310936
+          "total": 492371
         }
       ],
       "combinations": {
@@ -259,43 +263,32 @@
         ],
         "levels": {
           "subject": {
-            "total": 7903,
+            "total": 4551,
             "patterns": {
-              "00000001": 190,
-              "00100001": 1087,
-              "00110001": 3,
-              "10000001": 410,
-              "10010001": 166,
-              "10100001": 5724,
-              "10110001": 323
+              "00000000": 102,
+              "00000001": 995,
+              "00010000": 184,
+              "00010001": 937,
+              "00100000": 195,
+              "00100001": 832,
+              "00110000": 397,
+              "00110001": 909
             }
           },
           "biosample": {
-            "total": 51873,
+            "total": 476563,
             "patterns": {
-              "00000000": 1362,
-              "00100000": 18335,
-              "00110000": 13,
-              "10000000": 1692,
-              "10010000": 309,
-              "10100000": 27953,
-              "10110000": 2209
+              "00000000": 168996,
+              "00010000": 182183,
+              "00100000": 64422,
+              "00110000": 60962
             }
           },
           "file": {
-            "total": 251136,
+            "total": 8366,
             "patterns": {
-              "00001010": 4208,
-              "00001110": 1525,
-              "00101010": 13788,
-              "00101110": 102023,
-              "00111110": 104,
-              "10001010": 1397,
-              "10001110": 1891,
-              "10011110": 1015,
-              "10101010": 11128,
-              "10101110": 103815,
-              "10111110": 10242
+              "00001000": 2,
+              "00001010": 8364
             }
           }
         }

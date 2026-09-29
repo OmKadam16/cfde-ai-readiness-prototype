@@ -13,7 +13,7 @@ A working prototype that:
    connecting subjects → biosamples → files → project → disease, and runs
    real connected queries across it.
 4. Runs an **AI-Readiness Checker** (`src/readiness_checker.py`) over full
-   C2M2 releases from five CFDE programs, using simple, measurable proxies
+   C2M2 releases from seven CFDE programs, using simple, measurable proxies
    for the seven AI-readiness dimensions defined by the Bridge2AI
    Standards Working Group (see below).
 
@@ -77,7 +77,7 @@ Rules worth knowing:
 Each program's C2M2 releases are listed at
 `https://cfde.cloud/info/dcc/<program>#C2M2`. The releases used here are
 recorded in `releases.tsv`. To download and unzip them into `data_real/`
-(about 390 MB of zips, about 3 GB unzipped; git-ignored):
+(about 425 MB of zips, about 3.4 GB unzipped; git-ignored):
 
 ```
 tail -n +2 releases.tsv | while IFS=$'\t' read -r folder program file date url; do
@@ -94,9 +94,9 @@ python3 readiness_checker.py --data-dir ../data_real/sparc  # one real package
 python3 readiness_checker.py                              # the hand-collected sample in data/
 ```
 
-`--compare` scores every package in `data_real/` (about 75 seconds;
-peak memory around 4 GB, mostly from Kids First's and LINCS's multi-million
-row file and link tables) and writes
+`--compare` scores every package in `data_real/` (about 60-75 seconds;
+peak memory 1.5-4 GB in our runs, mostly from Kids First's and LINCS's
+multi-million row file and link tables) and writes
 `output/readiness_comparison.md` and `.json` plus a
 `readiness_report_<program>.md` / `readiness_scores_<program>.json` per
 program. The checker itself uses only pandas and the standard library.
@@ -124,6 +124,8 @@ It opens at http://localhost:8501. The pages answer three questions:
   my model needs?) - tick requirements and see, per program, how many
   subjects, biosamples or files meet all of them. Counts are exact: the
   checker stores how many records share each combination of requirements.
+  Sex and age use the same single-organism rule as the scores, so subject
+  counts for them are out of single-organism subjects.
 - **Program report card** (a program's data team: what would help most?) -
   dimension scores, every check as a progress bar with "X of Y", the top 3
   fixes ranked by points they would add, and data quality notes.
@@ -144,18 +146,64 @@ the 50 MB upload cap. After re-running `--compare`, commit
 
 | Program | Release | Release date | Records (project / subject / biosample / file) | Overall | FAIRness | Provenance | Characterization | Explainability | Ethics | Sustainability | Computability |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| ExRNA (ERCC_DCC) | `CFDE08272026_C2M2.zip` | 2026-08-28 | 78 / 8,584 / 14,765 / 336,426 | 91 | 50 | 98 | 100 | 100 | n/a | 100 | 100 |
 | HMP | `HMP_C2M2_2022-06-20_datapackage.zip` | 2022-06-20 (older release - may not reflect current metadata) | 24 / 7,903 / 51,873 / 251,136 | 80 | 86 | 50 | 59 | 100 | n/a | 88 | 100 |
 | Kids First (KFDRC) | `2026Q4_C2M2_datapackage.zip` | 2026-09-16 | 45 / 39,156 / 111,300 / 1,356,814 | 78 | 62 | 50 | 58 | 100 | n/a | 100 | 97 |
 | LINCS | `LINCS_C2M2_2023-09-18_datapackage.zip` | 2023-09-18 (older release - may not reflect current metadata) | 17 / 1,966 / 1,466,796 / 1,495,871 | 80 | 74 | 75 | 33 | 100 | n/a | 100 | 100 |
+| Metabolomics Workbench (MW) | `MW_submission_packet_20260914.zip` | 2026-09-14 | 2,891 / 4,551 / 476,563 / 8,366 | 68 | 50 | 50 | 9 | 100 | n/a | 100 | 100 |
 | SenNet | `sennet_c2m2_sep26.zip` | 2026-09-24 | 21 / 897 / 5,673 / 154,612 | 94 | 98 | 100 | 67 | 100 | n/a | 100 | 98 |
 | SPARC | `C2M2_datapackage_20260916.zip` | 2026-09-17 | 78 / 4,597 / 9,212 / 175,471 | 88 | 96 | 96 | 33 | 100 | n/a | 100 | 100 |
 
 Ethics is n/a for every program because of the C2M2 schema, not the
-programs. Most common gaps across programs: **age** recorded for 14% of
-single-organism subjects on average (0% in three of five releases),
-**sex** for 47%, and **persistent identifiers** on 67% of records. See
+programs. Most common gaps across programs: **age** recorded for 24% of
+single-organism subjects on average (0% in four of seven releases),
+**sex** for 48%, and **persistent identifiers** on 48% of records. See
 `output/readiness_comparison.md` for per-program numbers and data
 quality notes.
+
+### Tested on held-out programs
+The checker was written and tuned on HMP, Kids First, LINCS, SenNet and
+SPARC. To see whether it generalizes, it was then run - with no code
+changes first - on two programs it had never seen, both current releases
+under 100 MB: **ExRNA** (`CFDE08272026_C2M2.zip`, 2026-08-28, 16.9 MB) and
+**Metabolomics Workbench** (`MW_submission_packet_20260914.zip`,
+2026-09-14, 24.5 MB; its zip unpacks into a subfolder, which the checker
+already handled).
+
+- **It ran without errors** on both (about 3 and 5 seconds), and
+  `--compare` with all seven programs completed.
+- **Spot-checks:** nine numbers were re-derived with separate code (plain
+  `csv`, not the checker's pandas logic), and all matched exactly.
+  - Metabolomics Workbench: 125,384 of 476,563 biosamples with anatomy;
+    8,364 of 8,366 files with a file format; 2,890 persistent IDs (all
+    project DOIs).
+  - ExRNA scores: 8,580 of 8,580 single-organism subjects with sex; 8,580
+    with age; 350,633 of 359,853 records with a creation time.
+  - ExRNA finder counts: 8,580 of 8,580 subjects, 14,761 of 14,765
+    biosamples and 331,776 of 336,426 files meeting sex (and age).
+- **No scoring bugs were found.** Two things looked suspicious, and
+  inspecting the raw data showed the numbers were right but hid a detail:
+  - ExRNA's sex is 100% recorded, but 1,223 of its single-organism
+    subjects are coded `cfde_subject_sex:0` (*Indeterminate* in the CFDE
+    vocabulary), and no subject is coded Male.
+  - 1,508 of its recorded `age_at_enrollment` values are exactly 0.
+
+  The checker now reports both situations for any program, as unscored
+  data quality notes: Indeterminate sex codes, with the full list of sex
+  values used, and ages of exactly 0 when they are at least 5% of the
+  recorded ages. The scoring rule was not changed. Indeterminate is a valid
+  C2M2 value, and Kids First also uses it for 348 subjects.
+- **The original five programs' scores, dimensions and field coverage are
+  unchanged.** The only difference for them is the new Indeterminate note
+  for Kids First.
+- **Held-out results:** ExRNA 91 overall, Metabolomics Workbench 68.
+  Metabolomics Workbench records no sex or age for any subject. Its
+  biosample `persistent_id` values are Metabolomics Workbench landing-page
+  URLs, which are not on the persistent-identifier scheme list.
+
+Two programs is a small test. Programs with very different layouts (for
+example ones that describe files mainly through collections) may still
+expose gaps.
 
 ### Limitations
 - Simplified proxies, not an official implementation of the Bridge2AI

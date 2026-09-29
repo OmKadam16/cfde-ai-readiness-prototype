@@ -1,0 +1,4 @@
+# Streamlit settings for app.py (also used by Streamlit Community Cloud).
+[server]
+# Upload cap for "Check your own datapackage", in MB (app.py also checks it).
+maxUploadSize = 50

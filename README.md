@@ -96,9 +96,33 @@ python3 readiness_checker.py                              # the hand-collected s
 
 `--compare` scores every package in `data_real/` (about a minute; the
 largest, LINCS, peaks around 2.5 GB of memory) and writes
-`output/readiness_comparison.md` plus a `readiness_report_<program>.md` /
-`readiness_scores_<program>.json` per program. Only pandas and the
-standard library are used.
+`output/readiness_comparison.md` and `.json` plus a
+`readiness_report_<program>.md` / `readiness_scores_<program>.json` per
+program. The checker itself uses only pandas and the standard library.
+
+### Run the web app
+`app.py` is a small Streamlit app for browsing the results without
+installing anything beyond `requirements.txt`. It reads only the
+committed `output/readiness_comparison.json`, so it does not need
+`data_real/`.
+
+```
+pip3 install -r requirements.txt
+streamlit run app.py
+```
+
+It opens at http://localhost:8501 with five pages: Home, Comparison
+(table, heatmap and top-3 gaps), Program report card (one program's
+scores, raw numbers, observations and data quality notes), Methods
+(every check and its C2M2 source), and Check your own datapackage (upload
+a C2M2 `.zip` up to 50 MB zipped / 300 MB unzipped and score it live; the
+file is unpacked to a temporary folder and deleted afterwards).
+
+To publish it on Streamlit Community Cloud (free): push the repo to
+GitHub, then at share.streamlit.io choose "Create app", pick this repo and
+branch, and set the main file to `app.py`. `.streamlit/config.toml` sets
+the 50 MB upload cap. After re-running `--compare`, commit
+`output/readiness_comparison.json` so the app shows the new results.
 
 ### Results (current releases, run 2026-09-29)
 
@@ -213,6 +237,7 @@ excludes it unless run with `--include-demo`.
 - `data/*.tsv` — the hand-collected datapackage (real + one demo cluster).
 - `releases.tsv` — source URL and release date of each full release in `data_real/`.
 - `src/readiness_checker.py` — the AI-Readiness Checker.
+- `app.py`, `.streamlit/config.toml` — the Streamlit web app.
 - `src/c2m2_to_croissant.py` — converts the datapackage to Croissant JSON-LD.
 - `src/build_graph.py` — builds the knowledge graph (every node carries a
   `dcc` attribute, so DCC-based queries are reliable rather than guessed
@@ -221,7 +246,8 @@ excludes it unless run with `--include-demo`.
 - `src/validate_croissant.py` — structural Croissant spec validator.
 - `src/term_labels.py` — human-readable ontology term labels.
 - `output/croissant.json` — the generated AI-ready metadata file.
-- `output/readiness_*.md|json` — checker reports (sample, per program, comparison).
+- `output/readiness_*.md|json` — checker reports (sample, per program,
+  comparison); `output/readiness_comparison.json` is what the web app reads.
 
 ## Croissant, graph and queries
 ```

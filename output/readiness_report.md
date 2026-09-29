@@ -33,9 +33,9 @@ Records: 1 project, 2 subject, 2 biosample, 0 file
 - *Note:* The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata.
 
 ### Provenance: 0/100 [creation_time 0/5]
-- **Observation:** 5 of 5 records have no a creation_time recorded. Timestamps help identify which version of the data a model used and make batch or time effects detectable.
-- `creation_time` = 0 -- Records (project/subject/biosample/file) with a creation_time: 5 of 5 records have no a creation_time recorded
-- `file_checksums` = skipped (nothing to measure) -- Files with a sha256 or md5 checksum: 0 of 0 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all)
+- **Observation:** 5 of 5 records have no creation_time recorded. Timestamps help identify which version of the data a model used and make batch or time effects detectable.
+- `creation_time` = 0 -- Records (project/subject/biosample/file) with a creation_time: 5 of 5 records have no creation_time recorded
+- `file_checksums` = skipped (nothing to measure) -- Files with a sha256 or md5 checksum: 0 of 0 files have no checksum recorded (file.tsv has no sha256 or md5 column at all)
 
 ### Characterization: 33/100 [subject_sex 0/2, subject_age 0/2, biosample_anatomy 2/2]
 - **Observation:** 2 of 2 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
@@ -54,7 +54,7 @@ Records: 1 project, 2 subject, 2 biosample, 0 file
 
 ### Sustainability: NOT ASSESSABLE
 - Why not assessable: This program has no file records, so there is nothing whose long-term access can be checked.
-- `file_locatable` = skipped (nothing to measure) -- Files with a persistent_id or access_url: 0 of 0 files have no both a persistent_id and an access_url recorded
+- `file_locatable` = skipped (nothing to measure) -- Files with a persistent_id or access_url: 0 of 0 files have no persistent_id or access_url recorded
 
 ### Computability: NOT ASSESSABLE
 - Why not assessable: This program has no file records, so there is no data for a model to load (for reference: croissant generated for this program's records and passed validate_croissant.py).
@@ -74,9 +74,9 @@ Records: 3 project, 3 subject, 3 biosample, 1 file
 - *Note:* The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata.
 
 ### Provenance: 15/100 [creation_time 3/10, file_checksums 0/1]
-- **Observation:** 1 of 1 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all). Checksums let users verify that a downloaded file is exactly the one a model was trained on.
-- `creation_time` = 30 -- Records (project/subject/biosample/file) with a creation_time: 7 of 10 records have no a creation_time recorded
-- `file_checksums` = 0 -- Files with a sha256 or md5 checksum: 1 of 1 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all)
+- **Observation:** 1 of 1 files have no checksum recorded (file.tsv has no sha256 or md5 column at all). Checksums let users verify that a downloaded file is exactly the one a model was trained on.
+- `creation_time` = 30 -- Records (project/subject/biosample/file) with a creation_time: 7 of 10 records have no creation_time recorded
+- `file_checksums` = 0 -- Files with a sha256 or md5 checksum: 1 of 1 files have no checksum recorded (file.tsv has no sha256 or md5 column at all)
 
 ### Characterization: 11/100 [subject_sex 0/3, subject_age 0/3, biosample_anatomy 1/3]
 - **Observation:** 3 of 3 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
@@ -95,12 +95,12 @@ Records: 3 project, 3 subject, 3 biosample, 1 file
 - Why not assessable: This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.
 
 ### Sustainability: 0/100 [file_locatable 0/1]
-- **Observation:** 1 of 1 files have no both a persistent_id and an access_url recorded. A persistent ID or access URL on each file keeps it findable for the models and benchmarks that depend on it.
-- `file_locatable` = 0 -- Files with a persistent_id or access_url: 1 of 1 files have no both a persistent_id and an access_url recorded
+- **Observation:** 1 of 1 files have no persistent_id or access_url recorded. A persistent ID or access URL on each file keeps it findable for the models and benchmarks that depend on it.
+- `file_locatable` = 0 -- Files with a persistent_id or access_url: 1 of 1 files have no persistent_id or access_url recorded
 
 ### Computability: 50/100 [file_format 0/1, croissant_valid 1/1]
-- **Observation:** 1 of 1 files have no a file_format recorded. A declared file format lets pipelines parse each file without guessing.
-- `file_format` = 0 -- Files with a file_format: 1 of 1 files have no a file_format recorded
+- **Observation:** 1 of 1 files have no file_format recorded. A declared file format lets pipelines parse each file without guessing.
+- `file_format` = 0 -- Files with a file_format: 1 of 1 files have no file_format recorded
 - `croissant_valid` = 100 -- Croissant metadata generated and passes validate_croissant.py (yes=100 / no=0): Croissant generated for this program's records and passed validate_croissant.py
 
 ### Data quality notes (not scored)
@@ -119,9 +119,9 @@ Records: 2 project, 2 subject, 3 biosample, 1 file
 - *Note:* The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata.
 
 ### Provenance: 12/100 [creation_time 2/8, file_checksums 0/1]
-- **Observation:** 1 of 1 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all). Checksums let users verify that a downloaded file is exactly the one a model was trained on.
-- `creation_time` = 25 -- Records (project/subject/biosample/file) with a creation_time: 6 of 8 records have no a creation_time recorded
-- `file_checksums` = 0 -- Files with a sha256 or md5 checksum: 1 of 1 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all)
+- **Observation:** 1 of 1 files have no checksum recorded (file.tsv has no sha256 or md5 column at all). Checksums let users verify that a downloaded file is exactly the one a model was trained on.
+- `creation_time` = 25 -- Records (project/subject/biosample/file) with a creation_time: 6 of 8 records have no creation_time recorded
+- `file_checksums` = 0 -- Files with a sha256 or md5 checksum: 1 of 1 files have no checksum recorded (file.tsv has no sha256 or md5 column at all)
 
 ### Characterization: 22/100 [subject_sex 0/2, subject_age 0/2, biosample_anatomy 2/3]
 - **Observation:** 2 of 2 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
@@ -139,12 +139,12 @@ Records: 2 project, 2 subject, 3 biosample, 1 file
 - Why not assessable: This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.
 
 ### Sustainability: 0/100 [file_locatable 0/1]
-- **Observation:** 1 of 1 files have no both a persistent_id and an access_url recorded. A persistent ID or access URL on each file keeps it findable for the models and benchmarks that depend on it.
-- `file_locatable` = 0 -- Files with a persistent_id or access_url: 1 of 1 files have no both a persistent_id and an access_url recorded
+- **Observation:** 1 of 1 files have no persistent_id or access_url recorded. A persistent ID or access URL on each file keeps it findable for the models and benchmarks that depend on it.
+- `file_locatable` = 0 -- Files with a persistent_id or access_url: 1 of 1 files have no persistent_id or access_url recorded
 
 ### Computability: 50/100 [file_format 0/1, croissant_valid 1/1]
-- **Observation:** 1 of 1 files have no a file_format recorded. A declared file format lets pipelines parse each file without guessing.
-- `file_format` = 0 -- Files with a file_format: 1 of 1 files have no a file_format recorded
+- **Observation:** 1 of 1 files have no file_format recorded. A declared file format lets pipelines parse each file without guessing.
+- `file_format` = 0 -- Files with a file_format: 1 of 1 files have no file_format recorded
 - `croissant_valid` = 100 -- Croissant metadata generated and passes validate_croissant.py (yes=100 / no=0): Croissant generated for this program's records and passed validate_croissant.py
 
 ### Data quality notes (not scored)
@@ -162,9 +162,9 @@ Records: 1 project, 1 subject, 1 biosample, 0 file
 - *Note:* The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata.
 
 ### Provenance: 33/100 [creation_time 1/3]
-- **Observation:** 2 of 3 records have no a creation_time recorded. Timestamps help identify which version of the data a model used and make batch or time effects detectable.
-- `creation_time` = 33 -- Records (project/subject/biosample/file) with a creation_time: 2 of 3 records have no a creation_time recorded
-- `file_checksums` = skipped (nothing to measure) -- Files with a sha256 or md5 checksum: 0 of 0 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all)
+- **Observation:** 2 of 3 records have no creation_time recorded. Timestamps help identify which version of the data a model used and make batch or time effects detectable.
+- `creation_time` = 33 -- Records (project/subject/biosample/file) with a creation_time: 2 of 3 records have no creation_time recorded
+- `file_checksums` = skipped (nothing to measure) -- Files with a sha256 or md5 checksum: 0 of 0 files have no checksum recorded (file.tsv has no sha256 or md5 column at all)
 
 ### Characterization: 33/100 [subject_sex 0/1, subject_age 0/1, biosample_anatomy 1/1]
 - **Observation:** 1 of 1 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
@@ -183,7 +183,7 @@ Records: 1 project, 1 subject, 1 biosample, 0 file
 
 ### Sustainability: NOT ASSESSABLE
 - Why not assessable: This program has no file records, so there is nothing whose long-term access can be checked.
-- `file_locatable` = skipped (nothing to measure) -- Files with a persistent_id or access_url: 0 of 0 files have no both a persistent_id and an access_url recorded
+- `file_locatable` = skipped (nothing to measure) -- Files with a persistent_id or access_url: 0 of 0 files have no persistent_id or access_url recorded
 
 ### Computability: NOT ASSESSABLE
 - Why not assessable: This program has no file records, so there is no data for a model to load (for reference: croissant generated for this program's records and passed validate_croissant.py).
@@ -203,9 +203,9 @@ Records: 3 project, 3 subject, 3 biosample, 1 file
 - *Note:* The CFDE portal UI displays human-readable labels, while real C2M2 submissions store ontology IDs, so if this data was hand-transcribed from the portal, free-text values may be a transcription artifact rather than a gap in the program's own metadata.
 
 ### Provenance: 5/100 [creation_time 1/10, file_checksums 0/1]
-- **Observation:** 1 of 1 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all). Checksums let users verify that a downloaded file is exactly the one a model was trained on.
-- `creation_time` = 10 -- Records (project/subject/biosample/file) with a creation_time: 9 of 10 records have no a creation_time recorded
-- `file_checksums` = 0 -- Files with a sha256 or md5 checksum: 1 of 1 files have no a checksum recorded (file.tsv has no sha256 or md5 column at all)
+- **Observation:** 1 of 1 files have no checksum recorded (file.tsv has no sha256 or md5 column at all). Checksums let users verify that a downloaded file is exactly the one a model was trained on.
+- `creation_time` = 10 -- Records (project/subject/biosample/file) with a creation_time: 9 of 10 records have no creation_time recorded
+- `file_checksums` = 0 -- Files with a sha256 or md5 checksum: 1 of 1 files have no checksum recorded (file.tsv has no sha256 or md5 column at all)
 
 ### Characterization: 33/100 [subject_sex 0/3, subject_age 0/3, biosample_anatomy 3/3]
 - **Observation:** 3 of 3 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
@@ -223,11 +223,11 @@ Records: 3 project, 3 subject, 3 biosample, 1 file
 - Why not assessable: This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.
 
 ### Sustainability: 100/100 [file_locatable 1/1]
-- `file_locatable` = 100 -- Files with a persistent_id or access_url: 0 of 1 files have no both a persistent_id and an access_url recorded
+- `file_locatable` = 100 -- Files with a persistent_id or access_url: 0 of 1 files have no persistent_id or access_url recorded
 
 ### Computability: 50/100 [file_format 0/1, croissant_valid 1/1]
-- **Observation:** 1 of 1 files have no a file_format recorded. A declared file format lets pipelines parse each file without guessing.
-- `file_format` = 0 -- Files with a file_format: 1 of 1 files have no a file_format recorded
+- **Observation:** 1 of 1 files have no file_format recorded. A declared file format lets pipelines parse each file without guessing.
+- `file_format` = 0 -- Files with a file_format: 1 of 1 files have no file_format recorded
 - `croissant_valid` = 100 -- Croissant metadata generated and passes validate_croissant.py (yes=100 / no=0): Croissant generated for this program's records and passed validate_croissant.py
 
 ### Data quality notes (not scored)

@@ -25,11 +25,11 @@ Release: `C2M2_datapackage_20260916.zip` (2026-09-17)
 
 ### FAIRness: 96/100 [persistent_ids 175471/189358, ontology_ids 509813/509813]
 - `persistent_ids` = 93 -- Records with a persistent ID (persistent_id field, or a persistent-identifier access_url on files): 13,887 of 189,358 records have no persistent identifier recorded (175,471 have one in persistent_id; 0 more files have one only in access_url; 78 persistent_id values use a non-persistent scheme and are not counted)
-- `ontology_ids` = 100 -- Ontology-coded field values that are real term IDs (PREFIX:ID), not free text: 509813 of 509813 ontology-field values use a term ID
+- `ontology_ids` = 100 -- Ontology-coded field values that are real term IDs (PREFIX:ID), not free text: 509,813 of 509,813 ontology-field values use a term ID
 
 ### Provenance: 96/100 [creation_time 173350/189358, file_checksums 175471/175471]
-- `creation_time` = 92 -- Records (project/subject/biosample/file) with a creation_time: 16,008 of 189,358 records have no a creation_time recorded
-- `file_checksums` = 100 -- Files with a sha256 or md5 checksum: 0 of 175,471 files have no a checksum recorded
+- `creation_time` = 92 -- Records (project/subject/biosample/file) with a creation_time: 16,008 of 189,358 records have no creation_time recorded
+- `file_checksums` = 100 -- Files with a sha256 or md5 checksum: 0 of 175,471 files have no checksum recorded
 
 ### Characterization: 33/100 [subject_sex 0/4597, subject_age 0/4597, biosample_anatomy 9206/9212]
 - **Observation:** 4,597 of 4,597 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
@@ -45,10 +45,10 @@ Release: `C2M2_datapackage_20260916.zip` (2026-09-17)
 - Why not assessable: This reflects the C2M2 schema, not the program: C2M2 has no fields for consent, data use limitations, IRB approval, or governance, so ethics cannot be measured from C2M2 metadata. Each program's own data use documentation is the place to look.
 
 ### Sustainability: 100/100 [file_locatable 175471/175471]
-- `file_locatable` = 100 -- Files with a persistent_id or access_url: 0 of 175,471 files have no both a persistent_id and an access_url recorded
+- `file_locatable` = 100 -- Files with a persistent_id or access_url: 0 of 175,471 files have no persistent_id or access_url recorded
 
 ### Computability: 100/100 [file_format 173792/175471, croissant_valid 1/1]
-- `file_format` = 99 -- Files with a file_format: 1,679 of 175,471 files have no a file_format recorded
+- `file_format` = 99 -- Files with a file_format: 1,679 of 175,471 files have no file_format recorded
 - `croissant_valid` = 100 -- Croissant metadata generated and passes validate_croissant.py (yes=100 / no=0): Croissant generated for this program's records and passed validate_croissant.py
 
 ### Data quality notes (not scored)

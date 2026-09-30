@@ -13,13 +13,13 @@ Every score is computed from the C2M2 records in `/Users/omkadam/Documents/Om Ka
 
 | Program | Records (project / subject / biosample / file) | Overall | FAIRness | Provenance | Characterization | Pre-model Explainability | Ethics | Sustainability | Computability |
 |---|---|---|---|---|---|---|---|---|---|
-| ERCC_DCC | 78 / 8,584 / 14,765 / 336,426 | 91 | 50 | 98 | 100 | 100 | n/a | 100 | 100 |
+| ERCC_DCC | 78 / 8,584 / 14,765 / 336,426 | 90 | 50 | 98 | 94 | 100 | n/a | 100 | 100 |
 
 n/a = NOT ASSESSABLE (reason given in the program section).
 
 ## ERCC_DCC (`ERCC-exRNA`)
 
-**Overall: 91/100** (average of the 6 of 7 dimensions that could be assessed)  
+**Overall: 90/100** (average of the 6 of 7 dimensions that could be assessed)  
 Records: 78 project, 8584 subject, 14765 biosample, 336426 file  
 Release: `CFDE08272026_C2M2.zip` (2026-08-28)
 
@@ -32,9 +32,9 @@ Release: `CFDE08272026_C2M2.zip` (2026-08-28)
 - `creation_time` = 97 -- Records (project/subject/biosample/file) with a creation_time: 9,220 of 359,853 records have no creation_time recorded
 - `file_checksums` = 100 -- Files with a sha256 or md5 checksum: 0 of 336,426 files have no checksum recorded
 
-### Characterization: 100/100 [subject_sex 8580/8580, subject_age 8580/8580, biosample_anatomy 14765/14765]
+### Characterization: 94/100 [subject_sex 8580/8580, subject_age 7072/8580, biosample_anatomy 14765/14765]
 - `subject_sex` = 100 -- Single-organism subjects with sex recorded: 0 of 8,580 subjects have no sex recorded
-- `subject_age` = 100 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 0 of 8,580 subjects have no age recorded (8,580 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)
+- `subject_age` = 82 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 1,508 of 8,580 subjects have no age recorded (7,072 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample); ages of exactly 0 are treated as not recorded (likely placeholders, see Methods)
 - `biosample_anatomy` = 100 -- Biosamples with anatomy recorded: 0 of 14,765 biosamples have no anatomy recorded
 - *Info (not scored):* 4 cell-line subjects excluded from sex/age checks (these checks apply to single-organism subjects, human or animal)
 - *Info (not scored):* 4,961 disease associations in this release (3,125 in biosample_disease.tsv, 1,836 in subject_disease.tsv) - not scored, since not every program studies a disease
@@ -56,4 +56,6 @@ Release: `CFDE08272026_C2M2.zip` (2026-08-28)
 - subject.tsv: 1,223 single-organism subject(s) have sex recorded as Indeterminate (cfde_subject_sex:0). This is a valid C2M2 value, so they count as having sex recorded, but it does not say which sex. All sex values used: Female 7,357, Indeterminate 1,223.
 - subject.tsv: 1,508 of 8,580 recorded age_at_enrollment values are exactly 0 (under one year old). If 0 is used for "unknown", leaving the field empty would keep it from being read as an age.
 - biosample_from_subject.tsv: 3,446 of 14,818 recorded age_at_sampling values are exactly 0 (under one year old). If 0 is used for "unknown", leaving the field empty would keep it from being read as an age.
+- 4,958 ages of exactly 0 treated as not recorded (likely placeholders): 21% of the 23,402 recorded ages are 0, while the median of the others is 55 years (rule AGE_ZERO_PLACEHOLDER).
+- subject.tsv (human subjects): no subjects are coded Male while 1,223 are coded Indeterminate (cfde_subject_sex:0) and 7,325 are coded Female. If 0 was intended to mean Male, these subjects are mis-coded; worth confirming with the program.
 

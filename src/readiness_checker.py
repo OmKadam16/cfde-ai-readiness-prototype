@@ -131,6 +131,14 @@ SINGLE_ORGANISM = "cfde_subject_granularity:0"
 # Data quality note threshold: mention ages of exactly 0 when they are at least
 # this share of the recorded ages.
 ZERO_AGE_SHARE = 0.05
+# Named rule AGE_ZERO_PLACEHOLDER: in a program where at least ZERO_AGE_SHARE of all
+# recorded ages (age_at_enrollment and age_at_sampling) are exactly 0 AND the median
+# non-zero age is at least ADULT_MEDIAN_AGE, age 0 is treated as "not recorded" (a
+# placeholder for unknown) everywhere age is counted. Decided once per program; its
+# projects follow the program. Pediatric programs (low median age) are never affected,
+# since an age of 0 (under one year) is plausible there.
+ADULT_MEDIAN_AGE = 18
+AGE_COLUMNS = [("subject", "age_at_enrollment"), ("biosample_from_subject", "age_at_sampling")]
 # CFDE sex vocabulary (nih-cfde/c2m2, internal_CFDE_CV_reference_tables/subject_sex.tsv).
 INDETERMINATE_SEX = "cfde_subject_sex:0"
 KNOWN_SEX = ["cfde_subject_sex:1", "cfde_subject_sex:2"]  # Female, Male: what the finder counts as "sex"
@@ -309,6 +317,26 @@ def filled_mask(series: pd.Series) -> pd.Series:
     """Vectorised is_filled, so million-row file tables stay fast."""
     text = series.astype("string").str.strip()
     return (text.notna() & (text != "") & ~text.str.lower().isin(NON_ANSWERS)).fillna(False).astype(bool)
+
+
+def age_zero_rule(prog: dict) -> dict:
+    """Apply AGE_ZERO_PLACEHOLDER to a program: are its ages of exactly 0 likely placeholders?"""
+    values = [pd.to_numeric(prog[t].loc[column_mask(prog[t], c), c], errors="coerce")
+              for t, c in AGE_COLUMNS if c in prog[t].columns]
+    ages = pd.concat(values) if values else pd.Series(dtype=float)
+    zeros = int((ages == 0).sum())
+    nonzero = ages[(ages != 0) & ages.notna()]
+    median = float(nonzero.median()) if len(nonzero) else None
+    applies = bool(zeros and zeros >= ZERO_AGE_SHARE * len(ages) and median is not None and median >= ADULT_MEDIAN_AGE)
+    return {"applies": applies, "zeros": zeros, "recorded": int(len(ages)), "median_nonzero_age": median}
+
+
+def age_mask(df: pd.DataFrame, column: str, prog: dict) -> pd.Series:
+    """column_mask for an age column; under AGE_ZERO_PLACEHOLDER an age of exactly 0 counts as not recorded."""
+    mask = column_mask(df, column)
+    if column in df.columns and prog.get("age_rule", {}).get("applies"):
+        mask &= ~(pd.to_numeric(df[column], errors="coerce") == 0).fillna(False)
+    return mask
 
 
 def column_mask(df: pd.DataFrame, column: str) -> pd.Series:
@@ -512,9 +540,9 @@ def score_characterization(prog):
     # C2M2 records age in two places: subject.age_at_enrollment and
     # biosample_from_subject.age_at_sampling. A subject has an age if either
     # is filled (e.g. Kids First uses only age_at_sampling).
-    has_enrollment_age = column_mask(subjects, "age_at_enrollment")
+    has_enrollment_age = age_mask(subjects, "age_at_enrollment", prog)
     links = prog["biosample_from_subject"]
-    sampled = links[column_mask(links, "age_at_sampling")]
+    sampled = links[age_mask(links, "age_at_sampling", prog)]
     sampled_keys = set(zip(sampled["subject_id_namespace"], sampled["subject_local_id"]))
     subject_keys = pd.Series(list(zip(subjects["id_namespace"], subjects["local_id"])), index=subjects.index, dtype=object)
     has_sampling_age = subject_keys.map(lambda key: key in sampled_keys).astype(bool) if len(subjects) else has_enrollment_age
@@ -523,6 +551,8 @@ def score_characterization(prog):
     n_age = n_enrollment + n_sampling_only
     age_detail = missing_detail(n_age, len(subjects), "subjects", "age") + (
         f" ({n_enrollment:,} have age_at_enrollment; {n_sampling_only:,} more have age_at_sampling on a linked biosample)")
+    if prog.get("age_rule", {}).get("applies"):
+        age_detail += "; ages of exactly 0 are treated as not recorded (likely placeholders, see Methods)"
 
     # Disease links are reported, not scored: not every program studies a disease.
     n_links = {t: len(prog[t]) for t in DISEASE_TABLES}
@@ -866,8 +896,10 @@ def any_linked(n_from: int, from_pos: np.ndarray, to_pos: np.ndarray, to_flag: n
     return hits > 0
 
 
-def value_mask(df: pd.DataFrame, column: str, fid: str) -> np.ndarray:
-    """Which rows have a usable value. For sex, only Male or Female counts."""
+def value_mask(df: pd.DataFrame, column: str, fid: str, prog: dict | None = None) -> np.ndarray:
+    """Which rows have a usable value. For sex, only Male or Female counts; for age, see AGE_ZERO_PLACEHOLDER."""
+    if fid == "age":
+        return age_mask(df, column, prog or {}).to_numpy()
     if fid == "sex":
         values = df[column].astype("string").str.strip() if column in df.columns else pd.Series(pd.NA, index=df.index)
         return values.isin(KNOWN_SEX).fillna(False).to_numpy(dtype=bool)
@@ -902,10 +934,10 @@ def field_bitmasks(prog: dict, fields: dict | None = None) -> dict:
                 if fid == "persistent_id":  # persistent_id, and access_url on files
                     flag |= is_persistent(frames[entity], column).to_numpy()
                 else:
-                    flag |= value_mask(frames[entity], column, fid)
+                    flag |= value_mask(frames[entity], column, fid, prog)
             elif table == "biosample_from_subject" and entity == "biosample":
                 # a value on the biosample-subject link (age_at_sampling) belongs to the biosample
-                has = column_mask(bfs, column).to_numpy()
+                has = (age_mask(bfs, column, prog) if fid == "age" else column_mask(bfs, column)).to_numpy()
                 flag[bs_b[(bs_b >= 0) & has]] = True
             elif table in prog.get("assoc", {}) and table.startswith(entity + "_"):
                 df = prog["assoc"][table]
@@ -1026,7 +1058,8 @@ def discover_fields(prog: dict, combinations: dict | None = None, fields: dict |
         for table, column in f["sources"]:
             df = prog[table] if table in prog else prog.get("assoc", {}).get(table)
             if df is not None and column in df.columns:
-                values.append(df.loc[column_mask(df, column), column].astype(str).str.strip())
+                usable = age_mask(df, column, prog) if fid == "age" else column_mask(df, column)
+                values.append(df.loc[usable, column].astype(str).str.strip())
         values = pd.concat(values) if values else pd.Series(dtype=str)
         if not len(values):
             continue  # not available: no filled value anywhere
@@ -1073,6 +1106,21 @@ def field_coverage(dims: dict, combinations: dict) -> list[dict]:
 # ---------------------------------------------------------------------------
 # Data quality notes (reported, never scored)
 # ---------------------------------------------------------------------------
+
+HUMAN_TAXON_IDS = {"NCBI:txid9606", "NCBITaxon:9606"}
+
+
+def human_subjects(prog: dict, organisms: pd.DataFrame) -> tuple[pd.DataFrame, str]:
+    """Single-organism subjects that are human (via subject_role_taxonomy, when the package has it)."""
+    taxa = prog.get("assoc", {}).get("subject_role_taxonomy")
+    if taxa is None or "taxonomy_id" not in taxa.columns or not len(taxa):
+        return organisms, "single-organism subjects"
+    human = taxa[taxa["taxonomy_id"].astype(str).str.strip().isin(HUMAN_TAXON_IDS)]
+    keys = set(zip(human["subject_id_namespace"], human["subject_local_id"]))
+    mask = pd.Series([k in keys for k in zip(organisms["id_namespace"], organisms["local_id"])], index=organisms.index,
+                     dtype=bool)
+    return organisms[mask], "human subjects"
+
 
 def data_quality_notes(prog: dict[str, pd.DataFrame]) -> list[str]:
     found = []
@@ -1155,11 +1203,30 @@ def data_quality_notes(prog: dict[str, pd.DataFrame]) -> list[str]:
                 found.append(f"{table}.tsv: {zero:,} of {int(column_mask(df, column).sum()):,} recorded "
                              f"{column} values are exactly 0 (under one year old). If 0 is used for "
                              "\"unknown\", leaving the field empty would keep it from being read as an age.")
+    rule = prog.get("age_rule") or age_zero_rule(prog)
+    if rule["applies"]:
+        found.append(f"{rule['zeros']:,} ages of exactly 0 treated as not recorded (likely placeholders): "
+                     f"{rule['zeros'] / rule['recorded']:.0%} of the {rule['recorded']:,} recorded ages are 0, while the "
+                     f"median of the others is {rule['median_nonzero_age']:g} years (rule AGE_ZERO_PLACEHOLDER).")
+
+    # 8. Likely sex mis-coding: Female and Indeterminate but no Male (or the reverse).
+    humans, whom = human_subjects(prog, organisms)
+    if "sex" in humans.columns:
+        codes = humans["sex"].astype("string").str.strip().value_counts()
+        n_female, n_male = int(codes.get(KNOWN_SEX[0], 0)), int(codes.get(KNOWN_SEX[1], 0))
+        n_indet = int(codes.get(INDETERMINATE_SEX, 0))
+        for present, absent, n_present in (("Female", "Male", n_female), ("Male", "Female", n_male)):
+            if n_present and n_indet and not (n_male if absent == "Male" else n_female):
+                found.append(f"subject.tsv ({whom}): no subjects are coded {absent} while {n_indet:,} are coded "
+                             f"Indeterminate ({INDETERMINATE_SEX}) and {n_present:,} are coded {present}. If 0 was "
+                             f"intended to mean {absent}, these subjects are mis-coded; worth confirming with the "
+                             "program.")
     return found
 
 
 def score_program(namespace: str, label: str, prog: dict[str, pd.DataFrame],
                   release: str = "", release_date: str = "") -> dict:
+    prog.setdefault("age_rule", age_zero_rule(prog))  # projects are given their program's decision
     dims = {name: fn(prog) for name, fn in DIMENSIONS}
     # Store the plain-English text with the numbers, so the JSON output is
     # self-contained (the web app reads only the JSON).
@@ -1185,6 +1252,7 @@ def score_program(namespace: str, label: str, prog: dict[str, pd.DataFrame],
         "field_coverage": field_coverage(dims, combinations),
         "fields": discover_fields(prog, combinations, fields),
         "combinations": combinations,
+        "age_zero_rule": prog["age_rule"],
     }
 
 
@@ -1285,7 +1353,8 @@ def score_projects(data_dir: Path, package: dict) -> tuple[list[dict], dict[str,
     Also returns the value labels (term tables), used to name the projects' most common values."""
     tables = load_tables(data_dir)
     prog = {name: tables[name] for name in PER_PROGRAM_TABLES}
-    prog.update(term_names=tables["term_names"], value_labels=tables["value_labels"], assoc=tables["assoc"])
+    prog.update(term_names=tables["term_names"], value_labels=tables["value_labels"], assoc=tables["assoc"],
+                age_rule=package["age_zero_rule"])  # projects follow their program's AGE_ZERO_PLACEHOLDER decision
     # One field list (bit order) for the whole package, so every project's bitmasks read the same way.
     package_fields = field_sources(prog)
     labels = term_labels_for(prog)
@@ -1355,6 +1424,7 @@ def score_projects(data_dir: Path, package: dict) -> tuple[list[dict], dict[str,
             "subject_disease": link_rows("subject_disease", sd_s, "subject"),
             "term_names": tables["term_names"],
             "value_labels": tables["value_labels"],
+            "age_rule": package["age_zero_rule"],
             "assoc": {name: prog["assoc"][name][(pos >= 0) & keep[entity][np.maximum(pos, 0)]].reset_index(drop=True)
                       for name, (entity, pos) in assoc_pos.items()},
         }

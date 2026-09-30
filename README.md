@@ -162,6 +162,32 @@ the 50 MB upload cap. After re-running `--compare`, commit
 `output/readiness_comparison.json` so the app shows the new results; after
 `--projects`, commit `output/readiness_projects.json`.
 
+### Age 0 as a placeholder, and possible sex mis-coding
+**Rule AGE_ZERO_PLACEHOLDER.** Some programs record an unknown age as 0. If
+at least 5% of a program's recorded ages are exactly 0, and the median of
+its non-zero ages is 18 or more, an age of 0 is treated as *not recorded*.
+This applies to the age score, *Find ML-ready data*, the Dataset basket and
+field discovery.
+- The ages checked are `age_at_enrollment` and `age_at_sampling`.
+- The rule is decided per program, and its projects follow it.
+- Pediatric programs are not affected, because ages under one year are
+  expected there.
+- A data quality note says how many ages were set aside.
+
+Of the seven programs, only ExRNA meets the rule: 4,958 of its 23,402
+recorded ages (21%) are 0, and the median of the rest is 55.
+- ExRNA's age check moves from 8,580 to 7,072 of 8,580 single-organism
+  subjects, Characterization from 100 to 94, and overall from 91 to 90.
+- Kids First (0.1% zeros, median non-zero age 9.8) and SenNet (1.8% zeros)
+  are unchanged, as are all other programs.
+
+**Possible sex mis-coding (note only).** A data quality note appears when a
+program's human subjects include Female and Indeterminate
+(`cfde_subject_sex:0`) but no Male, or Male and Indeterminate but no Female.
+The note suggests confirming whether 0 was meant as the missing sex. This
+currently applies to ExRNA: 7,325 Female, 1,223 Indeterminate and no Male
+human subjects.
+
 ### Field discovery
 The "My model needs" choices are not a hard-coded list. For each package
 and each project, the checker scans every column of `subject.tsv`,
@@ -225,9 +251,12 @@ In the app you:
    - *Meets your needs:* at least the *minimum records needed* (default
      100) have every selected field. There's no universal minimum for
      training AI; it depends on the model and task.
-   - *Partly:* some records do, but fewer than the minimum. The review says
-     how many (e.g. "312 of 900 single-organism subjects") and which fields
-     not every record has.
+   - *Complete but small:* every record has every selected field, but there
+     are fewer records than the minimum. The "remove" button keeps these.
+   - *Partly:* some records have every selected field, fewer than the
+     minimum, and other records are missing fields. The review says how many
+     (e.g. "312 of 900 single-organism subjects") and which fields not every
+     record has.
    - *Doesn't meet your needs:* none do.
 
    One button removes the projects that don't meet your needs, and each
@@ -251,7 +280,7 @@ survives switching pages but not closing the tab.
 
 | Program | Release | Release date | Records (project / subject / biosample / file) | Overall | FAIRness | Provenance | Characterization | Explainability | Ethics | Sustainability | Computability |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| ExRNA (ERCC_DCC) | `CFDE08272026_C2M2.zip` | 2026-08-28 | 78 / 8,584 / 14,765 / 336,426 | 91 | 50 | 98 | 100 | 100 | n/a | 100 | 100 |
+| ExRNA (ERCC_DCC) | `CFDE08272026_C2M2.zip` | 2026-08-28 | 78 / 8,584 / 14,765 / 336,426 | 90 | 50 | 98 | 94 | 100 | n/a | 100 | 100 |
 | HMP | `HMP_C2M2_2022-06-20_datapackage.zip` | 2022-06-20 (older release - may not reflect current metadata) | 24 / 7,903 / 51,873 / 251,136 | 80 | 86 | 50 | 59 | 100 | n/a | 88 | 100 |
 | Kids First (KFDRC) | `2026Q4_C2M2_datapackage.zip` | 2026-09-16 | 45 / 39,156 / 111,300 / 1,356,814 | 78 | 62 | 50 | 58 | 100 | n/a | 100 | 97 |
 | LINCS | `LINCS_C2M2_2023-09-18_datapackage.zip` | 2023-09-18 (older release - may not reflect current metadata) | 17 / 1,966 / 1,466,796 / 1,495,871 | 80 | 74 | 75 | 33 | 100 | n/a | 100 | 100 |
@@ -260,7 +289,7 @@ survives switching pages but not closing the tab.
 | SPARC | `C2M2_datapackage_20260916.zip` | 2026-09-17 | 78 / 4,597 / 9,212 / 175,471 | 88 | 96 | 96 | 33 | 100 | n/a | 100 | 100 |
 
 Ethics is n/a for every program because of the C2M2 schema, not the
-programs. Most common gaps across programs: **age** recorded for 24% of
+programs. Most common gaps across programs: **age** recorded for 22% of
 single-organism subjects on average (0% in four of seven releases),
 **sex** for 48%, and **persistent identifiers** on 48% of records. See
 `output/readiness_comparison.md` for per-program numbers and data
@@ -301,7 +330,7 @@ already handled).
 - **The original five programs' scores, dimensions and field coverage are
   unchanged.** The only difference for them is the new Indeterminate note
   for Kids First.
-- **Held-out results:** ExRNA 91 overall, Metabolomics Workbench 68.
+- **Held-out results:** ExRNA 91 overall (90 since the AGE_ZERO_PLACEHOLDER rule described above), Metabolomics Workbench 68.
   Metabolomics Workbench records no sex or age for any subject. Its
   biosample `persistent_id` values are Metabolomics Workbench landing-page
   URLs, which are not on the persistent-identifier scheme list.

@@ -644,6 +644,17 @@ def methods_page():
         "- *Sex and age* are scored only for single-organism subjects (human or animal); cell lines, synthetic "
         "entities, microbiomes etc. are excluded and reported. NIH's Sex as a Biological Variable policy applies "
         "to human and animal studies alike.\n"
+        f"- *Age 0 as a placeholder (rule AGE_ZERO_PLACEHOLDER):* if at least {rc.ZERO_AGE_SHARE:.0%} of a program's "
+        f"recorded ages (age_at_enrollment and age_at_sampling) are exactly 0 and the median of its non-zero ages "
+        f"is {rc.ADULT_MEDIAN_AGE} or more, an age of 0 is treated as *not recorded* - in the age score, Find "
+        "ML-ready data, the Dataset basket and field discovery - because 0 then very likely stands for "
+        "\"unknown\". Decided per program (its projects follow it); pediatric programs, where ages under one "
+        "year are expected, are not affected. A data quality note says how many ages were set aside. Currently "
+        "applies to: " + (", ".join(name(r) for r in data["programs"] if r.get("age_zero_rule", {}).get("applies"))
+                          or "no program") + ".\n"
+        "- *Possible sex mis-coding (note only, not scored):* when a program's human subjects include Female and "
+        "Indeterminate (cfde_subject_sex:0) but no Male - or Male and Indeterminate but no Female - a data quality "
+        "note suggests confirming with the program whether 0 was meant as the missing sex.\n"
         "- *Labels* count if they come from the datapackage's own term tables, or were read off the CFDE portal.\n"
         "- A real datapackage is one program's submission and is scored as a whole.\n"
         f"- *Find ML-ready data:* {data['combination_rules']}\n"
@@ -676,7 +687,10 @@ def methods_page():
         "counts as *Find ML-ready data*, at the record level you choose, and your *Minimum records needed* "
         "(default 100; there's no universal minimum for training AI - it depends on the model and task):\n"
         f"- *{MEETS}*: at least the minimum number of records have every selected field.\n"
-        f"- *{PARTLY}*: some records do, but fewer than the minimum; the review shows how many, and which "
+        f"- *{SMALL}*: every record has every selected field, but there are fewer records than the minimum. "
+        "These are kept by *Remove projects that don't meet my needs*.\n"
+        f"- *{PARTLY}*: some records have every selected field, but fewer than the minimum, and other records are "
+        "missing fields; the review shows how many, and which "
         "fields not every record has.\n"
         f"- *{NOT_MET}*: none do (or the project has no records of that kind).\n\n"
         "If a project and one of its sub-projects are both in the basket, the sub-project's records are counted "
@@ -762,10 +776,12 @@ def score_upload(file) -> dict | None:
 # Reads only output/readiness_projects.json (precomputed with
 # `readiness_checker.py --projects`); nothing is scored or stored server-side.
 # ---------------------------------------------------------------------------
-MEETS, PARTLY, NOT_MET = "Meets your needs", "Partly", "Doesn't meet your needs"
+MEETS, SMALL, PARTLY, NOT_MET = "Meets your needs", "Complete but small", "Partly", "Doesn't meet your needs"
 STATUS_RULE = (f"{MEETS}: at least the minimum number of records have every selected field. "
-               f"{PARTLY}: some records do, but fewer than the minimum. {NOT_MET}: none do.")
-STATUS_MARK = {MEETS: "●", PARTLY: "◐", NOT_MET: "○"}  # shape, not colour, tells them apart
+               f"{SMALL}: every record has every selected field, but there are fewer records than the minimum. "
+               f"{PARTLY}: some records have every selected field, fewer than the minimum, and other records "
+               f"are missing fields. {NOT_MET}: no record has every selected field.")
+STATUS_MARK = {MEETS: "●", SMALL: "◆", PARTLY: "◐", NOT_MET: "○"}  # shape, not colour, tells them apart
 
 
 @st.cache_data
@@ -809,7 +825,7 @@ def assess(p: dict, field_order: list[str], level: str, chosen: list[str], catal
     if indeterminate:
         missing.append(f"{indeterminate:,} {finder_noun(level, ['sex'])} have sex recorded only as Indeterminate "
                        "(not counted)")
-    status = MEETS if met >= minimum else PARTLY if met > 0 else NOT_MET
+    status = MEETS if met >= minimum else NOT_MET if met == 0 else SMALL if met == total else PARTLY
     return {"met": met, "total": total, "noun": noun, "status": status, "missing": missing}
 
 
@@ -833,6 +849,19 @@ def basket_review(data: dict, chosen: list[str], level: str, catalog: dict, mini
         parent = included_in(p, in_basket, data["by_key"])
         reviewed.append({"project": p, **a, "included_in": parent["name"] if parent else ""})
     return reviewed
+
+
+def basket_totals(reviewed: list[dict], level: str, chosen: list[str]) -> dict:
+    """Counts for the summary bar and the report. A project inside another basket project is counted once."""
+    counted = [r for r in reviewed if not r["included_in"]]
+    return {"meets": sum(r["status"] == MEETS for r in reviewed),
+            "small": sum(r["status"] == SMALL for r in reviewed),
+            "partly": sum(r["status"] == PARTLY for r in reviewed),
+            "not_met": sum(r["status"] == NOT_MET for r in reviewed),
+            "qualifying": sum(r["met"] for r in counted),
+            "qualifying_in_meeting": sum(r["met"] for r in counted if r["status"] == MEETS),
+            "noun": finder_noun(level, chosen) if chosen else "records",
+            "nested": len(reviewed) - len(counted)}
 
 
 # -- basket state changes (callbacks run before the rerun, so the whole page sees them) --
@@ -984,8 +1013,10 @@ def basket_report(reviewed: list[dict], data: dict, chosen: list[str], catalog: 
         f"- Minimum records needed: {minimum:,} (there's no universal minimum for training AI; it depends on "
         "the model and task)",
         f"- Projects in basket: {len(reviewed)}",
-        f"- Meet your needs: {totals['meets']}; partly: {totals['partly']}; don't meet: {totals['not_met']}",
-        f"- Qualifying records: {totals['qualifying']:,} {totals['noun']}"
+        f"- Meet your needs: {totals['meets']}; complete but small: {totals['small']}; partly: {totals['partly']}; "
+        f"don't meet: {totals['not_met']}",
+        f"- Qualifying records: {totals['qualifying']:,} {totals['noun']} "
+        f"({totals['qualifying_in_meeting']:,} in projects that meet your needs)"
         + (" (projects already included in a parent project in the basket are counted once)" if totals["nested"] else ""),
         "", "| Program | Project | Status | Qualifying | Not every record has | Overall score | Release |",
         "|---|---|---|---|---|---|---|"]
@@ -1132,13 +1163,7 @@ def basket_page():
     # ---- 3. Review ------------------------------------------------------------------
     st.subheader("3. Review")
     reviewed = basket_review(data, chosen, level, catalog, minimum) if chosen else []
-    counted = [r for r in reviewed if not r["included_in"]]
-    totals = {"meets": sum(r["status"] == MEETS for r in reviewed),
-              "partly": sum(r["status"] == PARTLY for r in reviewed),
-              "not_met": sum(r["status"] == NOT_MET for r in reviewed),
-              "qualifying": sum(r["met"] for r in counted),
-              "noun": finder_noun(level, chosen) if chosen else "records",
-              "nested": len(reviewed) - len(counted)}
+    totals = basket_totals(reviewed, level, chosen)
     if not ss["basket"]:
         st.info("Your basket is empty. Tick projects in step 1 to add them.")
     elif not chosen:
@@ -1154,9 +1179,10 @@ def basket_page():
             "Within": r["included_in"]} for r in reviewed])
         ss["basket_review_keys"] = [r["project"]["key"] for r in reviewed]
         review_key = f"basket_review_{version}"
-        st.caption(f"● meets your needs: at least {minimum:,} records have everything selected · ◐ partly: some "
-                   f"do, but fewer than {minimum:,} · "
-                   "○ doesn't meet your needs: none do. Untick **Keep** to remove a project.")
+        st.caption(f"● meets your needs: at least {minimum:,} records have everything selected · ◆ complete but "
+                   f"small: every record has everything, but fewer than {minimum:,} records · ◐ partly: fewer than "
+                   f"{minimum:,} records have everything, and others are missing fields · ○ doesn't meet your "
+                   "needs: no record has everything. Untick **Keep** to remove a project.")
         st.data_editor(
             review_table, key=review_key, hide_index=True, width="stretch",
             height=min(38 + 35 * len(review_table), 420),
@@ -1218,12 +1244,14 @@ def basket_page():
         c1, c2, c3 = st.columns(3)
         c1.metric("Projects in basket", f"{len(ss['basket']):,}")
         c2.metric("Meet your needs", f"{totals['meets']:,}" if chosen and reviewed else "-",
-                  help=f"{totals['partly']:,} more meet them partly" if chosen and reviewed else None)
+                  help=(f"{totals['small']:,} more are complete but small; {totals['partly']:,} meet them partly"
+                        if chosen and reviewed else None))
         c3.metric("Qualifying records", f"{totals['qualifying']:,}" if chosen and reviewed else "-",
-                  help="Records that have everything you need, summed over the basket "
+                  help="Records that have everything you selected, summed over the whole basket "
                        "(a project inside another basket project is counted once).")
         if chosen and reviewed:
-            c3.caption(totals["noun"])
+            c3.caption(f"{totals['qualifying']:,} qualifying {totals['noun']} "
+                       f"({totals['qualifying_in_meeting']:,} in projects that meet your needs)")
     footer()
 
 

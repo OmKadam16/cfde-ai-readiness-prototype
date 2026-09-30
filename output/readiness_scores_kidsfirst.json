@@ -2306,6 +2306,12 @@
           "biosample": 467,
           "file": 4409
         }
+      },
+      "age_zero_rule": {
+        "applies": false,
+        "zeros": 60,
+        "recorded": 70047,
+        "median_nonzero_age": 9.77
       }
     }
   ]

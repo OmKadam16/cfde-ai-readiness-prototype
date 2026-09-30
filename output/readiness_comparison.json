@@ -462,7 +462,7 @@
         "biosample": 14765,
         "file": 336426
       },
-      "overall_score": 91,
+      "overall_score": 90,
       "dimensions_assessed": 6,
       "dimensions": {
         "FAIRness": {
@@ -525,7 +525,7 @@
           ]
         },
         "Characterization": {
-          "score": 100,
+          "score": 94,
           "reason": "",
           "checks": [
             {
@@ -540,12 +540,12 @@
             {
               "id": "subject_age",
               "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
-              "passed": 8580,
+              "passed": 7072,
               "total": 8580,
-              "score": 100,
-              "detail": "0 of 8,580 subjects have no age recorded (8,580 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
+              "score": 82,
+              "detail": "1,508 of 8,580 subjects have no age recorded (7,072 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample); ages of exactly 0 are treated as not recorded (likely placeholders, see Methods)",
               "raw": {
-                "age_at_enrollment": 8580,
+                "age_at_enrollment": 7072,
                 "age_at_sampling_only": 0
               },
               "why_it_matters": "Recording age lets model developers check whether results differ across age groups, such as children and adults."
@@ -628,7 +628,9 @@
       "data_quality_notes": [
         "subject.tsv: 1,223 single-organism subject(s) have sex recorded as Indeterminate (cfde_subject_sex:0). This is a valid C2M2 value, so they count as having sex recorded, but it does not say which sex. All sex values used: Female 7,357, Indeterminate 1,223.",
         "subject.tsv: 1,508 of 8,580 recorded age_at_enrollment values are exactly 0 (under one year old). If 0 is used for \"unknown\", leaving the field empty would keep it from being read as an age.",
-        "biosample_from_subject.tsv: 3,446 of 14,818 recorded age_at_sampling values are exactly 0 (under one year old). If 0 is used for \"unknown\", leaving the field empty would keep it from being read as an age."
+        "biosample_from_subject.tsv: 3,446 of 14,818 recorded age_at_sampling values are exactly 0 (under one year old). If 0 is used for \"unknown\", leaving the field empty would keep it from being read as an age.",
+        "4,958 ages of exactly 0 treated as not recorded (likely placeholders): 21% of the 23,402 recorded ages are 0, while the median of the others is 55 years (rule AGE_ZERO_PLACEHOLDER).",
+        "subject.tsv (human subjects): no subjects are coded Male while 1,223 are coded Indeterminate (cfde_subject_sex:0) and 7,325 are coded Female. If 0 was intended to mean Male, these subjects are mis-coded; worth confirming with the program."
       ],
       "field_coverage": [
         {
@@ -644,7 +646,7 @@
           "label": "Age",
           "columns": "subject.age_at_enrollment, biosample_from_subject.age_at_sampling",
           "unit": "single-organism subjects",
-          "passed": 8580,
+          "passed": 7072,
           "total": 8580
         },
         {
@@ -713,15 +715,10 @@
           "file_only": false,
           "no_subject_level": false,
           "organism": true,
-          "records_filled": 8580,
+          "records_filled": 7072,
           "records_total": 8580,
-          "distinct_values": 352,
+          "distinct_values": 351,
           "top_values": [
-            [
-              "0.0",
-              "",
-              4958
-            ],
             [
               "20.0",
               "",
@@ -741,6 +738,11 @@
               "65.0",
               "",
               448
+            ],
+            [
+              "58.0",
+              "",
+              446
             ]
           ]
         },
@@ -1366,11 +1368,11 @@
                 4
               ],
               [
-                687865871,
+                687865870,
                 1193
               ],
               [
-                687866895,
+                687866894,
                 30
               ],
               [
@@ -1378,20 +1380,32 @@
                 90
               ],
               [
+                692060174,
+                249
+              ],
+              [
                 692060175,
-                3788
+                3539
+              ],
+              [
+                692061198,
+                34
               ],
               [
                 692061199,
-                1527
+                1493
               ],
               [
                 700448783,
                 1675
               ],
               [
+                700449806,
+                2
+              ],
+              [
                 700449807,
-                277
+                275
               ]
             ]
           },
@@ -1399,40 +1413,48 @@
             "total": 14765,
             "patterns": [
               [
-                150995471,
+                150995470,
                 1712
               ],
               [
                 150996494,
-                4
-              ],
-              [
-                150996495,
-                586
+                590
               ],
               [
                 155189771,
                 90
               ],
               [
-                155189775,
-                6954
+                155189774,
+                993
               ],
               [
-                155190287,
+                155189775,
+                5961
+              ],
+              [
+                155190286,
                 18
               ],
               [
+                155190798,
+                75
+              ],
+              [
                 155190799,
-                2315
+                2240
               ],
               [
                 163578383,
                 2806
               ],
               [
+                163579406,
+                5
+              ],
+              [
                 163579407,
-                280
+                275
               ]
             ]
           },
@@ -1456,76 +1478,84 @@
                 336
               ],
               [
-                151960321,
+                151960320,
                 124
               ],
               [
-                151960335,
+                151960334,
                 19154
               ],
               [
-                151961345,
+                151961344,
                 1
               ],
               [
                 151961358,
-                115
+                16342
               ],
               [
-                151961359,
-                16227
-              ],
-              [
-                151976705,
+                151976704,
                 34
               ],
               [
-                151976719,
+                151976718,
                 2192
               ],
               [
-                151977729,
+                151977728,
                 1
               ],
               [
                 151977742,
-                12
-              ],
-              [
-                151977743,
-                1757
+                1769
               ],
               [
                 156154635,
                 2718
               ],
               [
-                156154639,
-                136842
+                156154638,
+                26534
               ],
               [
-                156155151,
+                156154639,
+                110308
+              ],
+              [
+                156155150,
                 528
               ],
               [
+                156155662,
+                2001
+              ],
+              [
                 156155663,
-                57597
+                55596
               ],
               [
                 156171019,
                 270
               ],
               [
-                156171023,
-                14657
+                156171022,
+                2958
               ],
               [
-                156171535,
+                156171023,
+                11699
+              ],
+              [
+                156171534,
                 54
               ],
               [
+                156172046,
+                219
+              ],
+              [
                 156172047,
-                6126
+                5907
               ],
               [
                 164543233,
@@ -1536,16 +1566,24 @@
                 57076
               ],
               [
+                164544270,
+                144
+              ],
+              [
                 164544271,
-                7781
+                7637
               ],
               [
                 164559631,
                 7796
               ],
               [
+                164560654,
+                15
+              ],
+              [
                 164560655,
-                840
+                825
               ]
             ]
           }
@@ -1555,6 +1593,12 @@
           "biosample": 2298,
           "file": 39490
         }
+      },
+      "age_zero_rule": {
+        "applies": true,
+        "zeros": 4958,
+        "recorded": 23402,
+        "median_nonzero_age": 55.0
       }
     },
     {
@@ -2397,6 +2441,12 @@
           "biosample": 0,
           "file": 0
         }
+      },
+      "age_zero_rule": {
+        "applies": false,
+        "zeros": 0,
+        "recorded": 0,
+        "median_nonzero_age": null
       }
     },
     {
@@ -4701,6 +4751,12 @@
           "biosample": 467,
           "file": 4409
         }
+      },
+      "age_zero_rule": {
+        "applies": false,
+        "zeros": 60,
+        "recorded": 70047,
+        "median_nonzero_age": 9.77
       }
     },
     {
@@ -5772,6 +5828,12 @@
           "biosample": 0,
           "file": 0
         }
+      },
+      "age_zero_rule": {
+        "applies": false,
+        "zeros": 0,
+        "recorded": 0,
+        "median_nonzero_age": null
       }
     },
     {
@@ -6922,6 +6984,12 @@
           "biosample": 0,
           "file": 0
         }
+      },
+      "age_zero_rule": {
+        "applies": false,
+        "zeros": 0,
+        "recorded": 0,
+        "median_nonzero_age": null
       }
     },
     {
@@ -7979,6 +8047,12 @@
           "biosample": 0,
           "file": 0
         }
+      },
+      "age_zero_rule": {
+        "applies": false,
+        "zeros": 71,
+        "recorded": 4025,
+        "median_nonzero_age": 47.0
       }
     },
     {
@@ -8941,6 +9015,12 @@
           "biosample": 0,
           "file": 0
         }
+      },
+      "age_zero_rule": {
+        "applies": false,
+        "zeros": 0,
+        "recorded": 0,
+        "median_nonzero_age": null
       }
     }
   ],
@@ -8948,13 +9028,13 @@
     {
       "check": "subject_age",
       "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
-      "average_score": 24,
+      "average_score": 22,
       "programs": [
         {
           "program": "ERCC_DCC",
-          "passed": 8580,
+          "passed": 7072,
           "total": 8580,
-          "score": 100
+          "score": 82
         },
         {
           "program": "HMP",

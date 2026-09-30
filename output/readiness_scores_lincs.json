@@ -1073,6 +1073,12 @@
           "biosample": 0,
           "file": 0
         }
+      },
+      "age_zero_rule": {
+        "applies": false,
+        "zeros": 0,
+        "recorded": 0,
+        "median_nonzero_age": null
       }
     }
   ]

@@ -9077,14 +9077,14 @@
     },
     {
       "check": "subject_sex",
-      "description": "Single-organism subjects with sex recorded",
-      "average_score": 48,
+      "description": "Single-organism subjects with sex (male or female) recorded",
+      "average_score": 46,
       "programs": [
         {
           "program": "ERCC_DCC",
-          "passed": 8580,
+          "passed": 7357,
           "total": 8580,
-          "score": 100
+          "score": 86
         },
         {
           "program": "HMP",
@@ -9094,9 +9094,9 @@
         },
         {
           "program": "KFDRC",
-          "passed": 39044,
+          "passed": 38696,
           "total": 39156,
-          "score": 100
+          "score": 99
         },
         {
           "program": "LINCS",
@@ -9123,7 +9123,8 @@
           "score": 0
         }
       ],
-      "why_it_matters": "Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike."
+      "why_it_matters": "Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.",
+      "note": "Indeterminate not counted; see data quality notes."
     },
     {
       "check": "persistent_ids",

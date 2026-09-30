@@ -1680,13 +1680,28 @@ def render_terminal(results: list[dict], banner: str) -> str:
     return "\n".join(out)
 
 
+# Key findings describe what a model could use, so sex counts only Male or Female here (the same
+# rule as Find ML-ready data and the Dataset basket); the subject_sex score itself is unchanged.
+KNOWN_SEX_NOTE = "Indeterminate not counted; see data quality notes."
+
+
+def known_sex_check(r: dict, c: dict) -> dict:
+    """The subject_sex check recounted with known sex only (Male or Female), same subjects checked."""
+    passed, total = count_meeting(r["combinations"], "subject", ["sex"])
+    assert total == c["total"], "known-sex count must use the same single-organism subjects"
+    return {**c, "passed": passed, "score": round(100 * passed / total) if total else None}
+
+
 def top_gap_data(results: list[dict], n: int = 3) -> list[dict]:
     """The n checks with the lowest average score across programs.
-    Only checks measured for at least two programs, so one program's gap isn't called a pattern."""
+    Only checks measured for at least two programs, so one program's gap isn't called a pattern.
+    Sex is counted as known sex (Male or Female), see KNOWN_SEX_NOTE."""
     by_check = {}
     for r in results:
         for dim in r["dimensions"].values():
             for c in dim["checks"]:
+                if c["id"] == "subject_sex" and c["score"] is not None:
+                    c = known_sex_check(r, c)
                 if c["score"] is not None:
                     by_check.setdefault(c["id"], []).append((r["program"], c))
     ranked = sorted((sum(c["score"] for _, c in entries) / len(entries), check_id, entries)
@@ -1698,6 +1713,8 @@ def top_gap_data(results: list[dict], n: int = 3) -> list[dict]:
         "programs": [{"program": p, "passed": c["passed"], "total": c["total"], "score": c["score"]}
                      for p, c in entries],
         "why_it_matters": WHY_IT_MATTERS[check_id],
+        **({"description": "Single-organism subjects with sex (male or female) recorded", "note": KNOWN_SEX_NOTE}
+           if check_id == "subject_sex" else {}),
     } for avg, check_id, entries in ranked[:n]]
 
 
@@ -1707,7 +1724,8 @@ def top_gaps(results: list[dict], n: int = 3) -> list[str]:
     for g in top_gap_data(results, n):
         per_program = "; ".join(f"{p['program']} {p['passed']:,}/{p['total']:,} ({p['score']}%)" for p in g["programs"])
         gaps.append(f"**{g['description']}**: {g['average_score']}% coverage on average across "
-                    f"{len(g['programs'])} programs ({per_program}). {g['why_it_matters']}")
+                    f"{len(g['programs'])} programs ({per_program}). {g['why_it_matters']}"
+                    + (f" {g['note']}" if g.get("note") else ""))
     return gaps
 
 

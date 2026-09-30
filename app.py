@@ -506,10 +506,14 @@ def overview():
         with col.container(border=True):
             st.markdown(f"<div style='font-size:2.4rem;font-weight:700;line-height:1.1'>{gap['average_score']}%</div>",
                         unsafe_allow_html=True)
-            st.markdown(f"**{label}: recorded for {gap['average_score']}% of {unit} on average**")
+            if gap["check"] == "subject_sex":  # known sex only (Male or Female), like the finder
+                label = "Sex (male or female)"
+            st.markdown(f"**{label} recorded for {gap['average_score']}% of {unit} on average**")
             st.caption(f"Across {len(gap['programs'])} programs, from {low['score']}% "
                        f"({program_name(low['program'])}) to {high['score']}% "
                        f"({program_name(high['program'])}). {gap['why_it_matters']}")
+            if gap.get("note"):
+                st.caption(gap["note"])
     footer()
 
 

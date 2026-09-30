@@ -291,7 +291,7 @@ survives switching pages but not closing the tab.
 Ethics is n/a for every program because of the C2M2 schema, not the
 programs. Most common gaps across programs: **age** recorded for 22% of
 single-organism subjects on average (0% in four of seven releases),
-**sex** for 48%, and **persistent identifiers** on 48% of records. See
+**sex** (male or female; Indeterminate not counted) for 46%, and **persistent identifiers** on 48% of records. See
 `output/readiness_comparison.md` for per-program numbers and data
 quality notes.
 

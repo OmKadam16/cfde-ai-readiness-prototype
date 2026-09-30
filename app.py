@@ -5,15 +5,17 @@ Run locally:
     pip3 install -r requirements.txt
     streamlit run app.py
 
-It reads only committed files (output/readiness_comparison.json), so it
-runs from a fresh clone without data_real/. The upload page runs
-src/readiness_checker.py live on a user's own small datapackage.
+It reads only committed files (output/readiness_comparison.json and
+output/readiness_projects.json), so it runs from a fresh clone without
+data_real/. The upload page runs src/readiness_checker.py live on a user's
+own small datapackage.
 
-Pages answer three questions:
+Pages:
   Overview           -- how AI-ready is CFDE metadata, at a glance? (a reviewer)
   Field coverage     -- which key fields are filled, where? (everyone)
   Find ML-ready data -- which programs have records with everything my model needs? (a researcher)
   Program report card -- what would raise this program's readiness most? (a program's data team)
+  Dataset basket     -- which of the projects I want meet my needs? export the selection (a researcher)
 """
 
 import hashlib
@@ -22,6 +24,7 @@ import math
 import sys
 import tempfile
 import zipfile
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -35,6 +38,7 @@ REPO_URL = "https://github.com/OmKadam16/cfde-ai-readiness-prototype"
 C2M2_ASSESSMENT_URL = "https://github.com/nih-cfde/c2m2-assessment"
 PAPER_URL = "https://doi.org/10.1101/2024.10.23.619844"
 COMPARISON_JSON = ROOT / "output" / "readiness_comparison.json"
+PROJECTS_JSON = ROOT / "output" / "readiness_projects.json"
 
 # Upload limits: the zip size is also enforced by .streamlit/config.toml.
 # The unzipped cap keeps memory use within a free Streamlit Cloud instance.
@@ -93,6 +97,56 @@ LEVEL_NOUN = {"subject": "subjects", "biosample": "biosamples", "file": "files"}
 def load_comparison() -> dict:
     with open(COMPARISON_JSON) as f:
         return json.load(f)
+
+
+def needs_checkboxes(labels: dict, page: str) -> list[str]:
+    """The "My model needs" checkboxes. The choice is kept in session state, so it carries
+    over between Find ML-ready data and the Dataset basket (widget state alone is cleared
+    when a page is left)."""
+    st.markdown("**My model needs:**")
+    saved = st.session_state.setdefault("needs", ["sex", "age"])
+    # Two rows of four, so labels are never cut off on narrower screens.
+    cols = st.columns(4)
+    chosen = [req for i, (req, label) in enumerate(labels.items())
+              if cols[i % 4].checkbox(label, value=req in saved, key=f"{page}_need_{req}")]
+    st.session_state["needs"] = chosen
+    return chosen
+
+
+def count_levels(chosen: list[str]) -> list[str]:
+    """Record levels at which every chosen requirement can be counted."""
+    if set(chosen) & rc.FILE_ONLY_REQUIREMENTS:
+        return ["file"]
+    if {"anatomy", "disease"} & set(chosen):
+        return ["biosample", "file"]
+    return ["subject", "biosample", "file"]
+
+
+def level_choice(chosen: list[str], page: str) -> str:
+    """Which records to count (subjects, biosamples or files), remembered across pages."""
+    levels = count_levels(chosen)
+    if len(levels) == 1:
+        st.caption("Counting files: checksums and file format are recorded per file.")
+        level = levels[0]
+    else:
+        saved = st.session_state.get("level")
+        level = st.radio("Count", levels, index=levels.index(saved) if saved in levels else 0,
+                         format_func=lambda lv: LEVEL_NOUN[lv], horizontal=True, key=f"{page}_level")
+    st.session_state["level"] = level
+    return level
+
+
+SEX_RULE = "Sex = male or female recorded; Indeterminate not counted (a model can't use it)."
+
+
+def indeterminate_note(records: list[tuple[str, dict]], level: str, chosen: list[str]) -> str:
+    """'ExRNA: 1,223 subjects ...' for records whose only sex value is Indeterminate."""
+    if "sex" not in chosen:
+        return ""
+    noun = finder_noun(level, ["sex"])
+    parts = [f"{label}: {r['sex_indeterminate'][level]:,} {noun}" for label, r in records
+             if r.get("sex_indeterminate", {}).get(level)]
+    return ("Recorded only as Indeterminate, so not counted as having sex - " + "; ".join(parts) + ".") if parts else ""
 
 
 def finder_noun(level: str, chosen: list[str]) -> str:
@@ -421,7 +475,7 @@ def field_coverage_page():
     st.markdown("How many records have each key field filled in. Darker blue = more records filled; "
                 "hover a cell for the exact count and the C2M2 column it comes from.")
     coverage_heatmap(programs)
-    st.caption("Sex and age are counted for single-organism subjects (human or animal). Disease link = biosamples "
+    st.caption("Sex and age are counted for single-organism subjects (human or animal); sex here counts any recorded value, including Indeterminate, as the score does. Disease link = biosamples "
                "linked to a disease directly or through their subject. Persistent ID and creation time count all "
                "project, subject, biosample and file records. n/a = nothing to measure.")
     with st.expander("Show as a table"):
@@ -438,35 +492,20 @@ def finder_page():
     st.title("Find ML-ready data")
     st.markdown("Pick what your model needs. Each bar shows how many records in each program meet **all** "
                 "of the selected requirements, counted exactly from the metadata.")
-    st.markdown("**My model needs:**")
-    # Two rows of four, so labels are never cut off on narrower screens.
-    cols = st.columns(4)
-    chosen = [req for i, (req, label) in enumerate(labels.items())
-              if cols[i % 4].checkbox(label, value=req in ("sex", "age"), key=f"need_{req}")]
+    chosen = needs_checkboxes(labels, "finder")
     if not chosen:
         st.info("Select at least one requirement.")
         footer()
         return
-
-    # Count at the most specific level the requirements need.
-    if set(chosen) & rc.FILE_ONLY_REQUIREMENTS:
-        levels = ["file"]
-    elif {"anatomy", "disease"} & set(chosen):
-        levels = ["biosample", "file"]
-    else:
-        levels = ["subject", "biosample", "file"]
-    if len(levels) == 1:
-        level = levels[0]
-        st.caption("Counting files: checksums and file format are recorded per file.")
-    else:
-        level = st.radio("Count", levels, format_func=lambda lv: LEVEL_NOUN[lv], horizontal=True, key="finder_level")
+    level = level_choice(chosen, "finder")
 
     organism_rule = bool(rc.ORGANISM_REQUIREMENTS & set(chosen))
     noun = finder_noun(level, chosen)
     if organism_rule:
         st.caption("Sex and age count only for single-organism subjects (human or animal), the same rule as the "
                    "scores and Field coverage. Cell lines, microbiomes and synthetic subjects - and biosamples or "
-                   "files linked only to them - don't meet a sex or age requirement.")
+                   "files linked only to them - don't meet a sex or age requirement."
+                   + (f" **{SEX_RULE}**" if "sex" in chosen else ""))
 
     rows = []
     for r in programs:
@@ -479,6 +518,8 @@ def finder_page():
     wanted = " and ".join(labels[c].lower().replace(" ids", " IDs") for c in chosen)
     st.markdown(f"##### {noun[0].upper() + noun[1:]} with {wanted}")
     track_bars(rows, f"% of {noun}", "label")
+    if note := indeterminate_note([(name(r), r["combinations"]) for r in programs], level, chosen):
+        st.caption(note)
     with st.expander("Show as text"):
         for row in rows:
             st.markdown(f"- **{row['row']}:** {row['met']:,} of {row['total']:,} {noun} have {wanted}")
@@ -529,6 +570,30 @@ def methods_page():
         f"- *Find ML-ready data:* {data['combination_rules']}\n"
         "- *Top fixes:* bringing one check to 100 adds (100 - its score) / (checks in its dimension) / "
         "(dimensions assessed) points to the overall score.")
+    st.subheader("Dataset basket: project-level scores")
+    st.markdown(
+        f"A C2M2 datapackage is a whole program, but researchers usually pick projects or studies, so every "
+        f"project is also scored. {rc.PROJECT_RULES} The whole-program project (the root of each program's "
+        "project tree) reproduces the program's own scores exactly, which is checked every time the project "
+        "scores are rebuilt. Project scores are precomputed offline (`readiness_checker.py --projects`) and "
+        "stored in `output/readiness_projects.json`; project descriptions there are shortened to "
+        f"{rc.PROJECT_DESCRIPTION_CHARS} characters.\n\n"
+        "**What \"meets your needs\" means.** For each project in the basket, the counts come from the same exact "
+        "combination counts as *Find ML-ready data*, at the record level you choose:\n"
+        f"- *{MEETS}*: every counted record has all the selected needs.\n"
+        f"- *{PARTLY}*: some do; the review shows how many, and which needs not every record has.\n"
+        f"- *{NOT_MET}*: none do, or the project has no records of that kind.\n\n"
+        "If a project and one of its sub-projects are both in the basket, the sub-project's records are counted "
+        "once, as part of the parent.\n\n"
+        "**What the export contains.** Everything is generated in your browser session; nothing is stored on the "
+        "server.\n"
+        "- *Manifest (CSV or JSON):* one row per project with program, project name and ID, record counts, the "
+        "needs, qualifying and total counts, status, the C2M2 download URL, release file, release date and the "
+        "release zip's sha256.\n"
+        "- *Croissant metadata:* a Croissant 1.0 JSON-LD file listing each program's release zip (with its sha256), "
+        "the C2M2 tables inside it and the columns behind your needs, and naming the selected projects. It passes "
+        "`validate_croissant.py`.\n"
+        "- *Summary report (Markdown):* the needs, the status of each project, and the download links.")
     st.subheader("Relation to CFDE's c2m2-assessment")
     st.markdown(
         f"CFDE already has an assessment tool for C2M2 datapackages, [nih-cfde/c2m2-assessment]"
@@ -596,12 +661,430 @@ def score_upload(file) -> dict | None:
 
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Dataset basket: choose projects, set needs, review, export.
+# Reads only output/readiness_projects.json (precomputed with
+# `readiness_checker.py --projects`); nothing is scored or stored server-side.
+# ---------------------------------------------------------------------------
+MEETS, PARTLY, NOT_MET = "Meets your needs", "Partly", "Doesn't meet your needs"
+STATUS_MARK = {MEETS: "●", PARTLY: "◐", NOT_MET: "○"}  # shape, not colour, tells them apart
+
+
+@st.cache_data
+def load_projects() -> dict:
+    with open(PROJECTS_JSON) as f:
+        data = json.load(f)
+    data["program_info"] = {p["program"]: p for p in data["programs"]}
+    for p in data["projects"]:
+        p["key"] = project_key(p["program"], p["id"])
+        p["parent_key"] = project_key(p["program"], p["parent"]) if p["parent"] else None
+    data["by_key"] = {p["key"]: p for p in data["projects"]}
+    return data
+
+
+def project_key(program: str, pid: list[str]) -> str:
+    return f"{program}|{pid[0]}|{pid[1]}"
+
+
+def slug(text: str) -> str:
+    return "".join(ch if ch.isalnum() else "-" for ch in text.lower()).strip("-")
+
+
+def assess(p: dict, requirements: list[str], level: str, chosen: list[str], labels: dict) -> dict:
+    """Does this project meet the needs? Exact counts from the project's stored combinations."""
+    combos = {"requirements": requirements, "levels": p["combinations"]}
+    met, total = rc.count_meeting(combos, level, chosen)
+    noun = finder_noun(level, chosen)
+    # Each need on its own, out of the same records (single-organism subjects when sex/age apply).
+    organism_rule = level == "subject" and bool(rc.ORGANISM_REQUIREMENTS & set(chosen))
+    missing = []
+    for need in chosen:
+        extra = [rc.SINGLE_ORGANISM_BIT] if organism_rule and need not in rc.ORGANISM_REQUIREMENTS else []
+        n, _ = rc.count_meeting(combos, level, [need] + extra)
+        if n < total:
+            missing.append(f"{labels[need].lower().replace(' ids', ' IDs')}: {n:,} of {total:,}")
+    indeterminate = p.get("sex_indeterminate", {}).get(level, 0) if "sex" in chosen else 0
+    if indeterminate:
+        missing.append(f"{indeterminate:,} {finder_noun(level, ['sex'])} have sex recorded only as Indeterminate "
+                       "(not counted)")
+    status = NOT_MET if met == 0 else MEETS if met == total else PARTLY  # total == 0 -> met == 0
+    return {"met": met, "total": total, "noun": noun, "status": status, "missing": missing}
+
+
+def included_in(p: dict, basket: set, by_key: dict) -> dict | None:
+    """The nearest ancestor project also in the basket (its counts already include this project)."""
+    key = p["parent_key"]
+    while key:
+        if key in basket:
+            return by_key.get(key)
+        key = by_key[key]["parent_key"] if key in by_key else None
+    return None
+
+
+def basket_review(data: dict, chosen: list[str], level: str, labels: dict) -> list[dict]:
+    basket = st.session_state["basket"]
+    in_basket = set(basket)
+    reviewed = []
+    for key in basket:
+        p = data["by_key"][key]
+        a = assess(p, data["requirements"], level, chosen, labels)
+        parent = included_in(p, in_basket, data["by_key"])
+        reviewed.append({"project": p, **a, "included_in": parent["name"] if parent else ""})
+    return reviewed
+
+
+# -- basket state changes (callbacks run before the rerun, so the whole page sees them) --
+
+def basket_set(keys: list[str], add: bool):
+    basket = st.session_state["basket"]
+    for key in keys:
+        if add and key not in basket:
+            basket.append(key)
+        elif not add and key in basket:
+            basket.remove(key)
+    st.session_state["basket_version"] += 1  # fresh editors, so no stale edits linger
+
+
+def apply_editor(editor_key: str, shown_key: str, column: str):
+    """Turn checkbox edits in a data editor into basket changes: ticked = in the basket."""
+    shown = st.session_state[shown_key]
+    for row, change in st.session_state[editor_key]["edited_rows"].items():
+        if column in change:
+            basket_set([shown[int(row)]], add=bool(change[column]))
+
+
+# -- exports (built in the browser session; nothing is written server-side) --
+
+def manifest_rows(reviewed: list[dict], data: dict, chosen: list[str], labels: dict) -> list[dict]:
+    rows = []
+    for r in reviewed:
+        p, info = r["project"], data["program_info"][r["project"]["program"]]
+        parent = data["by_key"].get(p["parent_key"]) if p["parent_key"] else None
+        rows.append({
+            "program": p["program"],
+            "project_name": p["name"],
+            "project_id_namespace": p["id"][0],
+            "project_local_id": p["id"][1],
+            "part_of": parent["name"] if parent else "",
+            "subjects": p["record_counts"]["subject"],
+            "biosamples": p["record_counts"]["biosample"],
+            "files": p["record_counts"]["file"],
+            "needs": "; ".join(labels[c] for c in chosen),
+            "counted": r["noun"],
+            "qualifying": r["met"],
+            "out_of": r["total"],
+            "status": r["status"],
+            "missing": "; ".join(r["missing"]),
+            "already_included_in": r["included_in"],
+            "overall_score": p["overall_score"],
+            "c2m2_download_url": info["download_url"],
+            "release_file": info["release"],
+            "release_date": info["release_date"],
+            "older_release": info["old_release"],
+            "release_zip_sha256": info["sha256"],
+        })
+    return rows
+
+
+# Columns described in the Croissant export: keys always, plus the columns behind each need.
+KEY_COLUMNS = {
+    "project": ["id_namespace", "local_id", "name", "description"],
+    "subject": ["id_namespace", "local_id", "project_id_namespace", "project_local_id", "granularity"],
+    "biosample": ["id_namespace", "local_id", "project_id_namespace", "project_local_id"],
+    "file": ["id_namespace", "local_id", "project_id_namespace", "project_local_id", "filename",
+             "size_in_bytes", "access_url"],
+    "biosample_from_subject": ["biosample_id_namespace", "biosample_local_id",
+                               "subject_id_namespace", "subject_local_id"],
+    "file_describes_biosample": ["file_id_namespace", "file_local_id", "biosample_id_namespace", "biosample_local_id"],
+    "file_describes_subject": ["file_id_namespace", "file_local_id", "subject_id_namespace", "subject_local_id"],
+    "biosample_disease": ["biosample_id_namespace", "biosample_local_id", "disease"],
+    "subject_disease": ["subject_id_namespace", "subject_local_id", "disease"],
+}
+NEED_COLUMNS = {
+    "sex": {"subject": ["sex"]},
+    "age": {"subject": ["age_at_enrollment"], "biosample_from_subject": ["age_at_sampling"]},
+    "anatomy": {"biosample": ["anatomy"]},
+    "disease": {},  # the disease tables themselves (always listed when present)
+    "checksum": {"file": ["md5", "sha256"]},
+    "persistent_id": {t: ["persistent_id"] for t in ("project", "subject", "biosample", "file")},
+    "file_format": {"file": ["file_format"]},
+}
+NUMERIC_COLUMNS = {"age_at_enrollment": "sc:Float", "age_at_sampling": "sc:Float", "size_in_bytes": "sc:Integer"}
+
+
+def basket_croissant(reviewed: list[dict], data: dict, chosen: list[str], labels: dict) -> dict:
+    """Croissant 1.0 metadata describing the selection: each program's C2M2 release zip, the
+    tables inside it, and the columns that matter for the chosen needs. The selected projects
+    are named in the descriptions (C2M2 rows belong to a project via project_id_namespace/local_id)."""
+    by_program: dict[str, list[dict]] = {}
+    for r in reviewed:
+        by_program.setdefault(r["project"]["program"], []).append(r["project"])
+    distribution, record_sets = [], []
+    for program, chosen_projects in by_program.items():
+        info, prefix = data["program_info"][program], slug(program)
+        zip_id = f"{prefix}-c2m2-zip"
+        zip_obj = {"@type": "cr:FileObject", "@id": zip_id, "name": info["release"],
+                   "description": f"{program} C2M2 datapackage, release {info['release_date']}.",
+                   "contentUrl": info["download_url"], "encodingFormat": "application/zip"}
+        if info["sha256"]:
+            zip_obj["sha256"] = info["sha256"]
+        distribution.append(zip_obj)
+        ids = "; ".join(f"{p['name']} ({p['id'][0]} / {p['id'][1]})" for p in chosen_projects)
+        for table, columns in info["columns"].items():
+            wanted = list(KEY_COLUMNS.get(table, []))
+            for need in chosen:
+                wanted += NEED_COLUMNS[need].get(table, [])
+            fields = [c for c in dict.fromkeys(wanted) if c in columns]
+            if not fields:
+                continue
+            file_id = f"{prefix}/{table}.tsv"
+            distribution.append({"@type": "cr:FileObject", "@id": file_id, "name": f"{table}.tsv",
+                                 "containedIn": {"@id": zip_id},
+                                 "contentUrl": f"{info['package_path']}/{table}.tsv".lstrip("/"),
+                                 "encodingFormat": "text/tab-separated-values"})
+            rs_id = f"{prefix}-{table}"
+            key = ([{"@id": f"{rs_id}/local_id"}] if "local_id" in fields
+                   else [{"@id": f"{rs_id}/{c}"} for c in fields if c.endswith("_local_id")])
+            record_sets.append({
+                "@type": "cr:RecordSet", "@id": rs_id, "name": f"{program} {table}",
+                "description": (f"Rows of {program}'s C2M2 {table}.tsv. For this selection, use the rows that "
+                                f"belong to the selected projects: {ids}."),
+                "key": key,
+                "field": [{"@type": "cr:Field", "@id": f"{rs_id}/{c}", "name": c,
+                           "dataType": NUMERIC_COLUMNS.get(c, "sc:Text"),
+                           "source": {"fileObject": {"@id": file_id}, "extract": {"column": c}}}
+                          for c in fields],
+            })
+    needs_text = ", ".join(labels[c].lower() for c in chosen) or "none selected"
+    return {
+        "@context": {"@language": "en", "@vocab": "https://schema.org/", "cr": "http://mlcommons.org/croissant/",
+                     "dct": "http://purl.org/dc/terms/", "sc": "https://schema.org/"},
+        "@type": "sc:Dataset",
+        "name": "cfde-dataset-basket",
+        "description": (
+            f"A selection of {len(reviewed)} project(s) from {len(by_program)} CFDE program(s), made with the "
+            f"CFDE AI-readiness prototype's Dataset basket. Needs checked: {needs_text}. Each program's full C2M2 "
+            "release is listed; a project's records are the subjects, biosamples and files whose "
+            "project_id_namespace/project_local_id is that project or one of its sub-projects, plus the "
+            f"biosamples and subjects they link to. {rc.DISCLAIMER}"),
+        "dct:conformsTo": "http://mlcommons.org/croissant/1.0",
+        "url": "https://cfde.cloud/",
+        "dateCreated": date.today().isoformat(),
+        "isBasedOn": [data["program_info"][prog]["download_url"] for prog in by_program],
+        "distribution": distribution,
+        "recordSet": record_sets,
+    }
+
+
+def basket_report(reviewed: list[dict], data: dict, chosen: list[str], labels: dict, totals: dict) -> str:
+    needs_text = ", ".join(labels[c] for c in chosen)
+    lines = [
+        "# Dataset basket summary", "",
+        f"Generated {date.today().isoformat()} with the CFDE AI-readiness prototype ({REPO_URL}).", "",
+        f"**{rc.DISCLAIMER}**", "",
+        f"- Needs: {needs_text}; records counted: {reviewed[0]['noun'] if reviewed else 'records'}",
+        f"- Projects in basket: {len(reviewed)}",
+        f"- Meet your needs: {totals['meets']}; partly: {totals['partly']}; don't meet: {totals['not_met']}",
+        f"- Qualifying records: {totals['qualifying']:,} {totals['noun']}"
+        + (" (projects already included in a parent project in the basket are counted once)" if totals["nested"] else ""),
+        "", "| Program | Project | Status | Qualifying | Not every record has | Overall score | Release |",
+        "|---|---|---|---|---|---|---|"]
+    for r in reviewed:
+        p, info = r["project"], data["program_info"][r["project"]["program"]]
+        note = f" (included in {r['included_in']})" if r["included_in"] else ""
+        cell = lambda text: str(text).replace("|", "\\|")
+        lines.append(f"| {cell(p['program'])} | {cell(p['name'])}{cell(note)} | {r['status']} | "
+                     f"{r['met']:,} of {r['total']:,} {r['noun']} | {cell('; '.join(r['missing']) or '-')} | "
+                     f"{p['overall_score'] if p['overall_score'] is not None else 'n/a'} | "
+                     f"{info['release_date']}{' (older release)' if info['old_release'] else ''} |")
+    lines += ["", "## Downloads", ""]
+    for program in dict.fromkeys(r["project"]["program"] for r in reviewed):
+        info = data["program_info"][program]
+        lines.append(f"- {program}: [{info['release']}]({info['download_url']})"
+                     + (f" (sha256 `{info['sha256']}`)" if info["sha256"] else ""))
+    lines += ["", "## How this was counted", "",
+              f"- {data['rules']}",
+              f"- {MEETS}: every counted record has all the needs. {PARTLY}: some do. "
+              f"{NOT_MET}: none do, or there are no such records.",
+              f"- {data['combination_rules']}"]
+    return "\n".join(lines) + "\n"
+
+
+def basket_page():
+    data = load_projects()
+    labels = load_comparison()["requirements"]
+    ss = st.session_state
+    ss.setdefault("basket", [])
+    ss.setdefault("basket_version", 0)
+    version = ss["basket_version"]
+
+    st.title("Dataset basket")
+    st.markdown("Pick the projects you're interested in, say what your model needs, and see which projects "
+                "have it. Keep the ones that fit and export the selection. Nothing is stored on the server; "
+                "the basket lives in this browser session.")
+    summary = st.container()
+
+    # ---- 1. Choose ------------------------------------------------------------------
+    st.subheader("1. Choose projects")
+    f1, f2, f3 = st.columns([2, 2, 1])
+    search = f1.text_input("Search project names and descriptions", key="basket_search",
+                           placeholder="e.g. liver, RNA-seq, pediatric")
+    programs = f2.multiselect("Programs", list(data["program_info"]), key="basket_programs",
+                              placeholder="All programs")
+    min_score = f3.number_input("Minimum score", 0, 100, 0, step=5, key="basket_min_score")
+    basket = set(ss["basket"])
+    needle = search.strip().lower()
+    shown = [p for p in data["projects"]
+             if (not programs or p["program"] in programs)
+             and (p["overall_score"] or 0) >= min_score
+             and (not needle or needle in p["name"].lower() or needle in p["description"].lower())]
+    ss["basket_shown"] = [p["key"] for p in shown]
+    table = pd.DataFrame([{
+        "In basket": p["key"] in basket, "Program": p["program"], "Project": p["name"],
+        "Subjects": p["record_counts"]["subject"], "Biosamples": p["record_counts"]["biosample"],
+        "Files": p["record_counts"]["file"], "Score": p["overall_score"],
+        "Contains": f"{p['sub_projects']} sub-projects" if p["sub_projects"] else "",
+        "Description": p["description"]} for p in shown],
+        columns=["In basket", "Program", "Project", "Subjects", "Biosamples", "Files", "Score", "Contains",
+                 "Description"])
+    st.caption(f"{len(shown):,} of {len(data['projects']):,} projects shown · {len(basket):,} in your basket. "
+               "Tick **In basket** to add a project. A project that contains sub-projects includes their records.")
+    editor_key = f"basket_choose_{version}"
+    st.data_editor(
+        table, key=editor_key, hide_index=True, height=380, width="stretch",
+        disabled=[c for c in table.columns if c != "In basket"],
+        on_change=apply_editor, args=(editor_key, "basket_shown", "In basket"),
+        # Pixel widths wide enough for each header and value, so nothing is clipped at 1100px.
+        column_config={
+            "In basket": st.column_config.CheckboxColumn(width=85),
+            "Program": st.column_config.TextColumn(width=165),
+            "Project": st.column_config.TextColumn(width=300),
+            "Subjects": st.column_config.NumberColumn(format="localized", width=85),
+            "Biosamples": st.column_config.NumberColumn(format="localized", width=95),
+            "Files": st.column_config.NumberColumn(format="localized", width=95),
+            "Score": st.column_config.ProgressColumn("Score", min_value=0, max_value=100, format="%d", width=125,
+                                                     help="Overall AI-readiness score of the project, 0-100"),
+            "Contains": st.column_config.TextColumn(width=135),
+            "Description": st.column_config.TextColumn(width="large"),
+        })
+    b1, b2, _ = st.columns([1, 1, 2])
+    to_add = [p["key"] for p in shown if p["key"] not in basket]
+    b1.button(f"Add all {len(to_add):,} shown" if to_add else "All added",
+              disabled=not to_add, on_click=basket_set, args=(to_add, True), key="basket_add_all")
+    b2.button("Empty the basket", disabled=not basket, on_click=basket_set, args=(list(ss["basket"]), False),
+              key="basket_clear")
+
+    # ---- 2. Needs -------------------------------------------------------------------
+    st.subheader("2. Set your needs")
+    chosen = needs_checkboxes(labels, "basket")
+    level = level_choice(chosen, "basket") if chosen else "subject"
+    if chosen and rc.ORGANISM_REQUIREMENTS & set(chosen):
+        st.caption("Sex and age count only for single-organism subjects (human or animal), as elsewhere in the app."
+                   + (f" **{SEX_RULE}**" if "sex" in chosen else ""))
+
+    # ---- 3. Review ------------------------------------------------------------------
+    st.subheader("3. Review")
+    reviewed = basket_review(data, chosen, level, labels) if chosen else []
+    counted = [r for r in reviewed if not r["included_in"]]
+    totals = {"meets": sum(r["status"] == MEETS for r in reviewed),
+              "partly": sum(r["status"] == PARTLY for r in reviewed),
+              "not_met": sum(r["status"] == NOT_MET for r in reviewed),
+              "qualifying": sum(r["met"] for r in counted),
+              "noun": finder_noun(level, chosen) if chosen else "records",
+              "nested": len(reviewed) - len(counted)}
+    if not ss["basket"]:
+        st.info("Your basket is empty. Tick projects in step 1 to add them.")
+    elif not chosen:
+        st.info("Select at least one need in step 2 to see which projects have it.")
+    else:
+        review_table = pd.DataFrame([{
+            "Keep": True,
+            "Status": f"{STATUS_MARK[r['status']]} {r['status']}",
+            # Short "X of Y" form; the status column says whether that meets the needs.
+            "Qualifying": f"{r['met']:,} of {r['total']:,} {r['noun']}",
+            "Program": r["project"]["program"], "Project": r["project"]["name"],
+            "Missing": "; ".join(r["missing"]) or "-",
+            "Within": r["included_in"]} for r in reviewed])
+        ss["basket_review_keys"] = [r["project"]["key"] for r in reviewed]
+        review_key = f"basket_review_{version}"
+        st.caption("● meets your needs: every counted record has all of them · ◐ partly: some records do · "
+                   "○ doesn't meet your needs: none do. Untick **Keep** to remove a project.")
+        st.data_editor(
+            review_table, key=review_key, hide_index=True, width="stretch",
+            height=min(38 + 35 * len(review_table), 420),
+            disabled=[c for c in review_table.columns if c != "Keep"],
+            on_change=apply_editor, args=(review_key, "basket_review_keys", "Keep"),
+            column_config={
+                "Keep": st.column_config.CheckboxColumn(width=70),
+                "Status": st.column_config.TextColumn(width=185),
+                "Program": st.column_config.TextColumn(width=165),
+                "Project": st.column_config.TextColumn(width=240),
+                "Qualifying": st.column_config.TextColumn("Qualifying records", width=260,
+                                                          help="Records with everything you need, out of all counted"),
+                "Missing": st.column_config.TextColumn("Not every record has", width="large"),
+                "Within": st.column_config.TextColumn(
+                    "Counted as part of", width="medium",
+                    help="This project sits inside another project in your basket, so its records are "
+                         "counted once, as part of that project"),
+            })
+        not_met = [r["project"]["key"] for r in reviewed if r["status"] == NOT_MET]
+        st.button(f"Remove {len(not_met):,} project{'s' if len(not_met) != 1 else ''} that don't meet my needs"
+                  if not_met else "Every project meets your needs at least partly",
+                  disabled=not not_met, on_click=basket_set, args=(not_met, False), key="basket_remove_not_met")
+        if totals["nested"]:
+            st.caption(f"{totals['nested']} project(s) sit inside another project in your basket; their records "
+                       "are counted once, as part of that project.")
+
+    # ---- 4. Export ------------------------------------------------------------------
+    st.subheader("4. Export")
+    if not reviewed:
+        st.info("Add projects and choose at least one need to export a selection.")
+    else:
+        rows = manifest_rows(reviewed, data, chosen, labels)
+        croissant = basket_croissant(reviewed, data, chosen, labels)
+        errors = rc.validate_croissant(croissant)
+        # Two rows of two, so button labels are never cut off on narrower screens.
+        e1, e2 = st.columns(2)
+        e3, e4 = st.columns(2)
+        e1.download_button("Manifest (CSV)", pd.DataFrame(rows).to_csv(index=False), "basket_manifest.csv",
+                           "text/csv", key="export_csv", on_click="ignore", width="stretch")
+        e2.download_button("Manifest (JSON)",
+                           json.dumps({"generated": date.today().isoformat(), "disclaimer": rc.DISCLAIMER,
+                                       "needs": chosen, "counted": totals["noun"], "projects": rows}, indent=2),
+                           "basket_manifest.json", "application/json", key="export_json", on_click="ignore",
+                           width="stretch")
+        e3.download_button("Croissant metadata (JSON-LD)", json.dumps(croissant, indent=2),
+                           "basket_croissant.json", "application/ld+json", key="export_croissant",
+                           on_click="ignore", width="stretch")
+        e4.download_button("Summary report (Markdown)", basket_report(reviewed, data, chosen, labels, totals),
+                           "basket_summary.md", "text/markdown", key="export_md", on_click="ignore",
+                           width="stretch")
+        st.caption("The manifest lists each project with its record counts, qualifying counts, C2M2 download URL "
+                   "and release date. The Croissant file describes each program's release zip, the C2M2 tables "
+                   "inside it and the columns behind your needs, and names the selected projects. "
+                   + ("It passes validate_croissant.py." if not errors
+                      else f"Validation problems: {'; '.join(errors)}"))
+
+    with summary:
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Projects in basket", f"{len(ss['basket']):,}")
+        c2.metric("Meet your needs", f"{totals['meets']:,}" if chosen and reviewed else "-",
+                  help=f"{totals['partly']:,} more meet them partly" if chosen and reviewed else None)
+        c3.metric("Qualifying records", f"{totals['qualifying']:,}" if chosen and reviewed else "-",
+                  help="Records that have everything you need, summed over the basket "
+                       "(a project inside another basket project is counted once).")
+        if chosen and reviewed:
+            c3.caption(totals["noun"])
+    footer()
+
+
 st.set_page_config(page_title="CFDE AI-Readiness", layout="wide")
 page = st.navigation([
     st.Page(overview, title="Overview", default=True),
     st.Page(field_coverage_page, title="Field coverage", url_path="coverage"),
     st.Page(finder_page, title="Find ML-ready data", url_path="find"),
     st.Page(program_page, title="Program report card", url_path="program"),
+    st.Page(basket_page, title="Dataset basket", url_path="basket"),
     st.Page(methods_page, title="Methods", url_path="methods"),
     st.Page(upload_page, title="Check your own datapackage", url_path="upload"),
 ])

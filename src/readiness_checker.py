@@ -51,6 +51,7 @@ package; and readiness_comparison.md for --compare.
 """
 
 import argparse
+import hashlib
 import json
 import re
 from datetime import date
@@ -132,6 +133,7 @@ SINGLE_ORGANISM = "cfde_subject_granularity:0"
 ZERO_AGE_SHARE = 0.05
 # CFDE sex vocabulary (nih-cfde/c2m2, internal_CFDE_CV_reference_tables/subject_sex.tsv).
 INDETERMINATE_SEX = "cfde_subject_sex:0"
+KNOWN_SEX = ["cfde_subject_sex:1", "cfde_subject_sex:2"]  # Female, Male: what the finder counts as "sex"
 SEX_NAMES = {
     "cfde_subject_sex:0": "Indeterminate",
     "cfde_subject_sex:1": "Female",
@@ -592,15 +594,21 @@ def score_sustainability(prog):
     ], "This program has no file records, so there is nothing whose long-term access can be checked.")
 
 
-def score_computability(prog):
+def score_computability(prog, croissant: dict | None = None):
+    """`croissant`: an already-computed croissant_valid check to reuse (projects
+    inherit it from their package) instead of building Croissant again."""
     files = prog["file"]
     n_format = count_filled(files, "file_format")
 
     # Build Croissant for just this program's records and run the same
     # structural validator used on the full output.
-    errors = validate_croissant(build_croissant({t: prog[t] for t in CORE_TABLES}))
-    croissant_detail = ("Croissant generated for this program's records and passed validate_croissant.py"
-                        if not errors else f"Croissant failed validation: {'; '.join(errors)}")
+    if croissant is not None:
+        errors = [] if croissant["passed"] else [croissant["detail"]]
+        croissant_detail = croissant["detail"]
+    else:
+        errors = validate_croissant(build_croissant({t: prog[t] for t in CORE_TABLES}))
+        croissant_detail = ("Croissant generated for this program's records and passed validate_croissant.py"
+                            if not errors else f"Croissant failed validation: {'; '.join(errors)}")
 
     # With no files, the Croissant check alone would give a misleading 100:
     # there is no actual data for a model to compute on.
@@ -685,6 +693,8 @@ FILE_ONLY_REQUIREMENTS = {"checksum", "file_format"}
 
 COMBINATION_RULES = (
     "A record meets a requirement if it, or a record it is directly linked to, has the value. "
+    "Sex means Male or Female recorded; Indeterminate is not counted, since a model can't use it "
+    "(the Characterization score still counts any recorded sex value). "
     "Subjects: sex and age are their own (age also counts age_at_sampling on any of their biosamples); "
     "anatomy and disease count if any of their biosamples has them (disease also via subject_disease). "
     "Biosamples: anatomy is their own; sex, age and disease also come from their subject "
@@ -745,7 +755,11 @@ def combination_counts(prog: dict[str, pd.DataFrame]) -> dict:
 
     # Each record's own values.
     s_org = organism_mask(subjects).to_numpy()
-    s_sex = column_mask(subjects, "sex").to_numpy() & s_org
+    # For finding usable data, sex means Male or Female: a model can't use "Indeterminate".
+    # (The Characterization score still counts any recorded sex value, Indeterminate included.)
+    sex_value = subjects["sex"].astype("string").str.strip() if "sex" in subjects.columns else pd.Series(pd.NA, index=subjects.index, dtype="string")
+    s_sex = sex_value.isin(KNOWN_SEX).fillna(False).to_numpy(dtype=bool) & s_org
+    s_indeterminate = (sex_value == INDETERMINATE_SEX).fillna(False).to_numpy(dtype=bool) & s_org
     s_age = (column_mask(subjects, "age_at_enrollment").to_numpy() | flagged(n_s, bs_s[sampled])) & s_org
     s_disease = flagged(n_s, positions(s_idx, prog["subject_disease"], "subject"))
     s_pid = is_persistent(subjects, "persistent_id").to_numpy()
@@ -795,10 +809,16 @@ def combination_counts(prog: dict[str, pd.DataFrame]) -> dict:
         return {"total": n, "patterns": {format(c, f"0{len(order)}b"): int(k)
                                          for c, k in enumerate(counts) if k}}
 
+    # Records whose only sex information is "Indeterminate" (reported next to sex counts).
+    b_indeterminate = any_linked(n_b, bs_b, bs_s, s_indeterminate) & ~biosample_level["sex"]
+    f_indeterminate = ((any_linked(n_f, fb_f, fb_b, b_indeterminate) | any_linked(n_f, fs_f, fs_s, s_indeterminate))
+                       & ~file_level["sex"])
     return {
         "requirements": order,
         "levels": {"subject": patterns(subject_level, n_s), "biosample": patterns(biosample_level, n_b),
                    "file": patterns(file_level, n_f)},
+        "sex_indeterminate": {"subject": int(s_indeterminate.sum()), "biosample": int(b_indeterminate.sum()),
+                              "file": int(f_indeterminate.sum())},
     }
 
 
@@ -956,6 +976,272 @@ def score_program(namespace: str, label: str, prog: dict[str, pd.DataFrame],
         "field_coverage": field_coverage(dims, combinations),
         "combinations": combinations,
     }
+
+
+# ---------------------------------------------------------------------------
+# Project-level scoring (read by the web app's Dataset basket)
+# ---------------------------------------------------------------------------
+# A datapackage is a whole program, but researchers choose projects/studies.
+# Each project is scored with the SAME dimension functions as a program, on
+# the records that make up that project:
+#   1. subjects, biosamples and files whose project_id_namespace/local_id is
+#      the project or one of its sub-projects (project_in_project, any depth);
+#   2. plus the biosamples and subjects those records link to directly
+#      (file_describes_biosample, file_describes_subject, biosample_from_subject).
+#      Links are followed file -> biosample -> subject only, never back down,
+#      so a shared subject does not pull in other projects' samples. Several
+#      programs (e.g. ExRNA, LINCS) file their subjects under a different project
+#      than the samples taken from them, so without this step those projects
+#      would appear to have no subjects.
+#   3. disease links of those biosamples and subjects.
+# Checks that describe the datapackage as a whole are inherited from the
+# package and marked as inherited.
+PACKAGE_LEVEL_CHECKS = {
+    "labeled_terms": "term labels come from the package's shared term tables",
+    "croissant_valid": "Croissant is generated and validated for the whole package",
+}
+PROJECTS_JSON = OUTPUT_DIR / "readiness_projects.json"
+EXPORT_TABLES = ["project", "subject", "biosample", "file", "biosample_from_subject", "file_describes_biosample",
+                 "file_describes_subject", "biosample_disease", "subject_disease"]
+PROJECT_DESCRIPTION_CHARS = 300  # descriptions are shortened to keep the JSON small
+PROJECT_RULES = (
+    "A project's records are its own subjects, biosamples and files (including those of its sub-projects, "
+    "via project_in_project), plus the biosamples and subjects they link to directly (file_describes_biosample, "
+    "file_describes_subject, biosample_from_subject; followed from files to biosamples to subjects only). "
+    "Each project is scored with the same checks as a whole program. Two checks describe the datapackage "
+    "as a whole and are inherited from the program: term labels (from the package's shared term tables) "
+    "and Croissant validity.")
+
+
+def unique_keys(df: pd.DataFrame, ns_col: str = "id_namespace", id_col: str = "local_id") -> pd.MultiIndex:
+    return pd.MultiIndex.from_arrays([df[ns_col].astype(str), df[id_col].astype(str)]).unique()
+
+
+def key_positions(index: pd.MultiIndex, df: pd.DataFrame, ns_col: str, id_col: str) -> np.ndarray:
+    """Position in `index` of each row's (ns_col, id_col) key; -1 if absent."""
+    if df.empty or len(index) == 0 or ns_col not in df.columns or id_col not in df.columns:
+        return np.full(len(df), -1)
+    return index.get_indexer(pd.MultiIndex.from_arrays([df[ns_col].astype(str), df[id_col].astype(str)]))
+
+
+def mark(n: int, pos: np.ndarray) -> np.ndarray:
+    flags = np.zeros(n, dtype=bool)
+    flags[pos[pos >= 0]] = True
+    return flags
+
+
+def project_tree(projects: pd.DataFrame, pip: pd.DataFrame | None) -> tuple[pd.MultiIndex, list[int], list[list[int]]]:
+    """Project keys, each project's parent position (-1 for none) and descendant positions (itself included)."""
+    index = unique_keys(projects)
+    n = len(index)
+    parent, children = [-1] * n, [[] for _ in range(n)]
+    if pip is not None and len(pip):
+        parents = key_positions(index, pip, "parent_project_id_namespace", "parent_project_local_id")
+        kids = key_positions(index, pip, "child_project_id_namespace", "child_project_local_id")
+        for p, c in zip(parents, kids):
+            if p >= 0 and c >= 0 and p != c:
+                children[p].append(c)
+                if parent[c] < 0:
+                    parent[c] = p
+    descendants = []
+    for start in range(n):
+        seen, stack = {start}, [start]
+        while stack:
+            for c in children[stack.pop()]:
+                if c not in seen:
+                    seen.add(c)
+                    stack.append(c)
+        descendants.append(sorted(seen))
+    return index, parent, descendants
+
+
+# Per-project results are stored as lists in these orders (named once at the
+# top of the JSON), which keeps the file small with ~3,000 projects.
+DIMENSION_ORDER = [name for name, _ in DIMENSIONS]
+CHECK_ORDER = [check_id for _, check_id, _, _ in METHODS if check_id in WHY_IT_MATTERS]  # real checks only
+COVERAGE_ORDER = ["sex", "age", "anatomy", "disease", "persistent_id", "checksum", "file_format", "creation_time"]
+
+
+def compact_dimensions(dims: dict) -> tuple[list, list]:
+    """[score or None per dimension], [[passed, total] or None per check] in DIMENSION_ORDER / CHECK_ORDER."""
+    scores = [None if dims[name]["score"] == NOT_ASSESSABLE else dims[name]["score"] for name in DIMENSION_ORDER]
+    found = {c["id"]: [c["passed"], c["total"]] for d in dims.values() for c in d["checks"]}
+    return scores, [found.get(check_id) for check_id in CHECK_ORDER]
+
+
+def score_projects(data_dir: Path, package: dict) -> list[dict]:
+    """Score every project in one real datapackage that has at least one subject, biosample or file.
+    `package` is the program-level result from score_real_package (its inherited checks are reused)."""
+    tables = load_tables(data_dir)
+    prog = {name: tables[name] for name in PER_PROGRAM_TABLES}
+    projects = prog["project"]
+    index, parent, descendants = project_tree(projects, read_tsv(data_dir / "project_in_project.tsv"))
+    n_proj = len(index)
+
+    # Row positions of every record and link, computed once.
+    rec = {t: prog[t] for t in ("subject", "biosample", "file")}
+    idx = {t: unique_keys(df) for t, df in rec.items()}
+    row_pos = {t: key_positions(idx[t], df, "id_namespace", "local_id") for t, df in rec.items()}
+    own_project = {t: np.full(len(idx[t]), -1) for t in rec}
+    for t, df in rec.items():
+        proj_of_row = key_positions(index, df, "project_id_namespace", "project_local_id")
+        own_project[t][row_pos[t]] = proj_of_row
+    project_row = key_positions(index, projects, "id_namespace", "local_id")
+
+    def link(table: str, a: str, b: str) -> tuple[np.ndarray, np.ndarray]:
+        df = prog[table]
+        return (key_positions(idx[a], df, f"{a}_id_namespace", f"{a}_local_id"),
+                key_positions(idx[b], df, f"{b}_id_namespace", f"{b}_local_id"))
+    fb_f, fb_b = link("file_describes_biosample", "file", "biosample")
+    fs_f, fs_s = link("file_describes_subject", "file", "subject")
+    bs_b, bs_s = link("biosample_from_subject", "biosample", "subject")
+    bd_b = key_positions(idx["biosample"], prog["biosample_disease"], "biosample_id_namespace", "biosample_local_id")
+    sd_s = key_positions(idx["subject"], prog["subject_disease"], "subject_id_namespace", "subject_local_id")
+
+    package_checks = {c["id"]: c for d in package["dimensions"].values() for c in d["checks"]}
+    explainability = package["dimensions"]["Pre-model Explainability"]
+    name_col = projects["name"] if "name" in projects.columns else pd.Series("", index=projects.index)
+    desc_col = projects["description"] if "description" in projects.columns else pd.Series("", index=projects.index)
+    first_row = {int(p): i for i, p in reversed(list(enumerate(project_row))) if p >= 0}
+
+    results = []
+    for p in range(n_proj):
+        in_tree = mark(n_proj, np.array(descendants[p]))
+
+        def own(t: str) -> np.ndarray:
+            op = own_project[t]
+            return (op >= 0) & in_tree[np.maximum(op, 0)]
+
+        files = own("file")
+        biosamples = own("biosample") | mark(len(idx["biosample"]), fb_b[(fb_f >= 0) & files[np.maximum(fb_f, 0)]])
+        subjects = (own("subject")
+                    | mark(len(idx["subject"]), fs_s[(fs_f >= 0) & files[np.maximum(fs_f, 0)]])
+                    | mark(len(idx["subject"]), bs_s[(bs_b >= 0) & biosamples[np.maximum(bs_b, 0)]]))
+        if not (files.any() or biosamples.any() or subjects.any()):
+            continue
+        keep = {"file": files, "biosample": biosamples, "subject": subjects}
+
+        def rows(t: str) -> pd.DataFrame:
+            return rec[t][keep[t][row_pos[t]]].reset_index(drop=True)
+
+        def link_rows(table: str, owner_pos: np.ndarray, owner: str) -> pd.DataFrame:
+            return prog[table][(owner_pos >= 0) & keep[owner][np.maximum(owner_pos, 0)]].reset_index(drop=True)
+
+        sub = {
+            "project": projects[(project_row >= 0) & in_tree[np.maximum(project_row, 0)]].reset_index(drop=True),
+            "subject": rows("subject"), "biosample": rows("biosample"), "file": rows("file"),
+            "biosample_from_subject": link_rows("biosample_from_subject", bs_b, "biosample"),
+            "file_describes_biosample": link_rows("file_describes_biosample", fb_f, "file"),
+            "file_describes_subject": link_rows("file_describes_subject", fs_f, "file"),
+            "biosample_disease": link_rows("biosample_disease", bd_b, "biosample"),
+            "subject_disease": link_rows("subject_disease", sd_s, "subject"),
+            "term_names": tables["term_names"],
+        }
+        dims = {}
+        for dim_name, fn in DIMENSIONS:
+            if dim_name == "Pre-model Explainability":
+                dims[dim_name] = explainability  # term tables are package-wide
+            elif dim_name == "Computability":
+                dims[dim_name] = score_computability(sub, croissant=package_checks.get("croissant_valid"))
+            else:
+                dims[dim_name] = fn(sub)
+        numeric = [d["score"] for d in dims.values() if d["score"] != NOT_ASSESSABLE]
+        combinations = combination_counts(sub)
+        coverage = field_coverage(dims, combinations)
+        assert [f["field"] for f in coverage] == COVERAGE_ORDER
+        scores, checks = compact_dimensions(dims)
+        row = first_row.get(p)
+        name = str(name_col.iloc[row]).strip() if row is not None and is_filled(name_col.iloc[row]) else index[p][1]
+        description = str(desc_col.iloc[row]).strip() if row is not None and is_filled(desc_col.iloc[row]) else ""
+        if len(description) > PROJECT_DESCRIPTION_CHARS:
+            description = description[:PROJECT_DESCRIPTION_CHARS].rsplit(" ", 1)[0] + " ..."
+        results.append({
+            "id": list(index[p]),
+            "name": name,
+            "description": description,
+            "parent": list(index[parent[p]]) if parent[p] >= 0 else None,
+            "sub_projects": len(descendants[p]) - 1,
+            "record_counts": {"project": len(sub["project"]), "subject": int(subjects.sum()),
+                              "biosample": int(biosamples.sum()), "file": int(files.sum())},
+            "overall_score": round(sum(numeric) / len(numeric)) if numeric else None,
+            "dimensions": scores,
+            "checks": checks,
+            "field_coverage": [[f["passed"], f["total"]] for f in coverage],
+            "combinations": combinations["levels"],
+            "sex_indeterminate": combinations["sex_indeterminate"],
+        })
+    return results
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def run_projects(root: Path) -> None:
+    """Score every project in every package in data_real/ -> output/readiness_projects.json."""
+    releases = read_tsv(RELEASES_FILE)
+    programs, projects = [], []
+    for folder in sorted(p for p in root.iterdir() if p.is_dir()):
+        package_dir = find_package_dir(folder)
+        if package_dir is None:
+            print(f"skipping {folder.name}/: no project.tsv found (not unzipped?)")
+            continue
+        print(f"scoring {folder.name}/ and its projects ...", flush=True)
+        package = score_real_package(package_dir, folder)
+        listed = releases[releases["folder"] == folder.name] if releases is not None else pd.DataFrame()
+        display = listed["program"].iloc[0] if len(listed) else package["program"]
+        zip_path = folder / package["release"]
+        scored = score_projects(package_dir, package)
+        # Consistency check: the project that contains every other project (the
+        # program's root) covers the whole package, so it must score the same.
+        full = [r for r in scored if r["record_counts"]["project"] == package["record_counts"]["project"]]
+        for r in full:
+            same = (r["overall_score"] == package["overall_score"]
+                    and r["dimensions"] == compact_dimensions(package["dimensions"])[0])
+            print(f"  root project '{r['name']}' covers the whole package: "
+                  f"{'same scores as the program' if same else 'SCORES DIFFER FROM THE PROGRAM'}")
+        programs.append({
+            "program": display,
+            "package_label": package["program"],
+            "release": package["release"],
+            "release_date": package["release_date"],
+            "old_release": package["old_release"],
+            "download_url": listed["url"].iloc[0] if len(listed) else "",
+            "sha256": file_sha256(zip_path) if zip_path.is_file() else "",
+            # Where the C2M2 tables sit inside the zip ("" = at its top level).
+            "package_path": inner if (inner := Path(package_dir).resolve().relative_to(folder.resolve()).as_posix()) != "." else "",
+            "overall_score": package["overall_score"],
+            "record_counts": package["record_counts"],
+            # Column names of the tables a basket export describes (Croissant needs real columns).
+            "columns": {t: list(pd.read_csv(path, sep="\t", nrows=0).columns) for t in EXPORT_TABLES
+                        if (path := Path(package_dir) / f"{t}.tsv").exists() and path.stat().st_size},
+            "inherited_checks": {cid: {"passed": c["passed"], "total": c["total"], "why": PACKAGE_LEVEL_CHECKS[cid]}
+                                 for d in package["dimensions"].values() for c in d["checks"]
+                                 if (cid := c["id"]) in PACKAGE_LEVEL_CHECKS},
+        })
+        for r in scored:
+            projects.append({"program": display, **r})
+        print(f"  {len(scored)} projects scored")
+
+    OUTPUT_DIR.mkdir(exist_ok=True)
+    with open(PROJECTS_JSON, "w") as f:
+        json.dump({"source": CITATION,
+                   "disclaimer": DISCLAIMER,
+                   "generated": date.today().isoformat(),
+                   "rules": PROJECT_RULES,
+                   "combination_rules": COMBINATION_RULES,
+                   "requirements": [r for r, _ in REQUIREMENTS] + [SINGLE_ORGANISM_BIT],
+                   "dimension_order": DIMENSION_ORDER,
+                   "check_order": CHECK_ORDER,
+                   "coverage_order": COVERAGE_ORDER,
+                   "programs": programs,
+                   "projects": projects}, f, separators=(",", ":"))
+    size = PROJECTS_JSON.stat().st_size / 1e6
+    print(f"Wrote {PROJECTS_JSON} ({len(projects)} projects, {size:.1f} MB)")
 
 
 # ---------------------------------------------------------------------------
@@ -1260,11 +1546,17 @@ def main():
                         help=f"with the sample: also score the synthetic demo cluster ({DEMO_NAMESPACE})")
     parser.add_argument("--compare", action="store_true",
                         help="score every datapackage folder in data_real/ and write output/readiness_comparison.md")
+    parser.add_argument("--projects", action="store_true",
+                        help="score every project inside every package in data_real/ and write "
+                             "output/readiness_projects.json (read by the web app's Dataset basket)")
     args = parser.parse_args()
 
     print("CFDE AI-Readiness Checker (simplified proxies for the Bridge2AI dimensions; not official)")
     if args.compare:
         run_compare(DATA_REAL_DIR)
+        return
+    if args.projects:
+        run_projects(DATA_REAL_DIR)
         return
 
     folder = args.data_dir.resolve()

@@ -90,6 +90,7 @@ done
 ```
 cd src
 python3 readiness_checker.py --compare                    # all of data_real/ -> output/readiness_comparison.md
+python3 readiness_checker.py --projects                   # every project in data_real/ -> output/readiness_projects.json
 python3 readiness_checker.py --data-dir ../data_real/sparc  # one real package
 python3 readiness_checker.py                              # the hand-collected sample in data/
 ```
@@ -99,13 +100,16 @@ peak memory 1.5-4 GB in our runs, mostly from Kids First's and LINCS's
 multi-million row file and link tables) and writes
 `output/readiness_comparison.md` and `.json` plus a
 `readiness_report_<program>.md` / `readiness_scores_<program>.json` per
-program. The checker itself uses only pandas and the standard library.
+program. `--projects` scores every project inside every package (7-10
+minutes, most of it Metabolomics Workbench's 2,891 studies) and
+writes `output/readiness_projects.json` (3.3 MB) for the web app's
+Dataset basket. The checker itself uses only pandas and the standard library.
 
 ### Run the web app
 `app.py` is a small Streamlit app for browsing the results without
 installing anything beyond `requirements.txt`. It reads only the
-committed `output/readiness_comparison.json`, so it does not need
-`data_real/`.
+committed `output/readiness_comparison.json` and
+`output/readiness_projects.json`, so it does not need `data_real/`.
 
 ```
 pip3 install -r requirements.txt
@@ -125,10 +129,20 @@ It opens at http://localhost:8501. The pages answer three questions:
   subjects, biosamples or files meet all of them. Counts are exact: the
   checker stores how many records share each combination of requirements.
   Sex and age use the same single-organism rule as the scores, so subject
-  counts for them are out of single-organism subjects.
+  counts for them are out of single-organism subjects. Here (and in the
+  Dataset basket) **sex means Male or Female recorded; Indeterminate is not
+  counted**, since a model can't use it. The number of records with only
+  an Indeterminate sex is shown separately (ExRNA: 1,223 subjects; Kids
+  First: 348). The Characterization score and Field coverage still count
+  any recorded sex value.
 - **Program report card** (a program's data team: what would help most?) -
   dimension scores, every check as a progress bar with "X of Y", the top 3
   fixes ranked by points they would add, and data quality notes.
+- **Dataset basket** (a researcher: which of the studies I want have what
+  my model needs?) - search and filter all ~3,150 projects across the seven
+  programs, add them to a basket, tick what your model needs, and see each
+  project's status; remove the ones that don't fit and export the selection.
+  See "Dataset basket" below.
 - **Methods** and **Check your own datapackage** (upload a C2M2 `.zip` up
   to 50 MB zipped / 300 MB unzipped and see its report card; the file is
   unpacked to a temporary folder and deleted afterwards).
@@ -140,7 +154,58 @@ To publish it on Streamlit Community Cloud (free): push the repo to
 GitHub, then at share.streamlit.io choose "Create app", pick this repo and
 branch, and set the main file to `app.py`. `.streamlit/config.toml` sets
 the 50 MB upload cap. After re-running `--compare`, commit
-`output/readiness_comparison.json` so the app shows the new results.
+`output/readiness_comparison.json` so the app shows the new results; after
+`--projects`, commit `output/readiness_projects.json`.
+
+### Dataset basket
+A C2M2 datapackage is a whole program, but researchers pick projects or
+studies, so the checker also scores **every project** in each package
+(`--projects`). This uses the same checks as a whole program, on the
+records that make up the project:
+
+- **Records:** the subjects, biosamples and files whose
+  `project_id_namespace`/`project_local_id` is the project or one of its
+  sub-projects (`project_in_project`, any depth).
+- **Linked records:** plus the biosamples and subjects those records link to
+  directly (`file_describes_biosample`, `file_describes_subject`,
+  `biosample_from_subject`). Links are followed from files to biosamples to
+  subjects only, never back down. This matters because ExRNA and LINCS file
+  their subjects under a different project than the samples taken from them.
+- **Inherited checks:** two checks describe the whole datapackage, so each
+  project takes them from its program: term labels (from the package's shared
+  term tables) and Croissant validity.
+- **Consistency check:** each program's root project contains everything, so
+  it must score exactly like the program. It does, for all seven.
+
+In the app you:
+1. **choose** projects from a searchable table (program, project, record
+   counts, overall score);
+2. **set your needs**, using the same checkboxes as *Find ML-ready data* (the
+   choice carries over between the two pages);
+3. **review** each project's status:
+   - *Meets your needs:* every counted record has all the needs.
+   - *Partly:* some records do. The review says how many (e.g. "312 of 900
+     single-organism subjects have sex and age") and which needs not every
+     record has.
+   - *Doesn't meet your needs:* none do, or the project has no records of
+     that kind.
+
+   One button removes the projects that don't meet your needs, and each
+   project can also be unticked by hand. If a project and one of its
+   sub-projects are both in the basket, the sub-project is counted once,
+   inside its parent;
+4. **export**, generated in the browser session with nothing stored on the
+   server:
+   - a manifest (CSV or JSON): program, project, record counts, qualifying
+     counts, status, the C2M2 download URL, release date and the release
+     zip's sha256;
+   - Croissant 1.0 metadata: each program's release zip, the C2M2 tables in
+     it and the columns behind the chosen needs, naming the selected
+     projects. It passes `validate_croissant.py`;
+   - a short Markdown summary report.
+
+The basket is kept in the browser session (`st.session_state`), so it
+survives switching pages but not closing the tab.
 
 ### Results (current releases, run 2026-09-29)
 

@@ -282,6 +282,11 @@
               "00101110": 164543
             }
           }
+        },
+        "sex_indeterminate": {
+          "subject": 0,
+          "biosample": 0,
+          "file": 0
         }
       }
     }

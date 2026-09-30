@@ -257,6 +257,11 @@
             "total": 0,
             "patterns": {}
           }
+        },
+        "sex_indeterminate": {
+          "subject": 0,
+          "biosample": 0,
+          "file": 0
         }
       }
     },
@@ -540,6 +545,11 @@
               "00100000": 1
             }
           }
+        },
+        "sex_indeterminate": {
+          "subject": 0,
+          "biosample": 0,
+          "file": 0
         }
       }
     },
@@ -821,6 +831,11 @@
               "00000000": 1
             }
           }
+        },
+        "sex_indeterminate": {
+          "subject": 0,
+          "biosample": 0,
+          "file": 0
         }
       }
     },
@@ -1075,6 +1090,11 @@
             "total": 0,
             "patterns": {}
           }
+        },
+        "sex_indeterminate": {
+          "subject": 0,
+          "biosample": 0,
+          "file": 0
         }
       }
     },
@@ -1354,6 +1374,11 @@
               "00100100": 1
             }
           }
+        },
+        "sex_indeterminate": {
+          "subject": 0,
+          "biosample": 0,
+          "file": 0
         }
       }
     }

@@ -298,6 +298,11 @@
               "10111110": 10242
             }
           }
+        },
+        "sex_indeterminate": {
+          "subject": 0,
+          "biosample": 0,
+          "file": 0
         }
       }
     }

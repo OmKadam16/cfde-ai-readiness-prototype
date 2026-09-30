@@ -250,46 +250,901 @@
           "total": 492371
         }
       ],
+      "fields": [
+        {
+          "id": "subject_role_taxonomy.taxonomy_id",
+          "label": "Organism",
+          "group": "Demographics",
+          "entity": [
+            "subject"
+          ],
+          "sources": [
+            "subject_role_taxonomy.taxonomy_id"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 4322,
+          "records_total": 4551,
+          "distinct_values": 226,
+          "top_values": [
+            [
+              "NCBI:txid9606",
+              "Homo sapiens",
+              1846
+            ],
+            [
+              "NCBI:txid10090",
+              "Mus musculus",
+              1453
+            ],
+            [
+              "NCBI:txid10116",
+              "Rattus norvegicus",
+              258
+            ],
+            [
+              "NCBI:txid5833",
+              "Plasmodium falciparum",
+              49
+            ],
+            [
+              "NCBI:txid562",
+              "Escherichia coli",
+              47
+            ]
+          ]
+        },
+        {
+          "id": "subject.granularity",
+          "label": "Subject type",
+          "group": "Demographics",
+          "entity": [
+            "subject"
+          ],
+          "sources": [
+            "subject.granularity"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 4551,
+          "records_total": 4551,
+          "distinct_values": 4,
+          "top_values": [
+            [
+              "cfde_subject_granularity:0",
+              "single organism",
+              3673
+            ],
+            [
+              "cfde_subject_granularity:4",
+              "cell line",
+              818
+            ],
+            [
+              "cfde_subject_granularity:5",
+              "synthetic",
+              38
+            ],
+            [
+              "cfde_subject_granularity:3",
+              "microbiome",
+              22
+            ]
+          ]
+        },
+        {
+          "id": "disease",
+          "label": "Disease",
+          "group": "Clinical/disease",
+          "entity": [
+            "biosample",
+            "subject"
+          ],
+          "sources": [
+            "biosample_disease.disease",
+            "subject_disease.disease"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 2427,
+          "records_total": 4551,
+          "distinct_values": 183,
+          "top_values": [
+            [
+              "DOID:162",
+              "cancer",
+              779
+            ],
+            [
+              "DOID:9351",
+              "diabetes mellitus",
+              140
+            ],
+            [
+              "DOID:9970",
+              "obesity",
+              99
+            ],
+            [
+              "DOID:104",
+              "bacterial infectious disease",
+              77
+            ],
+            [
+              "DOID:12365",
+              "malaria",
+              69
+            ]
+          ]
+        },
+        {
+          "id": "subject_phenotype.phenotype",
+          "label": "Phenotype",
+          "group": "Clinical/disease",
+          "entity": [
+            "subject"
+          ],
+          "sources": [
+            "subject_phenotype.phenotype"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 654,
+          "records_total": 4551,
+          "distinct_values": 96,
+          "top_values": [
+            [
+              "HP:0001513",
+              "Obesity",
+              99
+            ],
+            [
+              "HP:0100806",
+              "Sepsis",
+              51
+            ],
+            [
+              "HP:0000112",
+              "Nephropathy",
+              32
+            ],
+            [
+              "HP:0004326",
+              "Cachexia",
+              28
+            ],
+            [
+              "HP:0002621",
+              "Atherosclerosis",
+              26
+            ]
+          ]
+        },
+        {
+          "id": "biosample.anatomy",
+          "label": "Anatomy",
+          "group": "Biological sample",
+          "entity": [
+            "biosample"
+          ],
+          "sources": [
+            "biosample.anatomy"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": true,
+          "organism": false,
+          "records_filled": 125384,
+          "records_total": 476563,
+          "distinct_values": 241,
+          "top_values": [
+            [
+              "UBERON:0001988",
+              "feces",
+              19685
+            ],
+            [
+              "UBERON:0002107",
+              "liver",
+              13054
+            ],
+            [
+              "CL:0000000",
+              "cell",
+              11542
+            ],
+            [
+              "UBERON:0000955",
+              "brain",
+              7935
+            ],
+            [
+              "UBERON:0000948",
+              "heart",
+              5260
+            ]
+          ]
+        },
+        {
+          "id": "biosample.biofluid",
+          "label": "Biofluid",
+          "group": "Biological sample",
+          "entity": [
+            "biosample"
+          ],
+          "sources": [
+            "biosample.biofluid"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": true,
+          "organism": false,
+          "records_filled": 252462,
+          "records_total": 476563,
+          "distinct_values": 23,
+          "top_values": [
+            [
+              "UBERON:0001969",
+              "blood plasma",
+              135392
+            ],
+            [
+              "UBERON:0001977",
+              "blood serum",
+              51892
+            ],
+            [
+              "UBERON:0000178",
+              "blood",
+              28898
+            ],
+            [
+              "UBERON:0001088",
+              "urine",
+              23149
+            ],
+            [
+              "UBERON:0001836",
+              "saliva",
+              5032
+            ]
+          ]
+        },
+        {
+          "id": "file.analysis_type",
+          "label": "Analysis type",
+          "group": "Molecular",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.analysis_type"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 8366,
+          "records_total": 8366,
+          "distinct_values": 3,
+          "top_values": [
+            [
+              "OBI:0200085",
+              "mass spectrometry analysis",
+              7437
+            ],
+            [
+              "OBI:0200199",
+              "gas chromatography mass spectrometry",
+              542
+            ],
+            [
+              "OBI:0000726",
+              "peak matching",
+              387
+            ]
+          ]
+        },
+        {
+          "id": "file.assay_type",
+          "label": "Assay type",
+          "group": "Molecular",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.assay_type"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 8366,
+          "records_total": 8366,
+          "distinct_values": 4,
+          "top_values": [
+            [
+              "OBI:0003097",
+              "liquid chromatography mass spectrometry assay",
+              6864
+            ],
+            [
+              "OBI:0000470",
+              "mass spectrometry assay",
+              573
+            ],
+            [
+              "OBI:0003110",
+              "gas chromatography mass spectrometry assay",
+              542
+            ],
+            [
+              "OBI:0000623",
+              "NMR spectroscopy assay",
+              387
+            ]
+          ]
+        },
+        {
+          "id": "file.data_type",
+          "label": "Data type",
+          "group": "Molecular",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.data_type"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 8366,
+          "records_total": 8366,
+          "distinct_values": 2,
+          "top_values": [
+            [
+              "data:2536",
+              "Mass spectrometry data",
+              7979
+            ],
+            [
+              "data:3488",
+              "NMR spectrum",
+              387
+            ]
+          ]
+        },
+        {
+          "id": "file.access_url",
+          "label": "Access URL",
+          "group": "File/technical",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.access_url"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 8366,
+          "records_total": 8366,
+          "distinct_values": 8366
+        },
+        {
+          "id": "checksum",
+          "label": "Checksums",
+          "group": "File/technical",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.sha256",
+            "file.md5"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 8366,
+          "records_total": 8366,
+          "distinct_values": 8273
+        },
+        {
+          "id": "file.compression_format",
+          "label": "Compression",
+          "group": "File/technical",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.compression_format"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 5815,
+          "records_total": 8366,
+          "distinct_values": 6,
+          "top_values": [
+            [
+              "format:3987",
+              "ZIP format",
+              5106
+            ],
+            [
+              "format:2333",
+              "Binary format",
+              685
+            ],
+            [
+              "format:3989",
+              "GZIP format",
+              21
+            ],
+            [
+              "format:3981",
+              "TAR format",
+              1
+            ],
+            [
+              "format:3620",
+              "xlsx",
+              1
+            ]
+          ]
+        },
+        {
+          "id": "file.file_format",
+          "label": "File format",
+          "group": "File/technical",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.file_format"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 8364,
+          "records_total": 8366,
+          "distinct_values": 10,
+          "top_values": [
+            [
+              "format:3987",
+              "ZIP format",
+              5106
+            ],
+            [
+              "format:2330",
+              "Textual format",
+              2417
+            ],
+            [
+              "format:2333",
+              "Binary format",
+              685
+            ],
+            [
+              "format:3620",
+              "xlsx",
+              79
+            ],
+            [
+              "format:3506",
+              "docx",
+              33
+            ]
+          ]
+        },
+        {
+          "id": "file.size_in_bytes",
+          "label": "File size",
+          "group": "File/technical",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.size_in_bytes"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 8366,
+          "records_total": 8366,
+          "distinct_values": 8230
+        },
+        {
+          "id": "file.mime_type",
+          "label": "MIME type",
+          "group": "File/technical",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.mime_type"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 8366,
+          "records_total": 8366,
+          "distinct_values": 13,
+          "top_values": [
+            [
+              "application/zip",
+              "",
+              5098
+            ],
+            [
+              "text/plain",
+              "",
+              2432
+            ],
+            [
+              "application/x-7z-compressed",
+              "",
+              619
+            ],
+            [
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              "",
+              72
+            ],
+            [
+              "application/x-rar",
+              "",
+              71
+            ]
+          ]
+        },
+        {
+          "id": "persistent_id",
+          "label": "Persistent IDs",
+          "group": "File/technical",
+          "entity": [
+            "subject",
+            "biosample",
+            "file"
+          ],
+          "sources": [
+            "subject.persistent_id",
+            "biosample.persistent_id",
+            "file.persistent_id",
+            "file.access_url"
+          ],
+          "kind": "per_record",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 0,
+          "records_total": 489480,
+          "distinct_values": 484929
+        }
+      ],
       "combinations": {
-        "requirements": [
-          "sex",
+        "fields": [
           "age",
-          "anatomy",
-          "disease",
+          "biosample.anatomy",
+          "biosample.biofluid",
+          "biosample.sample_prep_method",
+          "biosample_gene.gene",
+          "biosample_protein.protein",
+          "biosample_ptm.ptm",
+          "biosample_substance.substance",
           "checksum",
+          "creation_time",
+          "disease",
+          "file.access_url",
+          "file.analysis_type",
+          "file.assay_type",
+          "file.compression_format",
+          "file.data_type",
+          "file.dbgap_study_id",
+          "file.file_format",
+          "file.mime_type",
+          "file.size_in_bytes",
+          "file.uncompressed_size_in_bytes",
           "persistent_id",
-          "file_format",
-          "single_organism"
+          "sex",
+          "subject.ethnicity",
+          "subject.granularity",
+          "subject_phenotype.phenotype",
+          "subject_race.race",
+          "subject_role_taxonomy.taxonomy_id",
+          "subject_substance.substance",
+          "_single_organism"
         ],
         "levels": {
           "subject": {
             "total": 4551,
-            "patterns": {
-              "00000000": 102,
-              "00000001": 995,
-              "00010000": 184,
-              "00010001": 937,
-              "00100000": 195,
-              "00100001": 832,
-              "00110000": 397,
-              "00110001": 909
-            }
+            "patterns": [
+              [
+                16777216,
+                48
+              ],
+              [
+                16777218,
+                6
+              ],
+              [
+                16777220,
+                1
+              ],
+              [
+                16778240,
+                5
+              ],
+              [
+                16778242,
+                10
+              ],
+              [
+                150994944,
+                49
+              ],
+              [
+                150994946,
+                179
+              ],
+              [
+                150994948,
+                2
+              ],
+              [
+                150995968,
+                151
+              ],
+              [
+                150995970,
+                329
+              ],
+              [
+                150995972,
+                12
+              ],
+              [
+                184549376,
+                2
+              ],
+              [
+                184549378,
+                10
+              ],
+              [
+                184550400,
+                16
+              ],
+              [
+                184550402,
+                58
+              ],
+              [
+                553648128,
+                97
+              ],
+              [
+                553648130,
+                16
+              ],
+              [
+                553648132,
+                12
+              ],
+              [
+                553649152,
+                21
+              ],
+              [
+                553649154,
+                3
+              ],
+              [
+                553649156,
+                1
+              ],
+              [
+                587202560,
+                1
+              ],
+              [
+                587203584,
+                3
+              ],
+              [
+                587203586,
+                4
+              ],
+              [
+                587203588,
+                1
+              ],
+              [
+                687865856,
+                413
+              ],
+              [
+                687865858,
+                729
+              ],
+              [
+                687865860,
+                442
+              ],
+              [
+                687865862,
+                44
+              ],
+              [
+                687866880,
+                172
+              ],
+              [
+                687866882,
+                645
+              ],
+              [
+                687866884,
+                479
+              ],
+              [
+                687866886,
+                31
+              ],
+              [
+                721420288,
+                1
+              ],
+              [
+                721420290,
+                43
+              ],
+              [
+                721420292,
+                29
+              ],
+              [
+                721421312,
+                26
+              ],
+              [
+                721421314,
+                210
+              ],
+              [
+                721421316,
+                234
+              ],
+              [
+                721421318,
+                16
+              ]
+            ]
           },
           "biosample": {
             "total": 476563,
-            "patterns": {
-              "00000000": 168996,
-              "00010000": 182183,
-              "00100000": 64422,
-              "00110000": 60962
-            }
+            "patterns": [
+              [
+                16777216,
+                16033
+              ],
+              [
+                16777218,
+                1649
+              ],
+              [
+                16777220,
+                1194
+              ],
+              [
+                16778240,
+                1676
+              ],
+              [
+                16778242,
+                978
+              ],
+              [
+                16778244,
+                73
+              ],
+              [
+                50331648,
+                24
+              ],
+              [
+                50332672,
+                386
+              ],
+              [
+                50332674,
+                104
+              ],
+              [
+                50332676,
+                93
+              ],
+              [
+                150994944,
+                55585
+              ],
+              [
+                150994946,
+                59074
+              ],
+              [
+                150994948,
+                93664
+              ],
+              [
+                150995968,
+                19505
+              ],
+              [
+                150995970,
+                46533
+              ],
+              [
+                150995972,
+                112147
+              ],
+              [
+                184549376,
+                277
+              ],
+              [
+                184549378,
+                3699
+              ],
+              [
+                184549380,
+                2219
+              ],
+              [
+                184550400,
+                5231
+              ],
+              [
+                184550402,
+                13347
+              ],
+              [
+                184550404,
+                43072
+              ]
+            ]
           },
           "file": {
             "total": 8366,
-            "patterns": {
-              "00001000": 2,
-              "00001010": 8364
-            }
+            "patterns": [
+              [
+                833792,
+                2
+              ],
+              [
+                964864,
+                2549
+              ],
+              [
+                981248,
+                5815
+              ]
+            ]
           }
         },
         "sex_indeterminate": {

@@ -250,101 +250,2055 @@
           "total": 1507315
         }
       ],
+      "fields": [
+        {
+          "id": "age",
+          "label": "Age",
+          "group": "Demographics",
+          "entity": [
+            "subject",
+            "biosample"
+          ],
+          "sources": [
+            "subject.age_at_enrollment",
+            "biosample_from_subject.age_at_sampling"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": true,
+          "records_filled": 7349,
+          "records_total": 39156,
+          "distinct_values": 3167,
+          "top_values": [
+            [
+              "1.05",
+              "",
+              736
+            ],
+            [
+              "7.62",
+              "",
+              471
+            ],
+            [
+              "8.49",
+              "",
+              378
+            ],
+            [
+              "2.52",
+              "",
+              312
+            ],
+            [
+              "5.71",
+              "",
+              305
+            ]
+          ]
+        },
+        {
+          "id": "subject.ethnicity",
+          "label": "Ethnicity",
+          "group": "Demographics",
+          "entity": [
+            "subject"
+          ],
+          "sources": [
+            "subject.ethnicity"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 28780,
+          "records_total": 39156,
+          "distinct_values": 2,
+          "top_values": [
+            [
+              "cfde_subject_ethnicity:1",
+              "not Hispanic or Latino",
+              23972
+            ],
+            [
+              "cfde_subject_ethnicity:0",
+              "Hispanic or Latino",
+              4808
+            ]
+          ]
+        },
+        {
+          "id": "subject_role_taxonomy.taxonomy_id",
+          "label": "Organism",
+          "group": "Demographics",
+          "entity": [
+            "subject"
+          ],
+          "sources": [
+            "subject_role_taxonomy.taxonomy_id"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 39156,
+          "records_total": 39156,
+          "distinct_values": 1,
+          "top_values": [
+            [
+              "NCBI:txid9606",
+              "Homo sapiens",
+              39156
+            ]
+          ]
+        },
+        {
+          "id": "subject_race.race",
+          "label": "Race",
+          "group": "Demographics",
+          "entity": [
+            "subject"
+          ],
+          "sources": [
+            "subject_race.race"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 28081,
+          "records_total": 39156,
+          "distinct_values": 6,
+          "top_values": [
+            [
+              "cfde_subject_race:3",
+              "White",
+              21569
+            ],
+            [
+              "cfde_subject_race:5",
+              "",
+              3633
+            ],
+            [
+              "cfde_subject_race:2",
+              "Black",
+              2306
+            ],
+            [
+              "cfde_subject_race:4",
+              "Other",
+              409
+            ],
+            [
+              "cfde_subject_race:0",
+              "American Indian or Alaskan Native",
+              109
+            ]
+          ]
+        },
+        {
+          "id": "sex",
+          "label": "Sex",
+          "group": "Demographics",
+          "entity": [
+            "subject"
+          ],
+          "sources": [
+            "subject.sex"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": true,
+          "records_filled": 38696,
+          "records_total": 39156,
+          "distinct_values": 3,
+          "top_values": [
+            [
+              "cfde_subject_sex:2",
+              "Male",
+              20186
+            ],
+            [
+              "cfde_subject_sex:1",
+              "Female",
+              18510
+            ],
+            [
+              "cfde_subject_sex:0",
+              "Indeterminate",
+              348
+            ]
+          ]
+        },
+        {
+          "id": "subject.granularity",
+          "label": "Subject type",
+          "group": "Demographics",
+          "entity": [
+            "subject"
+          ],
+          "sources": [
+            "subject.granularity"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 39156,
+          "records_total": 39156,
+          "distinct_values": 1,
+          "top_values": [
+            [
+              "cfde_subject_granularity:0",
+              "single organism",
+              39156
+            ]
+          ]
+        },
+        {
+          "id": "disease",
+          "label": "Disease",
+          "group": "Clinical/disease",
+          "entity": [
+            "biosample",
+            "subject"
+          ],
+          "sources": [
+            "biosample_disease.disease",
+            "subject_disease.disease"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 34640,
+          "records_total": 39156,
+          "distinct_values": 26,
+          "top_values": [
+            [
+              "DOID:162",
+              "cancer",
+              99933
+            ],
+            [
+              "DOID:3827",
+              "congenital diaphragmatic hernia",
+              8417
+            ],
+            [
+              "DOID:0050567",
+              "orofacial cleft",
+              8018
+            ],
+            [
+              "DOID:0080145",
+              "childhood T-cell acute lymphoblastic leukemia",
+              6138
+            ],
+            [
+              "DOID:1682",
+              "congenital heart disease",
+              4660
+            ]
+          ]
+        },
+        {
+          "id": "subject_phenotype.phenotype",
+          "label": "Phenotype",
+          "group": "Clinical/disease",
+          "entity": [
+            "subject"
+          ],
+          "sources": [
+            "subject_phenotype.phenotype"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 20513,
+          "records_total": 39156,
+          "distinct_values": 1556,
+          "top_values": [
+            [
+              "HP:0410030",
+              "Cleft lip",
+              3288
+            ],
+            [
+              "HP:0000175",
+              "Cleft palate",
+              2927
+            ],
+            [
+              "HP:0009733",
+              "Glioma",
+              2308
+            ],
+            [
+              "HP:0000776",
+              "Congenital diaphragmatic hernia",
+              1959
+            ],
+            [
+              "HP:0000119",
+              "Abnormality of the genitourinary system",
+              1753
+            ]
+          ]
+        },
+        {
+          "id": "biosample.anatomy",
+          "label": "Anatomy",
+          "group": "Biological sample",
+          "entity": [
+            "biosample"
+          ],
+          "sources": [
+            "biosample.anatomy"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": true,
+          "organism": false,
+          "records_filled": 60726,
+          "records_total": 111300,
+          "distinct_values": 110,
+          "top_values": [
+            [
+              "UBERON:0011216",
+              "organ system subdivision",
+              20491
+            ],
+            [
+              "UBERON:0001871",
+              "temporal lobe",
+              5082
+            ],
+            [
+              "UBERON:0016525",
+              "frontal lobe",
+              4752
+            ],
+            [
+              "UBERON:0004121",
+              "ectoderm-derived structure",
+              4635
+            ],
+            [
+              "UBERON:0016526",
+              "lobe of cerebral hemisphere",
+              4356
+            ]
+          ]
+        },
+        {
+          "id": "file.assay_type",
+          "label": "Assay type",
+          "group": "Molecular",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.assay_type"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1342132,
+          "records_total": 1356814,
+          "distinct_values": 6,
+          "top_values": [
+            [
+              "OBI:0002117",
+              "whole genome sequencing assay",
+              1169512
+            ],
+            [
+              "OBI:0001177",
+              "RNA sequencing assay",
+              120881
+            ],
+            [
+              "OBI:0002118",
+              "exome sequencing assay",
+              38737
+            ],
+            [
+              "OBI:0003109",
+              "single-nucleus RNA sequencing assay",
+              9296
+            ],
+            [
+              "OBI:0000634",
+              "DNA methylation profiling assay",
+              3684
+            ]
+          ]
+        },
+        {
+          "id": "file.data_type",
+          "label": "Data type",
+          "group": "Molecular",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.data_type"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1353215,
+          "records_total": 1356814,
+          "distinct_values": 8,
+          "top_values": [
+            [
+              "data:3914",
+              "Quality control report",
+              474676
+            ],
+            [
+              "data:3498",
+              "Sequence variations",
+              445769
+            ],
+            [
+              "data:0955",
+              "Data index",
+              219934
+            ],
+            [
+              "data:0863",
+              "Sequence alignment",
+              76792
+            ],
+            [
+              "data:0928",
+              "Gene expression profile",
+              49121
+            ]
+          ]
+        },
+        {
+          "id": "file.access_url",
+          "label": "Access URL",
+          "group": "File/technical",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.access_url"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1356814,
+          "records_total": 1356814,
+          "distinct_values": 1356812
+        },
+        {
+          "id": "creation_time",
+          "label": "Creation time",
+          "group": "File/technical",
+          "entity": [
+            "subject",
+            "biosample",
+            "file"
+          ],
+          "sources": [
+            "subject.creation_time",
+            "biosample.creation_time",
+            "file.creation_time"
+          ],
+          "kind": "per_record",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1507270,
+          "records_total": 1507270,
+          "distinct_values": 1507219
+        },
+        {
+          "id": "file.dbgap_study_id",
+          "label": "dbGaP study ID",
+          "group": "File/technical",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.dbgap_study_id"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1356814,
+          "records_total": 1356814,
+          "distinct_values": 37,
+          "top_values": [
+            [
+              "phs002517",
+              "",
+              414193
+            ],
+            [
+              "phs002276",
+              "",
+              251774
+            ],
+            [
+              "phs001436",
+              "",
+              116992
+            ],
+            [
+              "phs002330",
+              "",
+              81518
+            ],
+            [
+              "phs001228",
+              "",
+              54889
+            ]
+          ]
+        },
+        {
+          "id": "file.file_format",
+          "label": "File format",
+          "group": "File/technical",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.file_format"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1280973,
+          "records_total": 1356814,
+          "distinct_values": 19,
+          "top_values": [
+            [
+              "format:2330",
+              "Textual format",
+              391051
+            ],
+            [
+              "format:3016",
+              "VCF",
+              192420
+            ],
+            [
+              "format:3616",
+              "tabix",
+              166702
+            ],
+            [
+              "format:3475",
+              "TSV",
+              98293
+            ],
+            [
+              "format:3008",
+              "MAF",
+              72234
+            ]
+          ]
+        },
+        {
+          "id": "persistent_id",
+          "label": "Persistent IDs",
+          "group": "File/technical",
+          "entity": [
+            "subject",
+            "biosample",
+            "file"
+          ],
+          "sources": [
+            "subject.persistent_id",
+            "biosample.persistent_id",
+            "file.persistent_id",
+            "file.access_url"
+          ],
+          "kind": "per_record",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 370371,
+          "records_total": 1507270,
+          "distinct_values": 1727183
+        }
+      ],
       "combinations": {
-        "requirements": [
-          "sex",
+        "fields": [
           "age",
-          "anatomy",
-          "disease",
+          "biosample.anatomy",
+          "biosample.biofluid",
+          "biosample.sample_prep_method",
+          "biosample_gene.gene",
+          "biosample_protein.protein",
+          "biosample_ptm.ptm",
+          "biosample_substance.substance",
           "checksum",
+          "creation_time",
+          "disease",
+          "file.access_url",
+          "file.analysis_type",
+          "file.assay_type",
+          "file.compression_format",
+          "file.data_type",
+          "file.dbgap_study_id",
+          "file.file_format",
+          "file.mime_type",
+          "file.size_in_bytes",
+          "file.uncompressed_size_in_bytes",
           "persistent_id",
-          "file_format",
-          "single_organism"
+          "sex",
+          "subject.ethnicity",
+          "subject.granularity",
+          "subject_phenotype.phenotype",
+          "subject_race.race",
+          "subject_role_taxonomy.taxonomy_id",
+          "subject_substance.substance",
+          "_single_organism"
         ],
         "levels": {
           "subject": {
             "total": 39156,
-            "patterns": {
-              "00000001": 7,
-              "00010001": 80,
-              "00110001": 8,
-              "01010001": 292,
-              "01110001": 73,
-              "10000001": 3145,
-              "10010001": 26786,
-              "10100001": 830,
-              "10110001": 951,
-              "11000001": 146,
-              "11010001": 2025,
-              "11100001": 388,
-              "11110001": 4425
-            }
+            "patterns": [
+              [
+                687866368,
+                1
+              ],
+              [
+                687867392,
+                49
+              ],
+              [
+                687867393,
+                223
+              ],
+              [
+                687867394,
+                2
+              ],
+              [
+                687867395,
+                20
+              ],
+              [
+                692060672,
+                50
+              ],
+              [
+                692060674,
+                1
+              ],
+              [
+                692061696,
+                5675
+              ],
+              [
+                692061697,
+                59
+              ],
+              [
+                692061698,
+                88
+              ],
+              [
+                692061699,
+                32
+              ],
+              [
+                696254976,
+                2
+              ],
+              [
+                700449280,
+                191
+              ],
+              [
+                700449283,
+                2
+              ],
+              [
+                700450304,
+                324
+              ],
+              [
+                700450305,
+                33
+              ],
+              [
+                700450306,
+                1
+              ],
+              [
+                700450307,
+                48
+              ],
+              [
+                721421824,
+                11
+              ],
+              [
+                721421825,
+                45
+              ],
+              [
+                721421826,
+                3
+              ],
+              [
+                721421827,
+                50
+              ],
+              [
+                725615104,
+                33
+              ],
+              [
+                725616128,
+                971
+              ],
+              [
+                725616129,
+                196
+              ],
+              [
+                725616130,
+                100
+              ],
+              [
+                725616131,
+                444
+              ],
+              [
+                729809408,
+                4
+              ],
+              [
+                729810432,
+                3
+              ],
+              [
+                729810435,
+                1
+              ],
+              [
+                734003712,
+                307
+              ],
+              [
+                734004736,
+                1388
+              ],
+              [
+                734004737,
+                116
+              ],
+              [
+                734004738,
+                37
+              ],
+              [
+                734004739,
+                565
+              ],
+              [
+                759169536,
+                4
+              ],
+              [
+                759170560,
+                398
+              ],
+              [
+                759170561,
+                20
+              ],
+              [
+                759170562,
+                1
+              ],
+              [
+                759170563,
+                7
+              ],
+              [
+                763364864,
+                1
+              ],
+              [
+                763364865,
+                1
+              ],
+              [
+                763364866,
+                2
+              ],
+              [
+                763364867,
+                1
+              ],
+              [
+                767558144,
+                943
+              ],
+              [
+                767558145,
+                4
+              ],
+              [
+                767558146,
+                829
+              ],
+              [
+                767558147,
+                386
+              ],
+              [
+                767559168,
+                8213
+              ],
+              [
+                767559169,
+                350
+              ],
+              [
+                767559170,
+                220
+              ],
+              [
+                767559171,
+                462
+              ],
+              [
+                792723968,
+                12
+              ],
+              [
+                792724992,
+                1581
+              ],
+              [
+                792724993,
+                139
+              ],
+              [
+                792724994,
+                23
+              ],
+              [
+                792724995,
+                138
+              ],
+              [
+                796919296,
+                16
+              ],
+              [
+                796919297,
+                23
+              ],
+              [
+                796919298,
+                1
+              ],
+              [
+                796919299,
+                1
+              ],
+              [
+                801112576,
+                1605
+              ],
+              [
+                801112577,
+                142
+              ],
+              [
+                801113600,
+                8236
+              ],
+              [
+                801113601,
+                1112
+              ],
+              [
+                801113602,
+                481
+              ],
+              [
+                801113603,
+                2729
+              ]
+            ]
           },
           "biosample": {
             "total": 111300,
-            "patterns": {
-              "00000000": 7,
-              "00010000": 99,
-              "00110000": 17,
-              "01010000": 433,
-              "01110000": 328,
-              "10000000": 3761,
-              "10010000": 34414,
-              "10100000": 831,
-              "10110000": 1283,
-              "11000000": 183,
-              "11010000": 11677,
-              "11100000": 451,
-              "11110000": 57816
-            }
+            "patterns": [
+              [
+                150995456,
+                1
+              ],
+              [
+                150996480,
+                66
+              ],
+              [
+                150996481,
+                293
+              ],
+              [
+                150996482,
+                10
+              ],
+              [
+                150996483,
+                38
+              ],
+              [
+                155189760,
+                57
+              ],
+              [
+                155189762,
+                1
+              ],
+              [
+                155190784,
+                9629
+              ],
+              [
+                155190785,
+                113
+              ],
+              [
+                155190786,
+                122
+              ],
+              [
+                155190787,
+                160
+              ],
+              [
+                159384064,
+                2
+              ],
+              [
+                163578368,
+                193
+              ],
+              [
+                163578371,
+                2
+              ],
+              [
+                163579392,
+                294
+              ],
+              [
+                163579393,
+                92
+              ],
+              [
+                163579394,
+                2
+              ],
+              [
+                163579395,
+                544
+              ],
+              [
+                184550912,
+                13
+              ],
+              [
+                184550913,
+                111
+              ],
+              [
+                184550914,
+                3
+              ],
+              [
+                184550915,
+                286
+              ],
+              [
+                188744192,
+                43
+              ],
+              [
+                188745216,
+                968
+              ],
+              [
+                188745217,
+                1130
+              ],
+              [
+                188745218,
+                136
+              ],
+              [
+                188745219,
+                3846
+              ],
+              [
+                192938496,
+                4
+              ],
+              [
+                192939520,
+                3
+              ],
+              [
+                192939521,
+                4
+              ],
+              [
+                192939523,
+                2
+              ],
+              [
+                197132800,
+                336
+              ],
+              [
+                197133824,
+                1633
+              ],
+              [
+                197133825,
+                1232
+              ],
+              [
+                197133826,
+                43
+              ],
+              [
+                197133827,
+                8467
+              ],
+              [
+                222298624,
+                5
+              ],
+              [
+                222299648,
+                366
+              ],
+              [
+                222299649,
+                33
+              ],
+              [
+                222299650,
+                1
+              ],
+              [
+                222299651,
+                39
+              ],
+              [
+                226493953,
+                2
+              ],
+              [
+                226493954,
+                2
+              ],
+              [
+                226493955,
+                1
+              ],
+              [
+                230687232,
+                1073
+              ],
+              [
+                230687233,
+                41
+              ],
+              [
+                230687234,
+                830
+              ],
+              [
+                230687235,
+                449
+              ],
+              [
+                230688256,
+                7997
+              ],
+              [
+                230688257,
+                741
+              ],
+              [
+                230688258,
+                233
+              ],
+              [
+                230688259,
+                1923
+              ],
+              [
+                255853056,
+                19
+              ],
+              [
+                255854080,
+                1619
+              ],
+              [
+                255854081,
+                329
+              ],
+              [
+                255854082,
+                96
+              ],
+              [
+                255854083,
+                1305
+              ],
+              [
+                260048384,
+                17
+              ],
+              [
+                260048385,
+                23
+              ],
+              [
+                260048386,
+                2
+              ],
+              [
+                260048387,
+                1
+              ],
+              [
+                264241664,
+                2035
+              ],
+              [
+                264241665,
+                142
+              ],
+              [
+                264242688,
+                11908
+              ],
+              [
+                264242689,
+                8007
+              ],
+              [
+                264242690,
+                650
+              ],
+              [
+                264242691,
+                41532
+              ]
+            ]
           },
           "file": {
             "total": 1356814,
-            "patterns": {
-              "00000010": 28,
-              "00000100": 1,
-              "00000110": 26,
-              "00010010": 480,
-              "00010100": 2,
-              "00010110": 608,
-              "00110010": 18,
-              "00110110": 2,
-              "01010000": 41,
-              "01010010": 2461,
-              "01010100": 215,
-              "01010110": 1050,
-              "01110000": 83,
-              "01110010": 942,
-              "01110100": 14,
-              "01110110": 2,
-              "10000000": 243,
-              "10000010": 47602,
-              "10000100": 4602,
-              "10000110": 35192,
-              "10010000": 13378,
-              "10010010": 474510,
-              "10010100": 18918,
-              "10010110": 253912,
-              "10100000": 12,
-              "10100010": 6718,
-              "10110000": 20,
-              "10110010": 11912,
-              "10110100": 1699,
-              "10110110": 29826,
-              "11000000": 64,
-              "11000010": 3192,
-              "11000100": 146,
-              "11010000": 4652,
-              "11010010": 75875,
-              "11010100": 750,
-              "11010110": 12137,
-              "11100000": 1052,
-              "11100010": 19565,
-              "11110000": 29600,
-              "11110010": 293995,
-              "11110100": 349,
-              "11110110": 10920
-            }
+            "patterns": [
+              [
+                151105025,
+                6
+              ],
+              [
+                151105027,
+                1
+              ],
+              [
+                151235072,
+                4
+              ],
+              [
+                151236096,
+                364
+              ],
+              [
+                151236097,
+                1395
+              ],
+              [
+                151236098,
+                2
+              ],
+              [
+                151236099,
+                138
+              ],
+              [
+                153201152,
+                1
+              ],
+              [
+                153202177,
+                194
+              ],
+              [
+                153202179,
+                14
+              ],
+              [
+                153332224,
+                14
+              ],
+              [
+                153333248,
+                488
+              ],
+              [
+                155298306,
+                2
+              ],
+              [
+                155299328,
+                2187
+              ],
+              [
+                155299329,
+                23
+              ],
+              [
+                155299330,
+                1
+              ],
+              [
+                155299331,
+                95
+              ],
+              [
+                155396610,
+                7
+              ],
+              [
+                155422208,
+                107
+              ],
+              [
+                155422210,
+                1
+              ],
+              [
+                155429376,
+                392
+              ],
+              [
+                155429378,
+                31
+              ],
+              [
+                155430400,
+                53890
+              ],
+              [
+                155430401,
+                514
+              ],
+              [
+                155430402,
+                613
+              ],
+              [
+                155430403,
+                1025
+              ],
+              [
+                157363712,
+                1
+              ],
+              [
+                157395456,
+                26
+              ],
+              [
+                157396480,
+                2522
+              ],
+              [
+                157396481,
+                20
+              ],
+              [
+                157396482,
+                4
+              ],
+              [
+                157526528,
+                393
+              ],
+              [
+                157527552,
+                45380
+              ],
+              [
+                157527553,
+                60
+              ],
+              [
+                157527554,
+                1248
+              ],
+              [
+                159623680,
+                8
+              ],
+              [
+                161720832,
+                4
+              ],
+              [
+                163686915,
+                4
+              ],
+              [
+                163687937,
+                41
+              ],
+              [
+                163687939,
+                212
+              ],
+              [
+                163785219,
+                14
+              ],
+              [
+                163810816,
+                4
+              ],
+              [
+                163810819,
+                4
+              ],
+              [
+                163817984,
+                836
+              ],
+              [
+                163817987,
+                62
+              ],
+              [
+                163819008,
+                1801
+              ],
+              [
+                163819009,
+                1107
+              ],
+              [
+                163819011,
+                2058
+              ],
+              [
+                165784064,
+                139
+              ],
+              [
+                165785088,
+                155
+              ],
+              [
+                165785089,
+                7
+              ],
+              [
+                165915136,
+                492
+              ],
+              [
+                165916160,
+                1342
+              ],
+              [
+                165916161,
+                90
+              ],
+              [
+                165916163,
+                2
+              ],
+              [
+                184659457,
+                26
+              ],
+              [
+                184659459,
+                82
+              ],
+              [
+                184782339,
+                4
+              ],
+              [
+                184790528,
+                46
+              ],
+              [
+                184790529,
+                792
+              ],
+              [
+                184790530,
+                6
+              ],
+              [
+                184790531,
+                796
+              ],
+              [
+                186756609,
+                21
+              ],
+              [
+                186887680,
+                54
+              ],
+              [
+                186887681,
+                1050
+              ],
+              [
+                188852736,
+                6
+              ],
+              [
+                188853760,
+                273
+              ],
+              [
+                188853761,
+                617
+              ],
+              [
+                188853763,
+                2036
+              ],
+              [
+                188952064,
+                2
+              ],
+              [
+                188976640,
+                467
+              ],
+              [
+                188976641,
+                5
+              ],
+              [
+                188976643,
+                37
+              ],
+              [
+                188983808,
+                700
+              ],
+              [
+                188984832,
+                12383
+              ],
+              [
+                188984833,
+                9353
+              ],
+              [
+                188984834,
+                915
+              ],
+              [
+                188984835,
+                19051
+              ],
+              [
+                190918144,
+                1
+              ],
+              [
+                190949888,
+                57
+              ],
+              [
+                190950912,
+                443
+              ],
+              [
+                190950913,
+                34
+              ],
+              [
+                190950914,
+                107
+              ],
+              [
+                190950915,
+                2
+              ],
+              [
+                191080960,
+                419
+              ],
+              [
+                191081984,
+                13787
+              ],
+              [
+                191081985,
+                422
+              ],
+              [
+                191081986,
+                2067
+              ],
+              [
+                193048065,
+                9
+              ],
+              [
+                193178112,
+                16
+              ],
+              [
+                193179136,
+                14
+              ],
+              [
+                193179137,
+                136
+              ],
+              [
+                195275264,
+                8
+              ],
+              [
+                195276288,
+                22
+              ],
+              [
+                197234179,
+                18
+              ],
+              [
+                197241344,
+                21
+              ],
+              [
+                197242368,
+                822
+              ],
+              [
+                197242369,
+                513
+              ],
+              [
+                197242371,
+                4467
+              ],
+              [
+                197340672,
+                1
+              ],
+              [
+                197365248,
+                149
+              ],
+              [
+                197365249,
+                14
+              ],
+              [
+                197365251,
+                210
+              ],
+              [
+                197372416,
+                3517
+              ],
+              [
+                197373440,
+                25690
+              ],
+              [
+                197373441,
+                6758
+              ],
+              [
+                197373442,
+                542
+              ],
+              [
+                197373443,
+                42650
+              ],
+              [
+                199338496,
+                342
+              ],
+              [
+                199339520,
+                1107
+              ],
+              [
+                199339521,
+                7
+              ],
+              [
+                199339522,
+                88
+              ],
+              [
+                199339523,
+                1
+              ],
+              [
+                199469568,
+                2933
+              ],
+              [
+                199470592,
+                8541
+              ],
+              [
+                199470593,
+                308
+              ],
+              [
+                199470594,
+                1391
+              ],
+              [
+                199470595,
+                16
+              ],
+              [
+                222408195,
+                33
+              ],
+              [
+                222531075,
+                1
+              ],
+              [
+                222538240,
+                95
+              ],
+              [
+                222539264,
+                2896
+              ],
+              [
+                222539265,
+                170
+              ],
+              [
+                222539267,
+                295
+              ],
+              [
+                224504320,
+                2
+              ],
+              [
+                224505344,
+                319
+              ],
+              [
+                224505345,
+                6
+              ],
+              [
+                224635392,
+                28
+              ],
+              [
+                224636416,
+                4387
+              ],
+              [
+                224636417,
+                43
+              ],
+              [
+                226733570,
+                6
+              ],
+              [
+                226733571,
+                4
+              ],
+              [
+                228830722,
+                2
+              ],
+              [
+                228830723,
+                2
+              ],
+              [
+                230795777,
+                64
+              ],
+              [
+                230795778,
+                10
+              ],
+              [
+                230795779,
+                1048
+              ],
+              [
+                230796800,
+                46
+              ],
+              [
+                230796801,
+                185
+              ],
+              [
+                230796802,
+                19
+              ],
+              [
+                230796803,
+                845
+              ],
+              [
+                230894082,
+                28
+              ],
+              [
+                230894083,
+                3245
+              ],
+              [
+                230895104,
+                51
+              ],
+              [
+                230919680,
+                10730
+              ],
+              [
+                230919681,
+                5
+              ],
+              [
+                230919683,
+                32
+              ],
+              [
+                230926848,
+                8949
+              ],
+              [
+                230926849,
+                920
+              ],
+              [
+                230926850,
+                6652
+              ],
+              [
+                230926851,
+                16244
+              ],
+              [
+                230927872,
+                45571
+              ],
+              [
+                230927873,
+                4228
+              ],
+              [
+                230927874,
+                925
+              ],
+              [
+                230927875,
+                10353
+              ],
+              [
+                232892928,
+                771
+              ],
+              [
+                232892929,
+                4
+              ],
+              [
+                232893952,
+                5603
+              ],
+              [
+                232893953,
+                281
+              ],
+              [
+                232893954,
+                10
+              ],
+              [
+                232893955,
+                241
+              ],
+              [
+                233024000,
+                5403
+              ],
+              [
+                233025024,
+                48551
+              ],
+              [
+                233025025,
+                5206
+              ],
+              [
+                233025026,
+                676
+              ],
+              [
+                233025027,
+                5936
+              ],
+              [
+                255954435,
+                12
+              ],
+              [
+                255961600,
+                6
+              ],
+              [
+                255962624,
+                147
+              ],
+              [
+                255962625,
+                33
+              ],
+              [
+                255962627,
+                395
+              ],
+              [
+                256085504,
+                7
+              ],
+              [
+                256085507,
+                85
+              ],
+              [
+                256092672,
+                412
+              ],
+              [
+                256093696,
+                17294
+              ],
+              [
+                256093697,
+                2601
+              ],
+              [
+                256093698,
+                1577
+              ],
+              [
+                256093699,
+                4157
+              ],
+              [
+                258058752,
+                32
+              ],
+              [
+                258059776,
+                1488
+              ],
+              [
+                258059777,
+                39
+              ],
+              [
+                258059778,
+                356
+              ],
+              [
+                258189824,
+                219
+              ],
+              [
+                258190848,
+                18445
+              ],
+              [
+                258190849,
+                1143
+              ],
+              [
+                258190850,
+                4350
+              ],
+              [
+                260288000,
+                56
+              ],
+              [
+                260288001,
+                138
+              ],
+              [
+                260288002,
+                4
+              ],
+              [
+                262254080,
+                2
+              ],
+              [
+                262385152,
+                44
+              ],
+              [
+                264343043,
+                171
+              ],
+              [
+                264350208,
+                210
+              ],
+              [
+                264351232,
+                9903
+              ],
+              [
+                264351233,
+                3240
+              ],
+              [
+                264351235,
+                21316
+              ],
+              [
+                264449536,
+                28
+              ],
+              [
+                264449537,
+                220
+              ],
+              [
+                264474112,
+                1133
+              ],
+              [
+                264474113,
+                115
+              ],
+              [
+                264474115,
+                1371
+              ],
+              [
+                264481280,
+                32701
+              ],
+              [
+                264481281,
+                2272
+              ],
+              [
+                264482304,
+                302306
+              ],
+              [
+                264482305,
+                50785
+              ],
+              [
+                264482306,
+                7339
+              ],
+              [
+                264482307,
+                212666
+              ],
+              [
+                266415616,
+                1
+              ],
+              [
+                266447360,
+                3233
+              ],
+              [
+                266447361,
+                142
+              ],
+              [
+                266448384,
+                7278
+              ],
+              [
+                266448385,
+                356
+              ],
+              [
+                266448386,
+                1134
+              ],
+              [
+                266448387,
+                105
+              ],
+              [
+                266578432,
+                25305
+              ],
+              [
+                266579456,
+                113479
+              ],
+              [
+                266579457,
+                4865
+              ],
+              [
+                266579458,
+                20094
+              ],
+              [
+                266579459,
+                4966
+              ]
+            ]
           }
         },
         "sex_indeterminate": {

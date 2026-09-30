@@ -99,34 +99,68 @@ def load_comparison() -> dict:
         return json.load(f)
 
 
-def needs_checkboxes(labels: dict, page: str) -> list[str]:
-    """The "My model needs" checkboxes. The choice is kept in session state, so it carries
-    over between Find ML-ready data and the Dataset basket (widget state alone is cleared
-    when a page is left)."""
+def field_catalog(extra: dict | None = None) -> dict:
+    """Every discovered field (from all programs, plus an uploaded package's if any): id -> label, group, ..."""
+    catalog = {fid: dict(f) for fid, f in load_comparison()["fields"].items()}
+    uploaded = st.session_state.get("uploaded_result")
+    for f in (uploaded["fields"] if uploaded else []):
+        entry = catalog.setdefault(f["id"], {k: f[k] for k in ("label", "group", "file_only", "no_subject_level",
+                                                                  "organism", "sources")} | {"programs": []})
+        entry["programs"] = entry["programs"] + ["your upload"]
+    return catalog | (extra or {})
+
+
+def needs_checkboxes(catalog: dict, page: str) -> list[str]:
+    """The "My model needs" checkboxes, built from the fields discovered in the data and grouped
+    (Demographics, Clinical/disease, ...). The choice is kept in session state, so it carries over
+    between Find ML-ready data and the Dataset basket (widget state alone is cleared when a page is left)."""
     st.markdown("**My model needs:**")
     saved = st.session_state.setdefault("needs", ["sex", "age"])
-    # Two rows of four, so labels are never cut off on narrower screens.
-    cols = st.columns(4)
-    chosen = [req for i, (req, label) in enumerate(labels.items())
-              if cols[i % 4].checkbox(label, value=req in saved, key=f"{page}_need_{req}")]
+    chosen = []
+    for group in rc.FIELD_GROUPS:
+        ids = sorted((fid for fid, f in catalog.items() if f["group"] == group), key=lambda k: catalog[k]["label"].lower())
+        if not ids:
+            continue
+        st.markdown(f"<div style='font-size:0.85rem;opacity:0.75;margin:0.4rem 0 -0.3rem'>{group}</div>",
+                    unsafe_allow_html=True)
+        # Three per row, so labels are never cut off on narrower screens (details are in the help).
+        cols = st.columns(3)
+        for i, fid in enumerate(ids):
+            f = catalog[fid]
+            if cols[i % 3].checkbox(f["label"], value=fid in saved, key=f"{page}_need_{fid}",
+                                    help=f"C2M2: {', '.join(f['sources'])}. "
+                                         f"Recorded by: {', '.join(f['programs'])}."):
+                chosen.append(fid)
     st.session_state["needs"] = chosen
     return chosen
 
 
-def count_levels(chosen: list[str]) -> list[str]:
-    """Record levels at which every chosen requirement can be counted."""
-    if set(chosen) & rc.FILE_ONLY_REQUIREMENTS:
+def minimum_records(page: str) -> int:
+    """'Minimum records needed', remembered across pages."""
+    value = st.columns([1, 2])[0].number_input(
+        "Minimum records needed", min_value=1, value=st.session_state.get("min_records", 100),
+                            step=50, key=f"{page}_min_records",
+                            help="A program or project meets your needs only if at least this many records have "
+                                 "everything you selected.")
+    st.session_state["min_records"] = int(value)
+    st.caption("There's no universal minimum for training AI; it depends on the model and task.")
+    return int(value)
+
+
+def count_levels(chosen: list[str], catalog: dict) -> list[str]:
+    """Record levels at which every chosen field can be counted."""
+    if any(catalog[c]["file_only"] for c in chosen if c in catalog):
         return ["file"]
-    if {"anatomy", "disease"} & set(chosen):
+    if any(catalog[c]["no_subject_level"] for c in chosen if c in catalog):
         return ["biosample", "file"]
     return ["subject", "biosample", "file"]
 
 
-def level_choice(chosen: list[str], page: str) -> str:
+def level_choice(chosen: list[str], catalog: dict, page: str) -> str:
     """Which records to count (subjects, biosamples or files), remembered across pages."""
-    levels = count_levels(chosen)
+    levels = count_levels(chosen, catalog)
     if len(levels) == 1:
-        st.caption("Counting files: checksums and file format are recorded per file.")
+        st.caption("Counting files: some of the selected fields are recorded per file.")
         level = levels[0]
     else:
         saved = st.session_state.get("level")
@@ -134,6 +168,11 @@ def level_choice(chosen: list[str], page: str) -> str:
                          format_func=lambda lv: LEVEL_NOUN[lv], horizontal=True, key=f"{page}_level")
     st.session_state["level"] = level
     return level
+
+
+def wanted_text(chosen: list[str], catalog: dict) -> str:
+    return " and ".join(catalog[c]["label"].lower().replace(" ids", " IDs").replace("dbgap", "dbGaP")
+                        .replace("mime", "MIME").replace("url", "URL").replace("ncbi", "NCBI") for c in chosen)
 
 
 SEX_RULE = "Sex = male or female recorded; Indeterminate not counted (a model can't use it)."
@@ -151,7 +190,7 @@ def indeterminate_note(records: list[tuple[str, dict]], level: str, chosen: list
 
 def finder_noun(level: str, chosen: list[str]) -> str:
     """What the counts are out of: sex/age subject counts are out of single-organism subjects."""
-    if level == "subject" and rc.ORGANISM_REQUIREMENTS & set(chosen):
+    if level == "subject" and rc.ORGANISM_FIELDS & set(chosen):
         return "single-organism subjects"
     return LEVEL_NOUN[level]
 
@@ -273,6 +312,9 @@ def track_bars(rows: list[dict], y_title: str, label_field: str, height_per_row:
              "encoding": {"y": y, "x": {**x, "datum": 100}}},
             {"mark": {"type": "bar", "color": HIGHLIGHT, "cornerRadiusEnd": 4, "height": 20},
              "encoding": {"y": y, "x": {**x, "field": "pct"},
+                          # rows may set their own bar colour (e.g. gray when below a minimum)
+                          **({"color": {"field": "bar", "type": "nominal", "scale": None}}
+                             if rows and "bar" in rows[0] else {}),
                           "tooltip": [{"field": "row", "title": "Program"},
                                       {"field": label_field, "title": "Records"}]}},
             {"mark": {"type": "text", "align": "left", "dx": 8, "fontSize": 14, "fontWeight": 600, "color": CHART_TEXT},
@@ -431,6 +473,9 @@ def report_card(r: dict):
     with st.expander(f"Data quality notes ({len(notes)}) - reported, not scored"):
         for note in notes or ["None found by the checks we run."]:
             st.markdown(f"- {note}")
+    if r.get("fields"):
+        with st.expander(f"What this datapackage records ({len(r['fields'])} fields) - reported, not scored"):
+            field_table(r["fields"])
 
 
 # ---------------------------------------------------------------------------
@@ -487,21 +532,22 @@ def field_coverage_page():
 
 def finder_page():
     data = load_comparison()
-    programs = data["programs"]
-    labels = data["requirements"]
+    uploaded = st.session_state.get("uploaded_result")
+    programs = data["programs"] + ([uploaded] if uploaded else [])
+    catalog = field_catalog()
     st.title("Find ML-ready data")
-    st.markdown("Pick what your model needs. Each bar shows how many records in each program meet **all** "
-                "of the selected requirements, counted exactly from the metadata.")
-    chosen = needs_checkboxes(labels, "finder")
+    st.markdown("Pick what your model needs. The choices are the fields found in the programs' metadata. Each bar "
+                "shows how many records in each program have **all** of them, counted exactly.")
+    chosen = needs_checkboxes(catalog, "finder")
+    minimum = minimum_records("finder")
     if not chosen:
-        st.info("Select at least one requirement.")
+        st.info("Select at least one field.")
         footer()
         return
-    level = level_choice(chosen, "finder")
+    level = level_choice(chosen, catalog, "finder")
 
-    organism_rule = bool(rc.ORGANISM_REQUIREMENTS & set(chosen))
     noun = finder_noun(level, chosen)
-    if organism_rule:
+    if rc.ORGANISM_FIELDS & set(chosen):
         st.caption("Sex and age count only for single-organism subjects (human or animal), the same rule as the "
                    "scores and Field coverage. Cell lines, microbiomes and synthetic subjects - and biosamples or "
                    "files linked only to them - don't meet a sex or age requirement."
@@ -509,26 +555,59 @@ def finder_page():
 
     rows = []
     for r in programs:
+        label = name(r) + (" (your upload)" if r is uploaded else "")
         met, total = rc.count_meeting(r["combinations"], level, chosen)
         pct = 100 * met / total if total else 0
-        rows.append({"row": name(r), "pct": pct, "met": met, "total": total,
+        rows.append({"row": label, "pct": pct, "met": met, "total": total, "meets": met >= minimum,
+                     "bar": HIGHLIGHT if met >= minimum else CONTEXT_LINE,
                      # The unit is in the heading above, so the bar labels stay short enough to fit.
                      "label": f"{met:,} of {total:,}" + (f" ({pct:.0f}%)" if total else "")})
     rows.sort(key=lambda row: (-row["pct"], -row["met"]))
-    wanted = " and ".join(labels[c].lower().replace(" ids", " IDs") for c in chosen)
+    wanted = wanted_text(chosen, catalog)
     st.markdown(f"##### {noun[0].upper() + noun[1:]} with {wanted}")
     track_bars(rows, f"% of {noun}", "label")
+    meeting = [row["row"] for row in rows if row["meets"]]
+    st.caption(f"Blue: at least {minimum:,} {noun} have everything selected ({len(meeting)} of {len(rows)} "
+               f"programs). Gray: fewer than {minimum:,}.")
     if note := indeterminate_note([(name(r), r["combinations"]) for r in programs], level, chosen):
         st.caption(note)
     with st.expander("Show as text"):
         for row in rows:
-            st.markdown(f"- **{row['row']}:** {row['met']:,} of {row['total']:,} {noun} have {wanted}")
-    with st.expander("How requirements are counted"):
+            st.markdown(f"- **{row['row']}:** {row['met']:,} of {row['total']:,} {noun} have {wanted}"
+                        + ("" if row["meets"] else f" (fewer than {minimum:,})"))
+    with st.expander("What each program records"):
+        st.caption("Every field found in each program's metadata, with how many records have it and its most "
+                   "common values (labels from the package's term tables).")
+        choice = st.selectbox("Program", [row["row"] for row in rows], key="finder_fields_program")
+        r = next(r for r in programs if name(r) + (" (your upload)" if r is uploaded else "") == choice)
+        field_table(r["fields"])
+    with st.expander("How fields are counted"):
         st.markdown(data["combination_rules"])
         st.markdown("SenNet's files are not linked to individual biosamples or subjects in its C2M2 release "
                     "(its file_describes_biosample / file_describes_subject tables are empty), so file counts "
-                    "that need sex, age, anatomy or disease are 0 there.")
+                    "that need a subject or biosample field are 0 there.")
     footer()
+
+
+def field_table(fields: list[dict]):
+    """The discovered fields of one program (or upload): what it records, how often, and common values."""
+    def top(f: dict) -> str:
+        if "top_values" not in f:
+            return "(mostly unique values)" if f["kind"] != "per_record" else ""
+        return "; ".join(f"{label or value} ({count:,})" for value, label, count in f["top_values"])
+    # Field and coverage first; the source columns come last (the table scrolls sideways on narrow screens).
+    st.dataframe(pd.DataFrame([{
+        "Field": f["label"],
+        "% filled": 100 * f["records_filled"] / f["records_total"] if f["records_total"] else None,
+        "Records with it": f"{f['records_filled']:,} of {f['records_total']:,}",
+        "Most common values": top(f), "Distinct values": f["distinct_values"],
+        "C2M2 table.column": ", ".join(f["sources"]), "Group": f["group"]} for f in fields]),
+        hide_index=True, width="stretch",
+        column_config={"% filled": st.column_config.ProgressColumn(min_value=0, max_value=100, format="%.0f%%",
+                                                                   width=110),
+                       "Field": st.column_config.TextColumn(width=150),
+                       "Records with it": st.column_config.TextColumn(width=170),
+                       "Most common values": st.column_config.TextColumn(width="large")})
 
 
 def program_page():
@@ -570,6 +649,21 @@ def methods_page():
         f"- *Find ML-ready data:* {data['combination_rules']}\n"
         "- *Top fixes:* bringing one check to 100 adds (100 - its score) / (checks in its dimension) / "
         "(dimensions assessed) points to the overall score.")
+    st.subheader("Field discovery")
+    st.markdown(
+        "The *My model needs* choices are not a fixed list: the checker finds every field each datapackage "
+        "actually records. It reads every column of subject.tsv, biosample.tsv and file.tsv (except keys and "
+        "file names) and every association table named `<entity>_<something>.tsv` that links a record to a "
+        "value (e.g. subject_race, subject_phenotype, subject_disease, biosample_disease, biosample_gene, "
+        "biosample_substance, subject_role_taxonomy). A field is available when at least one record has a value. "
+        "For each field it records the C2M2 table and column, the entity, how many records have it, how many "
+        "distinct values it has and the 5 most common values, with labels from the package's own term tables "
+        "or the CFDE vocabularies. A few attributes C2M2 records in two places are merged into one field: age "
+        "(`age_at_enrollment`, `age_at_sampling`), disease (`subject_disease`, `biosample_disease`) and "
+        "checksums (`md5`, `sha256`). Persistent IDs and creation time are always the record's own.\n\n"
+        "Counts are exact: each record gets one bit per field it has (after following links), the checker "
+        "stores how many records share each set of bits, and any combination is a sum over those - no "
+        "estimates and no raw data needed. Discovery is reported, never scored.")
     st.subheader("Dataset basket: project-level scores")
     st.markdown(
         f"A C2M2 datapackage is a whole program, but researchers usually pick projects or studies, so every "
@@ -579,10 +673,12 @@ def methods_page():
         "stored in `output/readiness_projects.json`; project descriptions there are shortened to "
         f"{rc.PROJECT_DESCRIPTION_CHARS} characters.\n\n"
         "**What \"meets your needs\" means.** For each project in the basket, the counts come from the same exact "
-        "combination counts as *Find ML-ready data*, at the record level you choose:\n"
-        f"- *{MEETS}*: every counted record has all the selected needs.\n"
-        f"- *{PARTLY}*: some do; the review shows how many, and which needs not every record has.\n"
-        f"- *{NOT_MET}*: none do, or the project has no records of that kind.\n\n"
+        "counts as *Find ML-ready data*, at the record level you choose, and your *Minimum records needed* "
+        "(default 100; there's no universal minimum for training AI - it depends on the model and task):\n"
+        f"- *{MEETS}*: at least the minimum number of records have every selected field.\n"
+        f"- *{PARTLY}*: some records do, but fewer than the minimum; the review shows how many, and which "
+        "fields not every record has.\n"
+        f"- *{NOT_MET}*: none do (or the project has no records of that kind).\n\n"
         "If a project and one of its sub-projects are both in the basket, the sub-project's records are counted "
         "once, as part of the parent.\n\n"
         "**What the export contains.** Everything is generated in your browser session; nothing is stored on the "
@@ -629,7 +725,7 @@ def upload_page():
         result = score_upload(file)
         if result:
             st.session_state["uploaded_result"] = result
-            st.success(f"Scored {file.name}. It also appears in the Program report card dropdown for this session.")
+            st.success(f"Scored {file.name}. It also appears in the Program report card and in Find ML-ready data (with any new fields it records) for this session.")
             report_card(result)
     footer()
 
@@ -667,6 +763,8 @@ def score_upload(file) -> dict | None:
 # `readiness_checker.py --projects`); nothing is scored or stored server-side.
 # ---------------------------------------------------------------------------
 MEETS, PARTLY, NOT_MET = "Meets your needs", "Partly", "Doesn't meet your needs"
+STATUS_RULE = (f"{MEETS}: at least the minimum number of records have every selected field. "
+               f"{PARTLY}: some records do, but fewer than the minimum. {NOT_MET}: none do.")
 STATUS_MARK = {MEETS: "●", PARTLY: "◐", NOT_MET: "○"}  # shape, not colour, tells them apart
 
 
@@ -690,24 +788,28 @@ def slug(text: str) -> str:
     return "".join(ch if ch.isalnum() else "-" for ch in text.lower()).strip("-")
 
 
-def assess(p: dict, requirements: list[str], level: str, chosen: list[str], labels: dict) -> dict:
-    """Does this project meet the needs? Exact counts from the project's stored combinations."""
-    combos = {"requirements": requirements, "levels": p["combinations"]}
+def assess(p: dict, field_order: list[str], level: str, chosen: list[str], catalog: dict, minimum: int) -> dict:
+    """Does this project meet the needs? Exact counts from the project's stored bitmasks.
+    Meets = at least `minimum` records have every chosen field; partly = some do, but fewer; not met = none."""
+    combos = {"fields": field_order, "levels": p["combinations"]}
     met, total = rc.count_meeting(combos, level, chosen)
     noun = finder_noun(level, chosen)
     # Each need on its own, out of the same records (single-organism subjects when sex/age apply).
-    organism_rule = level == "subject" and bool(rc.ORGANISM_REQUIREMENTS & set(chosen))
+    organism_rule = level == "subject" and bool(rc.ORGANISM_FIELDS & set(chosen))
     missing = []
     for need in chosen:
-        extra = [rc.SINGLE_ORGANISM_BIT] if organism_rule and need not in rc.ORGANISM_REQUIREMENTS else []
+        if need not in field_order:
+            missing.append(f"{catalog[need]['label'].lower()}: not recorded in this program")
+            continue
+        extra = [rc.SINGLE_ORGANISM_BIT] if organism_rule and need not in rc.ORGANISM_FIELDS else []
         n, _ = rc.count_meeting(combos, level, [need] + extra)
         if n < total:
-            missing.append(f"{labels[need].lower().replace(' ids', ' IDs')}: {n:,} of {total:,}")
+            missing.append(f"{wanted_text([need], catalog)}: {n:,} of {total:,}")
     indeterminate = p.get("sex_indeterminate", {}).get(level, 0) if "sex" in chosen else 0
     if indeterminate:
         missing.append(f"{indeterminate:,} {finder_noun(level, ['sex'])} have sex recorded only as Indeterminate "
                        "(not counted)")
-    status = NOT_MET if met == 0 else MEETS if met == total else PARTLY  # total == 0 -> met == 0
+    status = MEETS if met >= minimum else PARTLY if met > 0 else NOT_MET
     return {"met": met, "total": total, "noun": noun, "status": status, "missing": missing}
 
 
@@ -721,13 +823,13 @@ def included_in(p: dict, basket: set, by_key: dict) -> dict | None:
     return None
 
 
-def basket_review(data: dict, chosen: list[str], level: str, labels: dict) -> list[dict]:
+def basket_review(data: dict, chosen: list[str], level: str, catalog: dict, minimum: int) -> list[dict]:
     basket = st.session_state["basket"]
     in_basket = set(basket)
     reviewed = []
     for key in basket:
         p = data["by_key"][key]
-        a = assess(p, data["requirements"], level, chosen, labels)
+        a = assess(p, data["program_info"][p["program"]]["field_order"], level, chosen, catalog, minimum)
         parent = included_in(p, in_basket, data["by_key"])
         reviewed.append({"project": p, **a, "included_in": parent["name"] if parent else ""})
     return reviewed
@@ -755,7 +857,7 @@ def apply_editor(editor_key: str, shown_key: str, column: str):
 
 # -- exports (built in the browser session; nothing is written server-side) --
 
-def manifest_rows(reviewed: list[dict], data: dict, chosen: list[str], labels: dict) -> list[dict]:
+def manifest_rows(reviewed: list[dict], data: dict, chosen: list[str], catalog: dict, minimum: int) -> list[dict]:
     rows = []
     for r in reviewed:
         p, info = r["project"], data["program_info"][r["project"]["program"]]
@@ -769,7 +871,8 @@ def manifest_rows(reviewed: list[dict], data: dict, chosen: list[str], labels: d
             "subjects": p["record_counts"]["subject"],
             "biosamples": p["record_counts"]["biosample"],
             "files": p["record_counts"]["file"],
-            "needs": "; ".join(labels[c] for c in chosen),
+            "needs": "; ".join(catalog[c]["label"] for c in chosen),
+            "minimum_records": minimum,
             "counted": r["noun"],
             "qualifying": r["met"],
             "out_of": r["total"],
@@ -800,21 +903,12 @@ KEY_COLUMNS = {
     "biosample_disease": ["biosample_id_namespace", "biosample_local_id", "disease"],
     "subject_disease": ["subject_id_namespace", "subject_local_id", "disease"],
 }
-NEED_COLUMNS = {
-    "sex": {"subject": ["sex"]},
-    "age": {"subject": ["age_at_enrollment"], "biosample_from_subject": ["age_at_sampling"]},
-    "anatomy": {"biosample": ["anatomy"]},
-    "disease": {},  # the disease tables themselves (always listed when present)
-    "checksum": {"file": ["md5", "sha256"]},
-    "persistent_id": {t: ["persistent_id"] for t in ("project", "subject", "biosample", "file")},
-    "file_format": {"file": ["file_format"]},
-}
 NUMERIC_COLUMNS = {"age_at_enrollment": "sc:Float", "age_at_sampling": "sc:Float", "size_in_bytes": "sc:Integer"}
 
 
-def basket_croissant(reviewed: list[dict], data: dict, chosen: list[str], labels: dict) -> dict:
+def basket_croissant(reviewed: list[dict], data: dict, chosen: list[str], catalog: dict) -> dict:
     """Croissant 1.0 metadata describing the selection: each program's C2M2 release zip, the
-    tables inside it, and the columns that matter for the chosen needs. The selected projects
+    tables inside it, and the columns behind the chosen fields (from field discovery). The selected projects
     are named in the descriptions (C2M2 rows belong to a project via project_id_namespace/local_id)."""
     by_program: dict[str, list[dict]] = {}
     for r in reviewed:
@@ -830,11 +924,14 @@ def basket_croissant(reviewed: list[dict], data: dict, chosen: list[str], labels
             zip_obj["sha256"] = info["sha256"]
         distribution.append(zip_obj)
         ids = "; ".join(f"{p['name']} ({p['id'][0]} / {p['id'][1]})" for p in chosen_projects)
+        need_columns = [source.split(".", 1) for need in chosen for source in catalog[need]["sources"]]
         for table, columns in info["columns"].items():
-            wanted = list(KEY_COLUMNS.get(table, []))
-            for need in chosen:
-                wanted += NEED_COLUMNS[need].get(table, [])
-            fields = [c for c in dict.fromkeys(wanted) if c in columns]
+            wanted = [col for t, col in need_columns if t == table]
+            # Tables with a need's column, plus the core and link tables (always), with their keys.
+            if table not in KEY_COLUMNS and not wanted:
+                continue
+            keys = KEY_COLUMNS.get(table) or [c for c in columns if rc.is_key_column(c)]
+            fields = [c for c in dict.fromkeys(keys + wanted) if c in columns]
             if not fields:
                 continue
             file_id = f"{prefix}/{table}.tsv"
@@ -855,7 +952,7 @@ def basket_croissant(reviewed: list[dict], data: dict, chosen: list[str], labels
                            "source": {"fileObject": {"@id": file_id}, "extract": {"column": c}}}
                           for c in fields],
             })
-    needs_text = ", ".join(labels[c].lower() for c in chosen) or "none selected"
+    needs_text = ", ".join(catalog[c]["label"].lower() for c in chosen) or "none selected"
     return {
         "@context": {"@language": "en", "@vocab": "https://schema.org/", "cr": "http://mlcommons.org/croissant/",
                      "dct": "http://purl.org/dc/terms/", "sc": "https://schema.org/"},
@@ -876,13 +973,16 @@ def basket_croissant(reviewed: list[dict], data: dict, chosen: list[str], labels
     }
 
 
-def basket_report(reviewed: list[dict], data: dict, chosen: list[str], labels: dict, totals: dict) -> str:
-    needs_text = ", ".join(labels[c] for c in chosen)
+def basket_report(reviewed: list[dict], data: dict, chosen: list[str], catalog: dict, totals: dict,
+                  minimum: int) -> str:
+    needs_text = ", ".join(catalog[c]["label"] for c in chosen)
     lines = [
         "# Dataset basket summary", "",
         f"Generated {date.today().isoformat()} with the CFDE AI-readiness prototype ({REPO_URL}).", "",
         f"**{rc.DISCLAIMER}**", "",
         f"- Needs: {needs_text}; records counted: {reviewed[0]['noun'] if reviewed else 'records'}",
+        f"- Minimum records needed: {minimum:,} (there's no universal minimum for training AI; it depends on "
+        "the model and task)",
         f"- Projects in basket: {len(reviewed)}",
         f"- Meet your needs: {totals['meets']}; partly: {totals['partly']}; don't meet: {totals['not_met']}",
         f"- Qualifying records: {totals['qualifying']:,} {totals['noun']}"
@@ -904,15 +1004,60 @@ def basket_report(reviewed: list[dict], data: dict, chosen: list[str], labels: d
                      + (f" (sha256 `{info['sha256']}`)" if info["sha256"] else ""))
     lines += ["", "## How this was counted", "",
               f"- {data['rules']}",
-              f"- {MEETS}: every counted record has all the needs. {PARTLY}: some do. "
-              f"{NOT_MET}: none do, or there are no such records.",
+              f"- {STATUS_RULE}",
               f"- {data['combination_rules']}"]
     return "\n".join(lines) + "\n"
 
 
+FIELD_TABLE_MAX_PROJECTS = 200
+
+
+def cell_style(pct) -> str:
+    """Blue-scale cell (darker = more filled), gray when the field isn't recorded; readable text on both."""
+    if pct is None or pd.isna(pct):
+        return f"background-color: {NA_FILL}; color: {INK_ON_LIGHT}"
+    colour = BLUE_RAMP[round(pct / 100 * (len(BLUE_RAMP) - 1))]
+    return f"background-color: {colour}; color: {ink(pct)}"
+
+
+def project_field_table(shown: list[dict], data: dict, catalog: dict):
+    """One row per project, one column per discovered field: % of the project's records with it."""
+    projects = shown[:FIELD_TABLE_MAX_PROJECTS]
+    if not projects:
+        return
+    rows = []
+    for p in projects:
+        order = data["program_info"][p["program"]]["field_order"]
+        stats = {order[bit]: (filled, total) for bit, filled, total, _, _ in p["fields"]}
+        rows.append({"Program": p["program"], "Project": p["name"],
+                     **{fid: (100 * stats[fid][0] / stats[fid][1] if stats.get(fid, (0, 0))[0] and stats[fid][1]
+                              else None) for fid in catalog}})
+    table = pd.DataFrame(rows)
+    # Only fields at least one shown project records, in group order.
+    fields = sorted((f for f in catalog if table[f].notna().any()),
+                    key=lambda f: (rc.FIELD_GROUPS.index(catalog[f]["group"]), catalog[f]["label"].lower()))
+    table = table[["Program", "Project"] + fields].rename(columns={f: catalog[f]["label"] for f in fields})
+    labels = [catalog[f]["label"] for f in fields]
+    st.markdown("##### What the shown projects record")
+    st.caption("% of each project's records with each field: darker blue = more filled, gray = not recorded. "
+               + (f"Showing the first {FIELD_TABLE_MAX_PROJECTS} of {len(shown):,} shown projects; search or filter "
+                  "to narrow the list." if len(shown) > FIELD_TABLE_MAX_PROJECTS else ""))
+    # Show "83%" or "-" as text; colour each cell from its number.
+    numbers = table[labels]
+    shown_text = table.copy()
+    shown_text[labels] = numbers.map(lambda v: "-" if pd.isna(v) else f"{v:.0f}%")
+    styles = pd.DataFrame("", index=table.index, columns=table.columns)
+    styles[labels] = numbers.map(cell_style)
+    styled = shown_text.style.apply(lambda _: styles, axis=None)
+    st.dataframe(styled, hide_index=True, width="stretch", height=min(38 + 35 * len(table), 380),
+                 column_config={"Program": st.column_config.TextColumn(width=165),
+                                "Project": st.column_config.TextColumn(width=280),
+                                **{lb: st.column_config.Column(width=max(70, 8 * len(lb) + 24)) for lb in labels}})
+
+
 def basket_page():
     data = load_projects()
-    labels = load_comparison()["requirements"]
+    catalog = field_catalog()
     ss = st.session_state
     ss.setdefault("basket", [])
     ss.setdefault("basket_version", 0)
@@ -973,18 +1118,20 @@ def basket_page():
               disabled=not to_add, on_click=basket_set, args=(to_add, True), key="basket_add_all")
     b2.button("Empty the basket", disabled=not basket, on_click=basket_set, args=(list(ss["basket"]), False),
               key="basket_clear")
+    project_field_table(shown, data, catalog)
 
     # ---- 2. Needs -------------------------------------------------------------------
     st.subheader("2. Set your needs")
-    chosen = needs_checkboxes(labels, "basket")
-    level = level_choice(chosen, "basket") if chosen else "subject"
-    if chosen and rc.ORGANISM_REQUIREMENTS & set(chosen):
+    chosen = needs_checkboxes(catalog, "basket")
+    minimum = minimum_records("basket")
+    level = level_choice(chosen, catalog, "basket") if chosen else "subject"
+    if chosen and rc.ORGANISM_FIELDS & set(chosen):
         st.caption("Sex and age count only for single-organism subjects (human or animal), as elsewhere in the app."
                    + (f" **{SEX_RULE}**" if "sex" in chosen else ""))
 
     # ---- 3. Review ------------------------------------------------------------------
     st.subheader("3. Review")
-    reviewed = basket_review(data, chosen, level, labels) if chosen else []
+    reviewed = basket_review(data, chosen, level, catalog, minimum) if chosen else []
     counted = [r for r in reviewed if not r["included_in"]]
     totals = {"meets": sum(r["status"] == MEETS for r in reviewed),
               "partly": sum(r["status"] == PARTLY for r in reviewed),
@@ -1007,7 +1154,8 @@ def basket_page():
             "Within": r["included_in"]} for r in reviewed])
         ss["basket_review_keys"] = [r["project"]["key"] for r in reviewed]
         review_key = f"basket_review_{version}"
-        st.caption("● meets your needs: every counted record has all of them · ◐ partly: some records do · "
+        st.caption(f"● meets your needs: at least {minimum:,} records have everything selected · ◐ partly: some "
+                   f"do, but fewer than {minimum:,} · "
                    "○ doesn't meet your needs: none do. Untick **Keep** to remove a project.")
         st.data_editor(
             review_table, key=review_key, hide_index=True, width="stretch",
@@ -1040,8 +1188,8 @@ def basket_page():
     if not reviewed:
         st.info("Add projects and choose at least one need to export a selection.")
     else:
-        rows = manifest_rows(reviewed, data, chosen, labels)
-        croissant = basket_croissant(reviewed, data, chosen, labels)
+        rows = manifest_rows(reviewed, data, chosen, catalog, minimum)
+        croissant = basket_croissant(reviewed, data, chosen, catalog)
         errors = rc.validate_croissant(croissant)
         # Two rows of two, so button labels are never cut off on narrower screens.
         e1, e2 = st.columns(2)
@@ -1050,13 +1198,14 @@ def basket_page():
                            "text/csv", key="export_csv", on_click="ignore", width="stretch")
         e2.download_button("Manifest (JSON)",
                            json.dumps({"generated": date.today().isoformat(), "disclaimer": rc.DISCLAIMER,
-                                       "needs": chosen, "counted": totals["noun"], "projects": rows}, indent=2),
+                                       "needs": chosen, "minimum_records": minimum, "counted": totals["noun"],
+                                       "projects": rows}, indent=2),
                            "basket_manifest.json", "application/json", key="export_json", on_click="ignore",
                            width="stretch")
         e3.download_button("Croissant metadata (JSON-LD)", json.dumps(croissant, indent=2),
                            "basket_croissant.json", "application/ld+json", key="export_croissant",
                            on_click="ignore", width="stretch")
-        e4.download_button("Summary report (Markdown)", basket_report(reviewed, data, chosen, labels, totals),
+        e4.download_button("Summary report (Markdown)", basket_report(reviewed, data, chosen, catalog, totals, minimum),
                            "basket_summary.md", "text/markdown", key="export_md", on_click="ignore",
                            width="stretch")
         st.caption("The manifest lists each project with its record counts, qualifying counts, C2M2 download URL "

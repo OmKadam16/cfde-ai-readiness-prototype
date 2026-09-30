@@ -229,33 +229,100 @@
           "total": 5
         }
       ],
+      "fields": [
+        {
+          "id": "biosample.anatomy",
+          "label": "Anatomy",
+          "group": "Biological sample",
+          "entity": [
+            "biosample"
+          ],
+          "sources": [
+            "biosample.anatomy"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": true,
+          "organism": false,
+          "records_filled": 2,
+          "records_total": 2,
+          "distinct_values": 2,
+          "top_values": [
+            [
+              "posterior fornix of vagina",
+              "",
+              1
+            ],
+            [
+              "Feces",
+              "",
+              1
+            ]
+          ]
+        },
+        {
+          "id": "persistent_id",
+          "label": "Persistent IDs",
+          "group": "File/technical",
+          "entity": [
+            "subject",
+            "biosample",
+            "file"
+          ],
+          "sources": [
+            "subject.persistent_id",
+            "biosample.persistent_id",
+            "file.persistent_id"
+          ],
+          "kind": "per_record",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 0,
+          "records_total": 4,
+          "distinct_values": 2
+        }
+      ],
       "combinations": {
-        "requirements": [
-          "sex",
+        "fields": [
           "age",
-          "anatomy",
+          "biosample.anatomy",
+          "biosample.biofluid",
+          "biosample.sample_prep_method",
+          "creation_time",
           "disease",
-          "checksum",
+          "file.assay_type",
+          "file.data_type",
+          "file.file_format",
+          "file.size_in_bytes",
           "persistent_id",
-          "file_format",
-          "single_organism"
+          "sex",
+          "subject.ethnicity",
+          "subject.granularity",
+          "_single_organism"
         ],
         "levels": {
           "subject": {
             "total": 2,
-            "patterns": {
-              "00100001": 2
-            }
+            "patterns": [
+              [
+                16386,
+                2
+              ]
+            ]
           },
           "biosample": {
             "total": 2,
-            "patterns": {
-              "00100000": 2
-            }
+            "patterns": [
+              [
+                2,
+                2
+              ]
+            ]
           },
           "file": {
             "total": 0,
-            "patterns": {}
+            "patterns": []
           }
         },
         "sex_indeterminate": {
@@ -513,37 +580,155 @@
           "total": 10
         }
       ],
+      "fields": [
+        {
+          "id": "biosample.anatomy",
+          "label": "Anatomy",
+          "group": "Biological sample",
+          "entity": [
+            "biosample"
+          ],
+          "sources": [
+            "biosample.anatomy"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": true,
+          "organism": false,
+          "records_filled": 1,
+          "records_total": 3,
+          "distinct_values": 1,
+          "top_values": [
+            [
+              "neck",
+              "",
+              1
+            ]
+          ]
+        },
+        {
+          "id": "file.assay_type",
+          "label": "Assay type",
+          "group": "Molecular",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.assay_type"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1,
+          "records_total": 1,
+          "distinct_values": 1,
+          "top_values": [
+            [
+              "OBI:0002117",
+              "",
+              1
+            ]
+          ]
+        },
+        {
+          "id": "creation_time",
+          "label": "Creation time",
+          "group": "File/technical",
+          "entity": [
+            "subject",
+            "biosample",
+            "file"
+          ],
+          "sources": [
+            "subject.creation_time",
+            "biosample.creation_time",
+            "file.creation_time"
+          ],
+          "kind": "per_record",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 3,
+          "records_total": 7,
+          "distinct_values": 3
+        },
+        {
+          "id": "persistent_id",
+          "label": "Persistent IDs",
+          "group": "File/technical",
+          "entity": [
+            "subject",
+            "biosample",
+            "file"
+          ],
+          "sources": [
+            "subject.persistent_id",
+            "biosample.persistent_id",
+            "file.persistent_id"
+          ],
+          "kind": "per_record",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 0,
+          "records_total": 7,
+          "distinct_values": 2
+        }
+      ],
       "combinations": {
-        "requirements": [
-          "sex",
+        "fields": [
           "age",
-          "anatomy",
+          "biosample.anatomy",
+          "biosample.biofluid",
+          "biosample.sample_prep_method",
+          "creation_time",
           "disease",
-          "checksum",
+          "file.assay_type",
+          "file.data_type",
+          "file.file_format",
+          "file.size_in_bytes",
           "persistent_id",
-          "file_format",
-          "single_organism"
+          "sex",
+          "subject.ethnicity",
+          "subject.granularity",
+          "_single_organism"
         ],
         "levels": {
           "subject": {
             "total": 3,
-            "patterns": {
-              "00000001": 2,
-              "00100001": 1
-            }
+            "patterns": [
+              [
+                16384,
+                2
+              ],
+              [
+                16386,
+                1
+              ]
+            ]
           },
           "biosample": {
             "total": 3,
-            "patterns": {
-              "00000000": 2,
-              "00100000": 1
-            }
+            "patterns": [
+              [
+                16,
+                2
+              ],
+              [
+                18,
+                1
+              ]
+            ]
           },
           "file": {
             "total": 1,
-            "patterns": {
-              "00100000": 1
-            }
+            "patterns": [
+              [
+                66,
+                1
+              ]
+            ]
           }
         },
         "sex_indeterminate": {
@@ -799,37 +984,180 @@
           "total": 8
         }
       ],
+      "fields": [
+        {
+          "id": "disease",
+          "label": "Disease",
+          "group": "Clinical/disease",
+          "entity": [
+            "biosample"
+          ],
+          "sources": [
+            "biosample_disease.disease"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": true,
+          "organism": false,
+          "records_filled": 2,
+          "records_total": 3,
+          "distinct_values": 1,
+          "top_values": [
+            [
+              "breast carcinoma",
+              "",
+              2
+            ]
+          ]
+        },
+        {
+          "id": "biosample.anatomy",
+          "label": "Anatomy",
+          "group": "Biological sample",
+          "entity": [
+            "biosample"
+          ],
+          "sources": [
+            "biosample.anatomy"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": true,
+          "organism": false,
+          "records_filled": 2,
+          "records_total": 3,
+          "distinct_values": 1,
+          "top_values": [
+            [
+              "Breast",
+              "",
+              2
+            ]
+          ]
+        },
+        {
+          "id": "biosample.sample_prep_method",
+          "label": "Sample prep",
+          "group": "Biological sample",
+          "entity": [
+            "biosample"
+          ],
+          "sources": [
+            "biosample.sample_prep_method"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": true,
+          "organism": false,
+          "records_filled": 3,
+          "records_total": 3,
+          "distinct_values": 1,
+          "top_values": [
+            [
+              "maintaining cell culture",
+              "",
+              3
+            ]
+          ]
+        },
+        {
+          "id": "creation_time",
+          "label": "Creation time",
+          "group": "File/technical",
+          "entity": [
+            "subject",
+            "biosample",
+            "file"
+          ],
+          "sources": [
+            "subject.creation_time",
+            "biosample.creation_time",
+            "file.creation_time"
+          ],
+          "kind": "per_record",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 2,
+          "records_total": 6,
+          "distinct_values": 1
+        },
+        {
+          "id": "persistent_id",
+          "label": "Persistent IDs",
+          "group": "File/technical",
+          "entity": [
+            "subject",
+            "biosample",
+            "file"
+          ],
+          "sources": [
+            "subject.persistent_id",
+            "biosample.persistent_id",
+            "file.persistent_id"
+          ],
+          "kind": "per_record",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 0,
+          "records_total": 6,
+          "distinct_values": 2
+        }
+      ],
       "combinations": {
-        "requirements": [
-          "sex",
+        "fields": [
           "age",
-          "anatomy",
+          "biosample.anatomy",
+          "biosample.biofluid",
+          "biosample.sample_prep_method",
+          "creation_time",
           "disease",
-          "checksum",
+          "file.assay_type",
+          "file.data_type",
+          "file.file_format",
+          "file.size_in_bytes",
           "persistent_id",
-          "file_format",
-          "single_organism"
+          "sex",
+          "subject.ethnicity",
+          "subject.granularity",
+          "_single_organism"
         ],
         "levels": {
           "subject": {
             "total": 2,
-            "patterns": {
-              "00000001": 1,
-              "00110001": 1
-            }
+            "patterns": [
+              [
+                16392,
+                1
+              ],
+              [
+                16426,
+                1
+              ]
+            ]
           },
           "biosample": {
             "total": 3,
-            "patterns": {
-              "00000000": 1,
-              "00110000": 2
-            }
+            "patterns": [
+              [
+                8,
+                1
+              ],
+              [
+                58,
+                2
+              ]
+            ]
           },
           "file": {
             "total": 1,
-            "patterns": {
-              "00000000": 1
-            }
+            "patterns": [
+              [
+                8,
+                1
+              ]
+            ]
           }
         },
         "sex_indeterminate": {
@@ -1062,33 +1390,120 @@
           "total": 3
         }
       ],
+      "fields": [
+        {
+          "id": "biosample.anatomy",
+          "label": "Anatomy",
+          "group": "Biological sample",
+          "entity": [
+            "biosample"
+          ],
+          "sources": [
+            "biosample.anatomy"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": true,
+          "organism": false,
+          "records_filled": 1,
+          "records_total": 1,
+          "distinct_values": 1,
+          "top_values": [
+            [
+              "Brain",
+              "",
+              1
+            ]
+          ]
+        },
+        {
+          "id": "biosample.sample_prep_method",
+          "label": "Sample prep",
+          "group": "Biological sample",
+          "entity": [
+            "biosample"
+          ],
+          "sources": [
+            "biosample.sample_prep_method"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": true,
+          "organism": false,
+          "records_filled": 1,
+          "records_total": 1,
+          "distinct_values": 1,
+          "top_values": [
+            [
+              "collecting specimen from organism",
+              "",
+              1
+            ]
+          ]
+        },
+        {
+          "id": "creation_time",
+          "label": "Creation time",
+          "group": "File/technical",
+          "entity": [
+            "subject",
+            "biosample",
+            "file"
+          ],
+          "sources": [
+            "subject.creation_time",
+            "biosample.creation_time",
+            "file.creation_time"
+          ],
+          "kind": "per_record",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1,
+          "records_total": 2,
+          "distinct_values": 1
+        }
+      ],
       "combinations": {
-        "requirements": [
-          "sex",
+        "fields": [
           "age",
-          "anatomy",
+          "biosample.anatomy",
+          "biosample.biofluid",
+          "biosample.sample_prep_method",
+          "creation_time",
           "disease",
-          "checksum",
+          "file.assay_type",
+          "file.data_type",
+          "file.file_format",
+          "file.size_in_bytes",
           "persistent_id",
-          "file_format",
-          "single_organism"
+          "sex",
+          "subject.ethnicity",
+          "subject.granularity",
+          "_single_organism"
         ],
         "levels": {
           "subject": {
             "total": 1,
-            "patterns": {
-              "00100001": 1
-            }
+            "patterns": [
+              [
+                16394,
+                1
+              ]
+            ]
           },
           "biosample": {
             "total": 1,
-            "patterns": {
-              "00100000": 1
-            }
+            "patterns": [
+              [
+                26,
+                1
+              ]
+            ]
           },
           "file": {
             "total": 0,
-            "patterns": {}
+            "patterns": []
           }
         },
         "sex_indeterminate": {
@@ -1344,35 +1759,207 @@
           "total": 10
         }
       ],
+      "fields": [
+        {
+          "id": "biosample.anatomy",
+          "label": "Anatomy",
+          "group": "Biological sample",
+          "entity": [
+            "biosample"
+          ],
+          "sources": [
+            "biosample.anatomy"
+          ],
+          "kind": "linked",
+          "file_only": false,
+          "no_subject_level": true,
+          "organism": false,
+          "records_filled": 3,
+          "records_total": 3,
+          "distinct_values": 3,
+          "top_values": [
+            [
+              "urinary bladder",
+              "",
+              1
+            ],
+            [
+              "cardiac nerve plexus",
+              "",
+              1
+            ],
+            [
+              "stomach",
+              "",
+              1
+            ]
+          ]
+        },
+        {
+          "id": "file.assay_type",
+          "label": "Assay type",
+          "group": "Molecular",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.assay_type"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1,
+          "records_total": 1,
+          "distinct_values": 1,
+          "top_values": [
+            [
+              "OBI:0002119",
+              "",
+              1
+            ]
+          ]
+        },
+        {
+          "id": "file.data_type",
+          "label": "Data type",
+          "group": "Molecular",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.data_type"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1,
+          "records_total": 1,
+          "distinct_values": 1,
+          "top_values": [
+            [
+              "Image",
+              "",
+              1
+            ]
+          ]
+        },
+        {
+          "id": "creation_time",
+          "label": "Creation time",
+          "group": "File/technical",
+          "entity": [
+            "subject",
+            "biosample",
+            "file"
+          ],
+          "sources": [
+            "subject.creation_time",
+            "biosample.creation_time",
+            "file.creation_time"
+          ],
+          "kind": "per_record",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1,
+          "records_total": 7,
+          "distinct_values": 1
+        },
+        {
+          "id": "file.size_in_bytes",
+          "label": "File size",
+          "group": "File/technical",
+          "entity": [
+            "file"
+          ],
+          "sources": [
+            "file.size_in_bytes"
+          ],
+          "kind": "linked",
+          "file_only": true,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1,
+          "records_total": 1,
+          "distinct_values": 1,
+          "top_values": [
+            [
+              "1153434",
+              "",
+              1
+            ]
+          ]
+        },
+        {
+          "id": "persistent_id",
+          "label": "Persistent IDs",
+          "group": "File/technical",
+          "entity": [
+            "subject",
+            "biosample",
+            "file"
+          ],
+          "sources": [
+            "subject.persistent_id",
+            "biosample.persistent_id",
+            "file.persistent_id"
+          ],
+          "kind": "per_record",
+          "file_only": false,
+          "no_subject_level": false,
+          "organism": false,
+          "records_filled": 1,
+          "records_total": 7,
+          "distinct_values": 3
+        }
+      ],
       "combinations": {
-        "requirements": [
-          "sex",
+        "fields": [
           "age",
-          "anatomy",
+          "biosample.anatomy",
+          "biosample.biofluid",
+          "biosample.sample_prep_method",
+          "creation_time",
           "disease",
-          "checksum",
+          "file.assay_type",
+          "file.data_type",
+          "file.file_format",
+          "file.size_in_bytes",
           "persistent_id",
-          "file_format",
-          "single_organism"
+          "sex",
+          "subject.ethnicity",
+          "subject.granularity",
+          "_single_organism"
         ],
         "levels": {
           "subject": {
             "total": 3,
-            "patterns": {
-              "00100001": 3
-            }
+            "patterns": [
+              [
+                16386,
+                3
+              ]
+            ]
           },
           "biosample": {
             "total": 3,
-            "patterns": {
-              "00100000": 3
-            }
+            "patterns": [
+              [
+                2,
+                3
+              ]
+            ]
           },
           "file": {
             "total": 1,
-            "patterns": {
-              "00100100": 1
-            }
+            "patterns": [
+              [
+                1746,
+                1
+              ]
+            ]
           }
         },
         "sex_indeterminate": {

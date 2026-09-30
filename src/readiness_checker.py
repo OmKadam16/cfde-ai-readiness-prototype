@@ -51,6 +51,7 @@ package; and readiness_comparison.md for --compare.
 """
 
 import argparse
+import hashlib
 import json
 import re
 from datetime import date
@@ -127,6 +128,20 @@ PERSISTENT_ID_PATTERN = re.compile(
 # draft-C2M2_specification/README.md). Sex and age are only checked for
 # single organisms -- humans and animals alike.
 SINGLE_ORGANISM = "cfde_subject_granularity:0"
+# Data quality note threshold: mention ages of exactly 0 when they are at least
+# this share of the recorded ages.
+ZERO_AGE_SHARE = 0.05
+# CFDE sex vocabulary (nih-cfde/c2m2, internal_CFDE_CV_reference_tables/subject_sex.tsv).
+INDETERMINATE_SEX = "cfde_subject_sex:0"
+KNOWN_SEX = ["cfde_subject_sex:1", "cfde_subject_sex:2"]  # Female, Male: what the finder counts as "sex"
+SEX_NAMES = {
+    "cfde_subject_sex:0": "Indeterminate",
+    "cfde_subject_sex:1": "Female",
+    "cfde_subject_sex:2": "Male",
+    "cfde_subject_sex:3": "Intersex",
+    "cfde_subject_sex:4": "Transsexual (MTF)",
+    "cfde_subject_sex:5": "Transsexual (FTM)",
+}
 GRANULARITY_NAMES = {
     "cfde_subject_granularity:0": "single-organism",
     "cfde_subject_granularity:1": "symbiont-system",
@@ -185,6 +200,8 @@ MIN_COLUMNS = {
 # Our hand-collected sample has none of these.
 TERM_TABLES = ["anatomy", "biofluid", "sample_prep_method", "assay_type", "analysis_type",
                "file_format", "data_type", "disease"]
+# Further term tables used only to label values in field discovery (not scored).
+LABEL_TABLES = ["gene", "substance", "compound", "phenotype", "ncbi_taxonomy", "protein"]
 
 
 def read_tsv(path: Path) -> pd.DataFrame | None:
@@ -205,6 +222,12 @@ def load_tables(data_dir: Path) -> dict[str, pd.DataFrame]:
     # quality notes can report stray whitespace.
     term_frames = [df[["id", "name"]].assign(table=name) for name in TERM_TABLES
                    if (df := read_tsv(data_dir / f"{name}.tsv")) is not None and {"id", "name"} <= set(df.columns)]
+    # Other term tables (gene, substance, phenotype, ncbi_taxonomy, ...) label discovered field values.
+    extra = [df[["id", "name"]].assign(table=path.stem) for path in sorted(data_dir.glob("*.tsv"))
+             if path.stem in LABEL_TABLES and path.stat().st_size
+             and {"id", "name"} <= set((df := pd.read_csv(path, sep="\t", dtype=str)).columns)]
+    tables["value_labels"] = (pd.concat(extra, ignore_index=True) if extra
+                              else pd.DataFrame(columns=["id", "name", "table"]))
     tables["term_names"] = (pd.concat(term_frames, ignore_index=True) if term_frames
                             else pd.DataFrame(columns=["id", "name", "table"]))
 
@@ -212,6 +235,8 @@ def load_tables(data_dir: Path) -> dict[str, pd.DataFrame]:
         df = read_tsv(data_dir / f"{lookup}.tsv")
         if df is not None:
             tables[lookup] = df
+    # Every <entity>_<x>.tsv that links records to values, for field discovery.
+    tables["assoc"] = find_association_tables(data_dir)
     return tables
 
 
@@ -231,6 +256,9 @@ def split_by_namespace(tables: dict[str, pd.DataFrame]) -> dict[str, dict[str, p
         prog = {name: tables[name][tables[name][namespace_column(tables[name])] == ns].reset_index(drop=True)
                 for name in PER_PROGRAM_TABLES}
         prog["term_names"] = tables["term_names"]  # shared lookup, not split
+        prog["value_labels"] = tables["value_labels"]
+        prog["assoc"] = {name: df[df[namespace_column(df)] == ns].reset_index(drop=True)
+                         for name, df in tables["assoc"].items()}
         programs[ns] = prog
     return programs
 
@@ -378,6 +406,14 @@ def value_scheme(value: str) -> str:
     return match.group(1) if match else "(no scheme)"
 
 
+def organism_mask(subjects: pd.DataFrame) -> pd.Series:
+    """True for single-organism subjects (or subjects with no granularity recorded)."""
+    if "granularity" not in subjects.columns:
+        return pd.Series(True, index=subjects.index)
+    granularity = subjects["granularity"].astype("string").str.strip()
+    return (granularity == SINGLE_ORGANISM).fillna(False).astype(bool) | ~filled_mask(subjects["granularity"])
+
+
 def organism_subjects(subjects: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     """Subjects whose sex and age are checked: single organisms (human or animal).
     Cell lines, microbiomes, synthetic entities etc. are excluded and reported.
@@ -386,9 +422,9 @@ def organism_subjects(subjects: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     if "granularity" not in subjects.columns:
         return subjects, (["subject.tsv has no granularity column, so all subjects are treated as single organisms"]
                           if len(subjects) else [])
+    keep = organism_mask(subjects)
     granularity = subjects["granularity"].astype("string").str.strip()
     blank = ~filled_mask(subjects["granularity"])
-    keep = (granularity == SINGLE_ORGANISM).fillna(False).astype(bool) | blank
     info = []
     excluded = granularity[~keep].value_counts()
     if len(excluded):
@@ -571,15 +607,21 @@ def score_sustainability(prog):
     ], "This program has no file records, so there is nothing whose long-term access can be checked.")
 
 
-def score_computability(prog):
+def score_computability(prog, croissant: dict | None = None):
+    """`croissant`: an already-computed croissant_valid check to reuse (projects
+    inherit it from their package) instead of building Croissant again."""
     files = prog["file"]
     n_format = count_filled(files, "file_format")
 
     # Build Croissant for just this program's records and run the same
     # structural validator used on the full output.
-    errors = validate_croissant(build_croissant({t: prog[t] for t in CORE_TABLES}))
-    croissant_detail = ("Croissant generated for this program's records and passed validate_croissant.py"
-                        if not errors else f"Croissant failed validation: {'; '.join(errors)}")
+    if croissant is not None:
+        errors = [] if croissant["passed"] else [croissant["detail"]]
+        croissant_detail = croissant["detail"]
+    else:
+        errors = validate_croissant(build_croissant({t: prog[t] for t in CORE_TABLES}))
+        croissant_detail = ("Croissant generated for this program's records and passed validate_croissant.py"
+                            if not errors else f"Croissant failed validation: {'; '.join(errors)}")
 
     # With no files, the Croissant check alone would give a misleading 100:
     # there is no actual data for a model to compute on.
@@ -647,31 +689,160 @@ METHODS = [
 # Field coverage and requirement combinations (reported, never scored)
 # ---------------------------------------------------------------------------
 
-# Requirements a researcher might need for a model. For each level (subject,
-# biosample, file) we record, per record, which requirements it meets, and
-# store how many records share each combination. Any "has all of X, Y, Z"
-# count is then an exact sum over those combinations -- nothing is estimated.
-REQUIREMENTS = [
-    ("sex", "Sex"),
-    ("age", "Age"),
-    ("anatomy", "Anatomy"),
-    ("disease", "Disease labels"),
-    ("checksum", "Checksums"),
-    ("persistent_id", "Persistent IDs"),
-    ("file_format", "File format"),
-]
-FILE_ONLY_REQUIREMENTS = {"checksum", "file_format"}
+# Field discovery. Instead of a fixed list, every column that holds information
+# about a subject, biosample or file is found in whatever tables the package
+# has: the entity tables themselves (subject.tsv, biosample.tsv, file.tsv) and
+# every association table named <entity>_<something>.tsv (subject_race,
+# subject_phenotype, biosample_gene, subject_role_taxonomy, ...). A field is
+# available when at least one record has a value for it.
+#
+# A few C2M2 attributes are recorded in more than one place; they are merged
+# into one field so a single checkbox means "has it, wherever it is recorded":
+#   age        subject.age_at_enrollment, biosample_from_subject.age_at_sampling
+#   disease    subject_disease.disease, biosample_disease.disease
+#   checksum   file.md5, file.sha256
+# Two fields are about each record itself, at whatever level is counted:
+#   persistent_id  the record's own persistent_id (files: also a persistent-identifier access_url)
+#   creation_time  the record's own creation_time
+#
+# Counting is exact. For each level (subject, biosample, file) every record
+# gets a bitmask with one bit per field it has (after following links, below),
+# and we store how many records share each bitmask. "How many records have all
+# of X, Y, Z" is then a sum over the stored bitmasks -- for any combination,
+# with no estimation and no raw data needed.
+ENTITIES = ["subject", "biosample", "file"]
+QUALIFIER_COLUMNS = {"association_type", "role_id"}  # describe a link, not the record
+IDENTIFIER_COLUMNS = {"filename"}                     # names/identifiers, not information
+MERGED_FIELDS = {
+    "age": [("subject", "age_at_enrollment"), ("biosample_from_subject", "age_at_sampling")],
+    "disease": [("subject_disease", "disease"), ("biosample_disease", "disease")],
+    "checksum": [("file", "md5"), ("file", "sha256")],
+}
+PER_RECORD_FIELDS = {"persistent_id": "persistent_id", "creation_time": "creation_time"}
+ORGANISM_FIELDS = {"sex", "age"}      # counted only for single-organism subjects
+SINGLE_ORGANISM_BIT = "_single_organism"  # hidden bit: sets the denominator for sex/age
+FIELD_GROUPS = ["Demographics", "Clinical/disease", "Biological sample", "Molecular", "File/technical"]
+# Plain-English names and groups for known fields; anything else gets a name
+# built from its column and a group from its entity.
+KNOWN_FIELDS = {
+    "sex": ("Sex", "Demographics"),
+    "age": ("Age", "Demographics"),
+    "subject.ethnicity": ("Ethnicity", "Demographics"),
+    "subject_race.race": ("Race", "Demographics"),
+    "subject.granularity": ("Subject type", "Demographics"),
+    "subject_role_taxonomy.taxonomy_id": ("Organism", "Demographics"),
+    "disease": ("Disease", "Clinical/disease"),
+    "subject_phenotype.phenotype": ("Phenotype", "Clinical/disease"),
+    "subject_substance.substance": ("Substance (subject)", "Clinical/disease"),
+    "biosample.anatomy": ("Anatomy", "Biological sample"),
+    "biosample.biofluid": ("Biofluid", "Biological sample"),
+    "biosample.sample_prep_method": ("Sample prep", "Biological sample"),
+    "biosample_gene.gene": ("Gene (sample)", "Molecular"),
+    "biosample_substance.substance": ("Substance (sample)", "Molecular"),
+    "file.assay_type": ("Assay type", "Molecular"),
+    "file.analysis_type": ("Analysis type", "Molecular"),
+    "file.data_type": ("Data type", "Molecular"),
+    "file.file_format": ("File format", "File/technical"),
+    "file.compression_format": ("Compression", "File/technical"),
+    "file.mime_type": ("MIME type", "File/technical"),
+    "checksum": ("Checksums", "File/technical"),
+    "file.size_in_bytes": ("File size", "File/technical"),
+    "file.uncompressed_size_in_bytes": ("Uncompressed size", "File/technical"),
+    "file.access_url": ("Access URL", "File/technical"),
+    "file.dbgap_study_id": ("dbGaP study ID", "File/technical"),
+    "persistent_id": ("Persistent IDs", "File/technical"),
+    "creation_time": ("Creation time", "File/technical"),
+}
+DEFAULT_GROUP = {"subject": "Demographics", "biosample": "Biological sample", "file": "File/technical"}
+# CFDE controlled vocabularies (nih-cfde/c2m2 internal_CFDE_CV_reference_tables), for value labels.
+CFDE_VOCABULARY = {
+    **SEX_NAMES,
+    **{k: v.replace("-", " ") for k, v in GRANULARITY_NAMES.items()},
+    "cfde_subject_race:0": "American Indian or Alaskan Native", "cfde_subject_race:1": "Asian or Pacific Islander",
+    "cfde_subject_race:2": "Black", "cfde_subject_race:3": "White", "cfde_subject_race:4": "Other",
+    "cfde_subject_ethnicity:0": "Hispanic or Latino", "cfde_subject_ethnicity:1": "not Hispanic or Latino",
+}
+TOP_VALUES = 5
 
 COMBINATION_RULES = (
-    "A record meets a requirement if it, or a record it is directly linked to, has the value. "
-    "Subjects: sex and age are their own (age also counts age_at_sampling on any of their biosamples); "
-    "anatomy and disease count if any of their biosamples has them (disease also via subject_disease). "
-    "Biosamples: anatomy is their own; sex, age and disease also come from their subject "
-    "(biosample_from_subject). Files: sex, age, anatomy and disease come from the biosamples and "
-    "subjects they describe (file_describes_biosample, file_describes_subject); checksums and file "
-    "format are the file's own. Persistent IDs are always the record's own. Records are linked only "
-    "through these C2M2 link tables, not through collections. Sex and age count for every subject "
-    "here, not only single organisms.")
+    "Fields are discovered from the tables each datapackage actually has. A record meets a need if it, or a "
+    "record it is directly linked to, has a value. Sex means Male or Female recorded; Indeterminate is not "
+    "counted, since a model can't use it (the Characterization score still counts any recorded sex value). "
+    "Sex and age count only for single-organism subjects (human or animal). "
+    "Subjects: their own fields, plus biosample fields recorded on any of their biosamples. "
+    "Biosamples: their own fields; a field that can be recorded on subjects (e.g. sex, age, disease) also "
+    "counts if their subject has it, including values recorded on the subject's other biosamples. "
+    "Files: the fields of the biosamples and subjects they describe (file_describes_biosample, "
+    "file_describes_subject), plus their own file fields; file fields (e.g. checksums, file format) can only be "
+    "counted per file. Persistent IDs and creation time are always the record's own. Records are linked only "
+    "through these C2M2 link tables, not through collections.")
+
+
+def is_key_column(column: str) -> bool:
+    return column in ("id_namespace", "local_id") or column.endswith(("_id_namespace", "_local_id"))
+
+
+def association_table_columns(data_dir: Path) -> dict[str, list[str]]:
+    """Every <entity>_<something>.tsv that links an entity to a value (e.g. subject_race.race), with the
+    columns to read (the entity's keys and the value columns). Read from headers only.
+    Link-only tables (file_describes_*, *_in_collection) have no value column and are skipped."""
+    found = {}
+    for path in sorted(data_dir.glob("*.tsv")):
+        entity = next((e for e in ENTITIES if path.stem.startswith(e + "_")), None)
+        if entity is None or path.stat().st_size == 0:
+            continue
+        header = list(pd.read_csv(path, sep="\t", nrows=0).columns)
+        keys = [f"{entity}_id_namespace", f"{entity}_local_id"]
+        values = [c for c in header if not is_key_column(c) and c not in QUALIFIER_COLUMNS]
+        if set(keys) <= set(header) and values:
+            found[path.stem] = keys + values
+    return found
+
+
+def find_association_tables(data_dir: Path) -> dict[str, pd.DataFrame]:
+    return {name: pd.read_csv(data_dir / f"{name}.tsv", sep="\t", dtype=str, usecols=columns)
+            for name, columns in association_table_columns(data_dir).items()}
+
+
+def field_sources(prog: dict) -> dict[str, dict]:
+    """Every candidate field in this package: id -> {label, group, entity, sources: [(table, column)], kind}."""
+    raw = []  # (table, column, entity)
+    for entity in ENTITIES:
+        for column in prog[entity].columns:
+            if not is_key_column(column) and column not in IDENTIFIER_COLUMNS and column not in PER_RECORD_FIELDS:
+                raw.append((entity, column, entity))
+    for table, df in prog.get("assoc", {}).items():
+        entity = next(e for e in ENTITIES if table.startswith(e + "_"))
+        for column in df.columns:
+            if not is_key_column(column) and column not in QUALIFIER_COLUMNS:
+                raw.append((table, column, entity))
+
+    merged_source = {src: fid for fid, sources in MERGED_FIELDS.items() for src in sources}
+    fields = {}
+    for table, column, entity in raw:
+        fid = "sex" if (table, column) == ("subject", "sex") else merged_source.get((table, column), f"{table}.{column}")
+        f = fields.setdefault(fid, {"id": fid, "entities": [], "sources": [], "kind": "linked"})
+        f["sources"].append([table, column])
+        if entity not in f["entities"]:
+            f["entities"].append(entity)
+    for fid, column in PER_RECORD_FIELDS.items():
+        sources = [[e, column] for e in ENTITIES if column in prog[e].columns]
+        if fid == "persistent_id" and "access_url" in prog["file"].columns:
+            sources.append(["file", "access_url"])
+        if sources:
+            fields[fid] = {"id": fid, "entities": [s[0] for s in sources if s[1] == column], "sources": sources,
+                           "kind": "per_record"}
+    for fid, f in fields.items():
+        entity = f["entities"][0]
+        default = (f["sources"][0][1].replace("_", " ").capitalize()
+                   + (f" ({entity})" if f["sources"][0][0] != entity else ""), DEFAULT_GROUP[entity])
+        f["label"], f["group"] = KNOWN_FIELDS.get(fid, default)
+        f["organism"] = fid in ORGANISM_FIELDS
+        # Fields recorded only on files can only be counted per file.
+        f["file_only"] = f["kind"] == "linked" and f["entities"] == ["file"]
+        # Fields with no subject-level source (e.g. anatomy) are counted per biosample or file.
+        f["no_subject_level"] = f["kind"] == "linked" and "subject" not in f["entities"] and not f["file_only"]
+    return fields
 
 
 def record_index(df: pd.DataFrame) -> pd.MultiIndex:
@@ -691,93 +862,185 @@ def positions(index: pd.MultiIndex, links: pd.DataFrame, entity: str) -> np.ndar
 def any_linked(n_from: int, from_pos: np.ndarray, to_pos: np.ndarray, to_flag: np.ndarray) -> np.ndarray:
     """For each 'from' record: does ANY record it links to have the flag?"""
     ok = (from_pos >= 0) & (to_pos >= 0)
-    hits = np.bincount(from_pos[ok], weights=to_flag[to_pos[ok]], minlength=n_from)
+    hits = np.bincount(from_pos[ok], weights=to_flag[to_pos[ok]].astype(float), minlength=n_from)
     return hits > 0
 
 
-def combination_counts(prog: dict[str, pd.DataFrame]) -> dict:
-    # Work on row numbers rather than string keys: the largest packages have
-    # millions of link rows. Duplicate keys (should not occur) keep their first row.
+def value_mask(df: pd.DataFrame, column: str, fid: str) -> np.ndarray:
+    """Which rows have a usable value. For sex, only Male or Female counts."""
+    if fid == "sex":
+        values = df[column].astype("string").str.strip() if column in df.columns else pd.Series(pd.NA, index=df.index)
+        return values.isin(KNOWN_SEX).fillna(False).to_numpy(dtype=bool)
+    return column_mask(df, column).to_numpy()
+
+
+def field_bitmasks(prog: dict, fields: dict | None = None) -> dict:
+    """Per level, how many records share each combination of fields (as bitmasks), plus the field list.
+    Also: how many records have sex recorded only as Indeterminate."""
+    fields = fields if fields is not None else field_sources(prog)
+    # Duplicate keys (should not occur) keep their first row.
     subjects, biosamples, files = (prog[t].drop_duplicates(["id_namespace", "local_id"]).reset_index(drop=True)
-                                   for t in ("subject", "biosample", "file"))
+                                   for t in ENTITIES)
     s_idx, b_idx, f_idx = record_index(subjects), record_index(biosamples), record_index(files)
-    n_s, n_b, n_f = len(subjects), len(biosamples), len(files)
+    n = {"subject": len(subjects), "biosample": len(biosamples), "file": len(files)}
+    frames = {"subject": subjects, "biosample": biosamples, "file": files}
 
     bfs = prog["biosample_from_subject"]
     bs_b, bs_s = positions(b_idx, bfs, "biosample"), positions(s_idx, bfs, "subject")
-    sampled = column_mask(bfs, "age_at_sampling").to_numpy()
     fdb, fds = prog["file_describes_biosample"], prog["file_describes_subject"]
     fb_f, fb_b = positions(f_idx, fdb, "file"), positions(b_idx, fdb, "biosample")
     fs_f, fs_s = positions(f_idx, fds, "file"), positions(s_idx, fds, "subject")
+    s_org = organism_mask(subjects).to_numpy()
+    b_org = any_linked(n["biosample"], bs_b, bs_s, s_org)
+    index_of = {"subject": s_idx, "biosample": b_idx, "file": f_idx}
 
-    def flagged(n: int, pos: np.ndarray) -> np.ndarray:
-        flags = np.zeros(n, dtype=bool)
-        flags[pos[pos >= 0]] = True
-        return flags
+    def own(fid: str, f: dict, entity: str) -> np.ndarray:
+        """Records of `entity` that have this field themselves (any of its sources on that entity)."""
+        flag = np.zeros(n[entity], dtype=bool)
+        for table, column in f["sources"]:
+            if table == entity:
+                if fid == "persistent_id":  # persistent_id, and access_url on files
+                    flag |= is_persistent(frames[entity], column).to_numpy()
+                else:
+                    flag |= value_mask(frames[entity], column, fid)
+            elif table == "biosample_from_subject" and entity == "biosample":
+                # a value on the biosample-subject link (age_at_sampling) belongs to the biosample
+                has = column_mask(bfs, column).to_numpy()
+                flag[bs_b[(bs_b >= 0) & has]] = True
+            elif table in prog.get("assoc", {}) and table.startswith(entity + "_"):
+                df = prog["assoc"][table]
+                rows = column_mask(df, column).to_numpy()
+                pos = positions(index_of[entity], df, entity)
+                flag[pos[(pos >= 0) & rows]] = True
+        if f["organism"]:
+            flag &= s_org if entity == "subject" else b_org if entity == "biosample" else flag
+        return flag
 
-    # Each record's own values.
-    s_sex = column_mask(subjects, "sex").to_numpy()
-    s_age = column_mask(subjects, "age_at_enrollment").to_numpy() | flagged(n_s, bs_s[sampled])
-    s_disease = flagged(n_s, positions(s_idx, prog["subject_disease"], "subject"))
-    s_pid = is_persistent(subjects, "persistent_id").to_numpy()
-    b_anatomy = column_mask(biosamples, "anatomy").to_numpy()
-    b_disease = flagged(n_b, positions(b_idx, prog["biosample_disease"], "biosample"))
-    b_age = flagged(n_b, bs_b[sampled])
-    b_pid = is_persistent(biosamples, "persistent_id").to_numpy()
+    levels = {lv: {} for lv in ENTITIES}
+    for fid, f in fields.items():
+        if f["kind"] == "per_record":
+            for lv in ENTITIES:
+                levels[lv][fid] = own(fid, f, lv)
+            continue
+        s_own = own(fid, f, "subject") if "subject" in f["entities"] else np.zeros(n["subject"], bool)
+        b_own = own(fid, f, "biosample") if "biosample" in f["entities"] else np.zeros(n["biosample"], bool)
+        f_own = own(fid, f, "file") if "file" in f["entities"] else np.zeros(n["file"], bool)
+        subject_level = s_own | any_linked(n["subject"], bs_s, bs_b, b_own)
+        if f["organism"]:
+            subject_level &= s_org
+        biosample_level = b_own | (any_linked(n["biosample"], bs_b, bs_s, subject_level)
+                                   if "subject" in f["entities"] else False)
+        file_level = (f_own | any_linked(n["file"], fb_f, fb_b, biosample_level)
+                      | (any_linked(n["file"], fs_f, fs_s, subject_level) if "subject" in f["entities"] else False))
+        levels["subject"][fid], levels["biosample"][fid], levels["file"][fid] = subject_level, biosample_level, file_level
+    levels["subject"][SINGLE_ORGANISM_BIT] = s_org
 
-    # Subject level: anatomy and disease also from any of the subject's biosamples.
-    subject_level = {
-        "sex": s_sex, "age": s_age,
-        "anatomy": any_linked(n_s, bs_s, bs_b, b_anatomy),
-        "disease": s_disease | any_linked(n_s, bs_s, bs_b, b_disease),
-        "persistent_id": s_pid,
-    }
-    # Biosample level: sex, age and disease also from the biosample's subject.
-    biosample_level = {
-        "sex": any_linked(n_b, bs_b, bs_s, subject_level["sex"]),
-        "age": b_age | any_linked(n_b, bs_b, bs_s, subject_level["age"]),
-        "anatomy": b_anatomy,
-        "disease": b_disease | any_linked(n_b, bs_b, bs_s, subject_level["disease"]),
-        "persistent_id": b_pid,
-    }
-    # File level: labels from the biosamples and subjects each file describes.
-    file_level = {
-        flag: any_linked(n_f, fb_f, fb_b, biosample_level[flag])
-        | (any_linked(n_f, fs_f, fs_s, subject_level[flag]) if flag != "anatomy" else False)
-        for flag in ("sex", "age", "anatomy", "disease")
-    }
-    file_level["checksum"] = (column_mask(files, "sha256") | column_mask(files, "md5")).to_numpy()
-    file_level["persistent_id"] = (is_persistent(files, "persistent_id") | is_persistent(files, "access_url")).to_numpy()
-    file_level["file_format"] = column_mask(files, "file_format").to_numpy()
+    order = sorted(fields) + [SINGLE_ORGANISM_BIT]
+    patterns = {}
+    for lv in ENTITIES:
+        if n[lv] == 0:
+            patterns[lv] = {"total": 0, "patterns": []}
+            continue
+        code = np.zeros(n[lv], dtype=np.int64)
+        for bit, fid in enumerate(order):
+            if fid in levels[lv]:
+                code |= levels[lv][fid].astype(np.int64) << bit
+        masks, counts = np.unique(code, return_counts=True)
+        patterns[lv] = {"total": n[lv], "patterns": [[int(m), int(c)] for m, c in zip(masks, counts)]}
 
-    order = [r for r, _ in REQUIREMENTS]
-
-    def patterns(level: dict, n: int) -> dict:
-        """How many records share each combination, as bit strings in REQUIREMENTS order."""
-        if n == 0:
-            return {"total": 0, "patterns": {}}
-        code = np.zeros(n, dtype=np.int64)
-        for i, flag in enumerate(order):
-            if flag in level:
-                code |= level[flag].astype(np.int64) << (len(order) - 1 - i)
-        counts = np.bincount(code, minlength=2 ** len(order))
-        return {"total": n, "patterns": {format(c, f"0{len(order)}b"): int(k)
-                                         for c, k in enumerate(counts) if k}}
-
-    return {
-        "requirements": order,
-        "levels": {"subject": patterns(subject_level, n_s), "biosample": patterns(biosample_level, n_b),
-                   "file": patterns(file_level, n_f)},
-    }
+    # Records whose only sex information is "Indeterminate" (reported next to sex counts).
+    sex_value = (subjects["sex"].astype("string").str.strip() if "sex" in subjects.columns
+                 else pd.Series(pd.NA, index=subjects.index, dtype="string"))
+    s_indet = (sex_value == INDETERMINATE_SEX).fillna(False).to_numpy(dtype=bool) & s_org
+    no_sex = {lv: ~levels[lv].get("sex", np.zeros(n[lv], bool)) for lv in ENTITIES}
+    b_indet = any_linked(n["biosample"], bs_b, bs_s, s_indet) & no_sex["biosample"]
+    f_indet = (any_linked(n["file"], fb_f, fb_b, b_indet) | any_linked(n["file"], fs_f, fs_s, s_indet)) & no_sex["file"]
+    return {"fields": order, "levels": patterns,
+            "sex_indeterminate": {"subject": int(s_indet.sum()), "biosample": int(b_indet.sum()),
+                                  "file": int(f_indet.sum())}}
 
 
 def count_meeting(combinations: dict, level: str, required: list[str]) -> tuple[int, int]:
-    """(records at `level` that meet ALL `required`, total records at `level`), from stored combinations."""
-    order = combinations["requirements"]
+    """(records at `level` that have ALL `required` fields, records counted at `level`), from stored bitmasks.
+    A field the package doesn't have is met by no record. Sex/age subject counts are out of single-organism
+    subjects."""
+    order = combinations["fields"]
     data = combinations["levels"][level]
-    positions = [order.index(r) for r in required]
-    met = sum(n for bits, n in data["patterns"].items() if all(bits[i] == "1" for i in positions))
-    return met, data["total"]
+    total = data["total"]
+    if level == "subject" and ORGANISM_FIELDS & set(required):
+        org = 1 << order.index(SINGLE_ORGANISM_BIT)
+        total = sum(c for m, c in data["patterns"] if m & org)
+    if any(r not in order for r in required):
+        return 0, total
+    mask = sum(1 << order.index(r) for r in required)
+    return sum(c for m, c in data["patterns"] if m & mask == mask), total
+
+
+def field_catalog(results: list[dict]) -> dict[str, dict]:
+    """Every field discovered in any of these programs: id -> how to show and count it."""
+    catalog = {}
+    for r in results:
+        for f in r["fields"]:
+            entry = catalog.setdefault(f["id"], {k: f[k] for k in ("label", "group", "file_only", "no_subject_level",
+                                                                      "organism")} | {"sources": [], "programs": []})
+            entry["sources"] = sorted(set(entry["sources"]) | set(f["sources"]))
+            entry["programs"].append(r["program"])
+    return catalog
+
+
+def coverage_level(f: dict) -> str | None:
+    """The level at which a field's '% filled' is measured (None: per-record fields, measured on every level)."""
+    if f["kind"] == "per_record":
+        return None
+    return "file" if f["file_only"] else "biosample" if f["no_subject_level"] else "subject"
+
+
+def field_filled(combinations: dict, f: dict) -> tuple[int, int]:
+    """Records with the field / records it could be on (exact, from the bitmasks)."""
+    level = coverage_level(f)
+    if level:
+        return count_meeting(combinations, level, [f["id"]])
+    parts = [count_meeting(combinations, lv, [f["id"]]) for lv in ENTITIES]
+    return sum(p[0] for p in parts), sum(p[1] for p in parts)
+
+
+def term_labels_for(prog: dict) -> dict[str, str]:
+    """Value -> label, from the package's own term tables and CFDE vocabularies."""
+    labels = dict(CFDE_VOCABULARY)
+    for names in (prog["term_names"], prog.get("value_labels", pd.DataFrame(columns=["id", "name"]))):
+        labels.update({str(i).strip(): str(nm) for i, nm in zip(names["id"], names["name"]) if is_filled(nm)})
+    return labels
+
+
+def discover_fields(prog: dict, combinations: dict | None = None, fields: dict | None = None,
+                    labels: dict | None = None) -> list[dict]:
+    """The available fields (at least one filled value) with their counts and most common values."""
+    fields = fields if fields is not None else field_sources(prog)
+    combinations = combinations if combinations is not None else field_bitmasks(prog, fields)
+    labels = labels if labels is not None else term_labels_for(prog)
+    found = []
+    for fid in sorted(fields, key=lambda k: (FIELD_GROUPS.index(fields[k]["group"]), fields[k]["label"].lower())):
+        f = fields[fid]
+        filled, total = field_filled(combinations, f)
+        values = []
+        for table, column in f["sources"]:
+            df = prog[table] if table in prog else prog.get("assoc", {}).get(table)
+            if df is not None and column in df.columns:
+                values.append(df.loc[column_mask(df, column), column].astype(str).str.strip())
+        values = pd.concat(values) if values else pd.Series(dtype=str)
+        if not len(values):
+            continue  # not available: no filled value anywhere
+        counts = values.value_counts()
+        entry = {"id": fid, "label": f["label"], "group": f["group"], "entity": f["entities"],
+                 "sources": [f"{t}.{c}" for t, c in f["sources"]], "kind": f["kind"],
+                 "file_only": f["file_only"], "no_subject_level": f["no_subject_level"], "organism": f["organism"],
+                 "records_filled": filled, "records_total": total, "distinct_values": int(len(counts))}
+        # Mostly-unique values (checksums, sizes, URLs) and per-record fields (persistent IDs,
+        # timestamps) have no meaningful "most common" list.
+        if f["kind"] != "per_record" and len(counts) <= max(50, 0.5 * len(values)):
+            entry["top_values"] = [[v, labels.get(v, ""), int(c)] for v, c in counts.head(TOP_VALUES).items()]
+        found.append(entry)
+    return found
 
 
 def field_coverage(dims: dict, combinations: dict) -> list[dict]:
@@ -866,6 +1129,32 @@ def data_quality_notes(prog: dict[str, pd.DataFrame]) -> list[str]:
         found.append("Persistent IDs present, but stored in access_url instead of the C2M2 persistent_id field "
                      f"({int(only_in_access_url.sum()):,} of {len(prog['file']):,} files; "
                      f"{urls.nunique():,} distinct identifiers, e.g. {examples(urls.unique(), 2)}).")
+
+    # 6. Sex recorded as "Indeterminate" (cfde_subject_sex:0). It is a valid
+    #    C2M2 value, so it counts as recorded, but it carries no sex information.
+    organisms, _ = organism_subjects(prog["subject"])
+    if "sex" in organisms.columns:
+        sex = organisms["sex"].astype("string").str.strip()
+        indeterminate = int((sex == INDETERMINATE_SEX).sum())
+        if indeterminate:
+            counts = sex[filled_mask(organisms["sex"])].value_counts()
+            found.append(f"subject.tsv: {indeterminate:,} single-organism subject(s) have sex recorded as "
+                         f"Indeterminate ({INDETERMINATE_SEX}). This is a valid C2M2 value, so they count as "
+                         "having sex recorded, but it does not say which sex. All sex values used: "
+                         + ", ".join(f"{SEX_NAMES.get(v, v)} {n:,}" for v, n in counts.items()) + ".")
+
+    # 7. Ages of exactly 0. C2M2 ages are in years, so 0 means under one year
+    #    old; when it is common, it is worth confirming it is not a stand-in
+    #    for "unknown". Only noted when it is a notable share of recorded ages,
+    #    since infants are expected in some studies (e.g. pediatric ones).
+    for table, column in [("subject", "age_at_enrollment"), ("biosample_from_subject", "age_at_sampling")]:
+        df = organisms if table == "subject" else prog[table]
+        if column in df.columns:
+            zero = int((pd.to_numeric(df[column], errors="coerce") == 0).sum())
+            if zero and zero >= ZERO_AGE_SHARE * int(column_mask(df, column).sum()):
+                found.append(f"{table}.tsv: {zero:,} of {int(column_mask(df, column).sum()):,} recorded "
+                             f"{column} values are exactly 0 (under one year old). If 0 is used for "
+                             "\"unknown\", leaving the field empty would keep it from being read as an age.")
     return found
 
 
@@ -880,7 +1169,8 @@ def score_program(namespace: str, label: str, prog: dict[str, pd.DataFrame],
         if dim["score"] != NOT_ASSESSABLE and dim["score"] < LOW_SCORE_THRESHOLD:
             dim["observation"] = low_score_sentence(dim)
     numeric = [d["score"] for d in dims.values() if d["score"] != NOT_ASSESSABLE]
-    combinations = combination_counts(prog)
+    fields = field_sources(prog)
+    combinations = field_bitmasks(prog, fields)
     return {
         "program": label,
         "namespace": namespace,
@@ -893,8 +1183,304 @@ def score_program(namespace: str, label: str, prog: dict[str, pd.DataFrame],
         "dimensions": dims,
         "data_quality_notes": data_quality_notes(prog),
         "field_coverage": field_coverage(dims, combinations),
+        "fields": discover_fields(prog, combinations, fields),
         "combinations": combinations,
     }
+
+
+# ---------------------------------------------------------------------------
+# Project-level scoring (read by the web app's Dataset basket)
+# ---------------------------------------------------------------------------
+# A datapackage is a whole program, but researchers choose projects/studies.
+# Each project is scored with the SAME dimension functions as a program, on
+# the records that make up that project:
+#   1. subjects, biosamples and files whose project_id_namespace/local_id is
+#      the project or one of its sub-projects (project_in_project, any depth);
+#   2. plus the biosamples and subjects those records link to directly
+#      (file_describes_biosample, file_describes_subject, biosample_from_subject).
+#      Links are followed file -> biosample -> subject only, never back down,
+#      so a shared subject does not pull in other projects' samples. Several
+#      programs (e.g. ExRNA, LINCS) file their subjects under a different project
+#      than the samples taken from them, so without this step those projects
+#      would appear to have no subjects.
+#   3. disease links of those biosamples and subjects.
+# Checks that describe the datapackage as a whole are inherited from the
+# package and marked as inherited.
+PACKAGE_LEVEL_CHECKS = {
+    "labeled_terms": "term labels come from the package's shared term tables",
+    "croissant_valid": "Croissant is generated and validated for the whole package",
+}
+PROJECTS_JSON = OUTPUT_DIR / "readiness_projects.json"
+EXPORT_TABLES = ["project", "subject", "biosample", "file", "biosample_from_subject", "file_describes_biosample",
+                 "file_describes_subject", "biosample_disease", "subject_disease"]
+PROJECT_DESCRIPTION_CHARS = 300  # descriptions are shortened to keep the JSON small
+PROJECT_RULES = (
+    "A project's records are its own subjects, biosamples and files (including those of its sub-projects, "
+    "via project_in_project), plus the biosamples and subjects they link to directly (file_describes_biosample, "
+    "file_describes_subject, biosample_from_subject; followed from files to biosamples to subjects only). "
+    "Each project is scored with the same checks as a whole program. Two checks describe the datapackage "
+    "as a whole and are inherited from the program: term labels (from the package's shared term tables) "
+    "and Croissant validity.")
+
+
+def unique_keys(df: pd.DataFrame, ns_col: str = "id_namespace", id_col: str = "local_id") -> pd.MultiIndex:
+    return pd.MultiIndex.from_arrays([df[ns_col].astype(str), df[id_col].astype(str)]).unique()
+
+
+def key_positions(index: pd.MultiIndex, df: pd.DataFrame, ns_col: str, id_col: str) -> np.ndarray:
+    """Position in `index` of each row's (ns_col, id_col) key; -1 if absent."""
+    if df.empty or len(index) == 0 or ns_col not in df.columns or id_col not in df.columns:
+        return np.full(len(df), -1)
+    return index.get_indexer(pd.MultiIndex.from_arrays([df[ns_col].astype(str), df[id_col].astype(str)]))
+
+
+def mark(n: int, pos: np.ndarray) -> np.ndarray:
+    flags = np.zeros(n, dtype=bool)
+    flags[pos[pos >= 0]] = True
+    return flags
+
+
+def project_tree(projects: pd.DataFrame, pip: pd.DataFrame | None) -> tuple[pd.MultiIndex, list[int], list[list[int]]]:
+    """Project keys, each project's parent position (-1 for none) and descendant positions (itself included)."""
+    index = unique_keys(projects)
+    n = len(index)
+    parent, children = [-1] * n, [[] for _ in range(n)]
+    if pip is not None and len(pip):
+        parents = key_positions(index, pip, "parent_project_id_namespace", "parent_project_local_id")
+        kids = key_positions(index, pip, "child_project_id_namespace", "child_project_local_id")
+        for p, c in zip(parents, kids):
+            if p >= 0 and c >= 0 and p != c:
+                children[p].append(c)
+                if parent[c] < 0:
+                    parent[c] = p
+    descendants = []
+    for start in range(n):
+        seen, stack = {start}, [start]
+        while stack:
+            for c in children[stack.pop()]:
+                if c not in seen:
+                    seen.add(c)
+                    stack.append(c)
+        descendants.append(sorted(seen))
+    return index, parent, descendants
+
+
+# Per-project results are stored as lists in these orders (named once at the
+# top of the JSON), which keeps the file small with ~3,000 projects.
+DIMENSION_ORDER = [name for name, _ in DIMENSIONS]
+CHECK_ORDER = [check_id for _, check_id, _, _ in METHODS if check_id in WHY_IT_MATTERS]  # real checks only
+COVERAGE_ORDER = ["sex", "age", "anatomy", "disease", "persistent_id", "checksum", "file_format", "creation_time"]
+
+
+def compact_dimensions(dims: dict) -> tuple[list, list]:
+    """[score or None per dimension], [[passed, total] or None per check] in DIMENSION_ORDER / CHECK_ORDER."""
+    scores = [None if dims[name]["score"] == NOT_ASSESSABLE else dims[name]["score"] for name in DIMENSION_ORDER]
+    found = {c["id"]: [c["passed"], c["total"]] for d in dims.values() for c in d["checks"]}
+    return scores, [found.get(check_id) for check_id in CHECK_ORDER]
+
+
+def score_projects(data_dir: Path, package: dict) -> tuple[list[dict], dict[str, str]]:
+    """Score every project in one real datapackage that has at least one subject, biosample or file.
+    `package` is the program-level result from score_real_package (its inherited checks are reused).
+    Also returns the value labels (term tables), used to name the projects' most common values."""
+    tables = load_tables(data_dir)
+    prog = {name: tables[name] for name in PER_PROGRAM_TABLES}
+    prog.update(term_names=tables["term_names"], value_labels=tables["value_labels"], assoc=tables["assoc"])
+    # One field list (bit order) for the whole package, so every project's bitmasks read the same way.
+    package_fields = field_sources(prog)
+    labels = term_labels_for(prog)
+    projects = prog["project"]
+    index, parent, descendants = project_tree(projects, read_tsv(data_dir / "project_in_project.tsv"))
+    n_proj = len(index)
+
+    # Row positions of every record and link, computed once.
+    rec = {t: prog[t] for t in ("subject", "biosample", "file")}
+    idx = {t: unique_keys(df) for t, df in rec.items()}
+    row_pos = {t: key_positions(idx[t], df, "id_namespace", "local_id") for t, df in rec.items()}
+    own_project = {t: np.full(len(idx[t]), -1) for t in rec}
+    for t, df in rec.items():
+        proj_of_row = key_positions(index, df, "project_id_namespace", "project_local_id")
+        own_project[t][row_pos[t]] = proj_of_row
+    project_row = key_positions(index, projects, "id_namespace", "local_id")
+
+    def link(table: str, a: str, b: str) -> tuple[np.ndarray, np.ndarray]:
+        df = prog[table]
+        return (key_positions(idx[a], df, f"{a}_id_namespace", f"{a}_local_id"),
+                key_positions(idx[b], df, f"{b}_id_namespace", f"{b}_local_id"))
+    fb_f, fb_b = link("file_describes_biosample", "file", "biosample")
+    fs_f, fs_s = link("file_describes_subject", "file", "subject")
+    bs_b, bs_s = link("biosample_from_subject", "biosample", "subject")
+    bd_b = key_positions(idx["biosample"], prog["biosample_disease"], "biosample_id_namespace", "biosample_local_id")
+    assoc_pos = {name: (entity, key_positions(idx[entity], df, f"{entity}_id_namespace", f"{entity}_local_id"))
+                 for name, df in prog["assoc"].items()
+                 for entity in [next(e for e in ENTITIES if name.startswith(e + "_"))]}
+    sd_s = key_positions(idx["subject"], prog["subject_disease"], "subject_id_namespace", "subject_local_id")
+
+    package_checks = {c["id"]: c for d in package["dimensions"].values() for c in d["checks"]}
+    explainability = package["dimensions"]["Pre-model Explainability"]
+    name_col = projects["name"] if "name" in projects.columns else pd.Series("", index=projects.index)
+    desc_col = projects["description"] if "description" in projects.columns else pd.Series("", index=projects.index)
+    first_row = {int(p): i for i, p in reversed(list(enumerate(project_row))) if p >= 0}
+
+    results = []
+    for p in range(n_proj):
+        in_tree = mark(n_proj, np.array(descendants[p]))
+
+        def own(t: str) -> np.ndarray:
+            op = own_project[t]
+            return (op >= 0) & in_tree[np.maximum(op, 0)]
+
+        files = own("file")
+        biosamples = own("biosample") | mark(len(idx["biosample"]), fb_b[(fb_f >= 0) & files[np.maximum(fb_f, 0)]])
+        subjects = (own("subject")
+                    | mark(len(idx["subject"]), fs_s[(fs_f >= 0) & files[np.maximum(fs_f, 0)]])
+                    | mark(len(idx["subject"]), bs_s[(bs_b >= 0) & biosamples[np.maximum(bs_b, 0)]]))
+        if not (files.any() or biosamples.any() or subjects.any()):
+            continue
+        keep = {"file": files, "biosample": biosamples, "subject": subjects}
+
+        def rows(t: str) -> pd.DataFrame:
+            return rec[t][keep[t][row_pos[t]]].reset_index(drop=True)
+
+        def link_rows(table: str, owner_pos: np.ndarray, owner: str) -> pd.DataFrame:
+            return prog[table][(owner_pos >= 0) & keep[owner][np.maximum(owner_pos, 0)]].reset_index(drop=True)
+
+        sub = {
+            "project": projects[(project_row >= 0) & in_tree[np.maximum(project_row, 0)]].reset_index(drop=True),
+            "subject": rows("subject"), "biosample": rows("biosample"), "file": rows("file"),
+            "biosample_from_subject": link_rows("biosample_from_subject", bs_b, "biosample"),
+            "file_describes_biosample": link_rows("file_describes_biosample", fb_f, "file"),
+            "file_describes_subject": link_rows("file_describes_subject", fs_f, "file"),
+            "biosample_disease": link_rows("biosample_disease", bd_b, "biosample"),
+            "subject_disease": link_rows("subject_disease", sd_s, "subject"),
+            "term_names": tables["term_names"],
+            "value_labels": tables["value_labels"],
+            "assoc": {name: prog["assoc"][name][(pos >= 0) & keep[entity][np.maximum(pos, 0)]].reset_index(drop=True)
+                      for name, (entity, pos) in assoc_pos.items()},
+        }
+        dims = {}
+        for dim_name, fn in DIMENSIONS:
+            if dim_name == "Pre-model Explainability":
+                dims[dim_name] = explainability  # term tables are package-wide
+            elif dim_name == "Computability":
+                dims[dim_name] = score_computability(sub, croissant=package_checks.get("croissant_valid"))
+            else:
+                dims[dim_name] = fn(sub)
+        numeric = [d["score"] for d in dims.values() if d["score"] != NOT_ASSESSABLE]
+        combinations = field_bitmasks(sub, package_fields)
+        coverage = field_coverage(dims, combinations)
+        assert [f["field"] for f in coverage] == COVERAGE_ORDER
+        scores, checks = compact_dimensions(dims)
+        row = first_row.get(p)
+        name = str(name_col.iloc[row]).strip() if row is not None and is_filled(name_col.iloc[row]) else index[p][1]
+        description = str(desc_col.iloc[row]).strip() if row is not None and is_filled(desc_col.iloc[row]) else ""
+        if len(description) > PROJECT_DESCRIPTION_CHARS:
+            description = description[:PROJECT_DESCRIPTION_CHARS].rsplit(" ", 1)[0] + " ..."
+        results.append({
+            "id": list(index[p]),
+            "name": name,
+            "description": description,
+            "parent": list(index[parent[p]]) if parent[p] >= 0 else None,
+            "sub_projects": len(descendants[p]) - 1,
+            "record_counts": {"project": len(sub["project"]), "subject": int(subjects.sum()),
+                              "biosample": int(biosamples.sum()), "file": int(files.sum())},
+            "overall_score": round(sum(numeric) / len(numeric)) if numeric else None,
+            "dimensions": scores,
+            "checks": checks,
+            "field_coverage": [[f["passed"], f["total"]] for f in coverage],
+            "combinations": combinations["levels"],
+            "sex_indeterminate": combinations["sex_indeterminate"],
+            # Discovered fields: [bit, records filled, records it could be on, distinct values,
+            # [[value, count], ...] most common] -- values are resolved to names at program level.
+            "fields": [[combinations["fields"].index(f["id"]), f["records_filled"], f["records_total"],
+                        f["distinct_values"], [[v, c] for v, _, c in f.get("top_values", [])]]
+                       for f in discover_fields(sub, combinations, package_fields, labels)],
+        })
+    return results, labels
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def run_projects(root: Path) -> None:
+    """Score every project in every package in data_real/ -> output/readiness_projects.json."""
+    releases = read_tsv(RELEASES_FILE)
+    programs, projects = [], []
+    for folder in sorted(p for p in root.iterdir() if p.is_dir()):
+        package_dir = find_package_dir(folder)
+        if package_dir is None:
+            print(f"skipping {folder.name}/: no project.tsv found (not unzipped?)")
+            continue
+        print(f"scoring {folder.name}/ and its projects ...", flush=True)
+        package = score_real_package(package_dir, folder)
+        listed = releases[releases["folder"] == folder.name] if releases is not None else pd.DataFrame()
+        display = listed["program"].iloc[0] if len(listed) else package["program"]
+        zip_path = folder / package["release"]
+        scored, labels = score_projects(package_dir, package)
+        # Consistency check: the project that contains every other project (the
+        # program's root) covers the whole package, so it must score the same.
+        full = [r for r in scored if r["record_counts"]["project"] == package["record_counts"]["project"]]
+        for r in full:
+            same = (r["overall_score"] == package["overall_score"]
+                    and r["dimensions"] == compact_dimensions(package["dimensions"])[0])
+            print(f"  root project '{r['name']}' covers the whole package: "
+                  f"{'same scores as the program' if same else 'SCORES DIFFER FROM THE PROGRAM'}")
+        programs.append({
+            "program": display,
+            "package_label": package["program"],
+            "release": package["release"],
+            "release_date": package["release_date"],
+            "old_release": package["old_release"],
+            "download_url": listed["url"].iloc[0] if len(listed) else "",
+            "sha256": file_sha256(zip_path) if zip_path.is_file() else "",
+            # Where the C2M2 tables sit inside the zip ("" = at its top level).
+            "package_path": inner if (inner := Path(package_dir).resolve().relative_to(folder.resolve()).as_posix()) != "." else "",
+            "overall_score": package["overall_score"],
+            "record_counts": package["record_counts"],
+            # Column names of the tables a basket export describes (Croissant needs real columns).
+            "columns": {t: list(pd.read_csv(path, sep="\t", nrows=0).columns)
+                        for t in dict.fromkeys(EXPORT_TABLES + sorted(association_table_columns(Path(package_dir))))
+                        if (path := Path(package_dir) / f"{t}.tsv").exists() and path.stat().st_size},
+            "inherited_checks": {cid: {"passed": c["passed"], "total": c["total"], "why": PACKAGE_LEVEL_CHECKS[cid]}
+                                 for d in package["dimensions"].values() for c in d["checks"]
+                                 if (cid := c["id"]) in PACKAGE_LEVEL_CHECKS},
+            # Field discovery for the whole package, and the bit order of every project's bitmasks.
+            "fields": package["fields"],
+            "field_order": package["combinations"]["fields"],
+            "values": [],  # [value, label] -- projects' most common values point into this list
+        })
+        # Projects store their most common values as positions in the program's value list.
+        value_pos = {}
+        for r in scored:
+            for stat in r["fields"]:
+                for pair in stat[4]:
+                    if pair[0] not in value_pos:
+                        value_pos[pair[0]] = len(value_pos)
+                        programs[-1]["values"].append([pair[0], labels.get(pair[0], "")])
+                    pair[0] = value_pos[pair[0]]
+            projects.append({"program": display, **r})
+        print(f"  {len(scored)} projects scored")
+
+    OUTPUT_DIR.mkdir(exist_ok=True)
+    with open(PROJECTS_JSON, "w") as f:
+        json.dump({"source": CITATION,
+                   "disclaimer": DISCLAIMER,
+                   "generated": date.today().isoformat(),
+                   "rules": PROJECT_RULES,
+                   "combination_rules": COMBINATION_RULES,
+                   "field_groups": FIELD_GROUPS,
+                   "dimension_order": DIMENSION_ORDER,
+                   "check_order": CHECK_ORDER,
+                   "coverage_order": COVERAGE_ORDER,
+                   "programs": programs,
+                   "projects": projects}, f, separators=(",", ":"))
+    size = PROJECTS_JSON.stat().st_size / 1e6
+    print(f"Wrote {PROJECTS_JSON} ({len(projects)} projects, {size:.1f} MB)")
 
 
 # ---------------------------------------------------------------------------
@@ -1134,6 +1720,8 @@ def score_real_package(data_dir: Path, folder: Path, release: tuple[str, str] | 
     tables = load_tables(data_dir)
     prog = {name: tables[name] for name in PER_PROGRAM_TABLES}
     prog["term_names"] = tables["term_names"]
+    prog["value_labels"] = tables["value_labels"]
+    prog["assoc"] = tables["assoc"]
     release, release_date = release or release_info(folder)
     return score_program(package_namespaces(tables), package_label(tables, data_dir), prog, release, release_date)
 
@@ -1179,7 +1767,8 @@ def run_compare(root: Path) -> None:
                    "generated": date.today().isoformat(),
                    "old_release_years": OLD_RELEASE_YEARS,
                    "old_release_flag": OLD_RELEASE_FLAG,
-                   "requirements": dict(REQUIREMENTS),
+                   "field_groups": FIELD_GROUPS,
+                   "fields": field_catalog(results),
                    "combination_rules": COMBINATION_RULES,
                    "programs": results,
                    "top_gaps": top_gap_data(results)}, f, indent=2)
@@ -1199,11 +1788,17 @@ def main():
                         help=f"with the sample: also score the synthetic demo cluster ({DEMO_NAMESPACE})")
     parser.add_argument("--compare", action="store_true",
                         help="score every datapackage folder in data_real/ and write output/readiness_comparison.md")
+    parser.add_argument("--projects", action="store_true",
+                        help="score every project inside every package in data_real/ and write "
+                             "output/readiness_projects.json (read by the web app's Dataset basket)")
     args = parser.parse_args()
 
     print("CFDE AI-Readiness Checker (simplified proxies for the Bridge2AI dimensions; not official)")
     if args.compare:
         run_compare(DATA_REAL_DIR)
+        return
+    if args.projects:
+        run_projects(DATA_REAL_DIR)
         return
 
     folder = args.data_dir.resolve()

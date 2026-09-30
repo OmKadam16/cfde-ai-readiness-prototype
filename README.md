@@ -13,7 +13,7 @@ A working prototype that:
    connecting subjects → biosamples → files → project → disease, and runs
    real connected queries across it.
 4. Runs an **AI-Readiness Checker** (`src/readiness_checker.py`) over full
-   C2M2 releases from five CFDE programs, using simple, measurable proxies
+   C2M2 releases from seven CFDE programs, using simple, measurable proxies
    for the seven AI-readiness dimensions defined by the Bridge2AI
    Standards Working Group (see below).
 
@@ -77,7 +77,7 @@ Rules worth knowing:
 Each program's C2M2 releases are listed at
 `https://cfde.cloud/info/dcc/<program>#C2M2`. The releases used here are
 recorded in `releases.tsv`. To download and unzip them into `data_real/`
-(about 390 MB of zips, about 3 GB unzipped; git-ignored):
+(about 425 MB of zips, about 3.4 GB unzipped; git-ignored):
 
 ```
 tail -n +2 releases.tsv | while IFS=$'\t' read -r folder program file date url; do
@@ -90,22 +90,26 @@ done
 ```
 cd src
 python3 readiness_checker.py --compare                    # all of data_real/ -> output/readiness_comparison.md
+python3 readiness_checker.py --projects                   # every project in data_real/ -> output/readiness_projects.json
 python3 readiness_checker.py --data-dir ../data_real/sparc  # one real package
 python3 readiness_checker.py                              # the hand-collected sample in data/
 ```
 
-`--compare` scores every package in `data_real/` (about 75 seconds;
-peak memory around 4 GB, mostly from Kids First's and LINCS's multi-million
-row file and link tables) and writes
+`--compare` scores every package in `data_real/` (about 60-75 seconds;
+peak memory 1.5-4 GB in our runs, mostly from Kids First's and LINCS's
+multi-million row file and link tables) and writes
 `output/readiness_comparison.md` and `.json` plus a
 `readiness_report_<program>.md` / `readiness_scores_<program>.json` per
-program. The checker itself uses only pandas and the standard library.
+program. `--projects` scores every project inside every package (7-10
+minutes, most of it Metabolomics Workbench's 2,891 studies) and
+writes `output/readiness_projects.json` (5.5 MB) for the web app's
+Dataset basket. The checker itself uses only pandas and the standard library.
 
 ### Run the web app
 `app.py` is a small Streamlit app for browsing the results without
 installing anything beyond `requirements.txt`. It reads only the
-committed `output/readiness_comparison.json`, so it does not need
-`data_real/`.
+committed `output/readiness_comparison.json` and
+`output/readiness_projects.json`, so it does not need `data_real/`.
 
 ```
 pip3 install -r requirements.txt
@@ -121,12 +125,29 @@ It opens at http://localhost:8501. The pages answer three questions:
   filled (sex, age, anatomy, disease link, persistent ID, checksum, file
   format, creation time); hover a cell for the raw count and C2M2 column.
 - **Find ML-ready data** (a researcher: where are records with everything
-  my model needs?) - tick requirements and see, per program, how many
-  subjects, biosamples or files meet all of them. Counts are exact: the
-  checker stores how many records share each combination of requirements.
+  my model needs?) - tick the fields your model needs (built from the fields
+  discovered in the data, grouped as Demographics, Clinical/disease,
+  Biological sample, Molecular and File/technical), set a *minimum records
+  needed* (default 100), and see per program how many subjects, biosamples
+  or files have all of them. A program meets the needs when at least that
+  many records do (blue bar; gray when fewer). "What each program records"
+  lists every discovered field. Counts are exact (see "Field discovery").
+  Sex and age use the same single-organism rule as the scores, so subject
+  counts for them are out of single-organism subjects. Here (and in the
+  Dataset basket) **sex means Male or Female recorded; Indeterminate is not
+  counted**, since a model can't use it. The number of records with only
+  an Indeterminate sex is shown separately (ExRNA: 1,223 subjects; Kids
+  First: 348). The Characterization score and Field coverage still count
+  any recorded sex value.
 - **Program report card** (a program's data team: what would help most?) -
   dimension scores, every check as a progress bar with "X of Y", the top 3
   fixes ranked by points they would add, and data quality notes.
+- **Dataset basket** (a researcher: which of the studies I want have what
+  my model needs?) - search and filter all ~3,150 projects across the seven
+  programs, add them to a basket, tick what your model needs, and see each
+  project's status; remove the ones that don't fit and export the selection.
+  A table shows which fields each shown project records (% filled). See
+  "Dataset basket" below.
 - **Methods** and **Check your own datapackage** (upload a C2M2 `.zip` up
   to 50 MB zipped / 300 MB unzipped and see its report card; the file is
   unpacked to a temporary folder and deleted afterwards).
@@ -138,24 +159,156 @@ To publish it on Streamlit Community Cloud (free): push the repo to
 GitHub, then at share.streamlit.io choose "Create app", pick this repo and
 branch, and set the main file to `app.py`. `.streamlit/config.toml` sets
 the 50 MB upload cap. After re-running `--compare`, commit
-`output/readiness_comparison.json` so the app shows the new results.
+`output/readiness_comparison.json` so the app shows the new results; after
+`--projects`, commit `output/readiness_projects.json`.
+
+### Field discovery
+The "My model needs" choices are not a hard-coded list. For each package
+and each project, the checker scans every column of `subject.tsv`,
+`biosample.tsv` and `file.tsv` (except keys and file names) and every
+association table named `<entity>_<something>.tsv` that links a record to a
+value (e.g. `subject_race`, `subject_phenotype`, `subject_disease`,
+`biosample_disease`, `biosample_gene`, `biosample_substance`,
+`subject_role_taxonomy`), whatever the package contains. A field is
+available when at least one record has a value. For each field it records:
+- a plain-English name and group;
+- the C2M2 table/column and the entity;
+- the records filled and the number of distinct values;
+- the 5 most common values, with labels from the package's term tables or
+  the CFDE vocabularies.
+
+Some attributes are recorded in two places in C2M2, so they are merged into
+one field:
+- age (`age_at_enrollment`, `age_at_sampling`);
+- disease (`subject_disease`, `biosample_disease`);
+- checksums (`md5`, `sha256`).
+
+Persistent IDs and creation time are always the record's own. Across the
+seven programs, 26 fields are found. Biofluid, for example, is recorded
+only by ExRNA and Metabolomics Workbench.
+
+**Counting is exact.** Each subject, biosample and file gets a bitmask with
+one bit per field it has, after following C2M2 links. The checker stores how
+many records share each bitmask, per program and per project. Any "has all
+of X, Y, Z" count is then a sum over the stored bitmasks, with no estimates
+and no raw data needed. An uploaded package is scored and counted the same
+way, live. The new engine reproduces all 2,667 counts of the previous
+fixed-list finder exactly (127 combinations × 3 levels × 7 programs).
+Scores are unchanged: discovery is reported, never scored.
+
+### Dataset basket
+A C2M2 datapackage is a whole program, but researchers pick projects or
+studies, so the checker also scores **every project** in each package
+(`--projects`). This uses the same checks as a whole program, on the
+records that make up the project:
+
+- **Records:** the subjects, biosamples and files whose
+  `project_id_namespace`/`project_local_id` is the project or one of its
+  sub-projects (`project_in_project`, any depth).
+- **Linked records:** plus the biosamples and subjects those records link to
+  directly (`file_describes_biosample`, `file_describes_subject`,
+  `biosample_from_subject`). Links are followed from files to biosamples to
+  subjects only, never back down. This matters because ExRNA and LINCS file
+  their subjects under a different project than the samples taken from them.
+- **Inherited checks:** two checks describe the whole datapackage, so each
+  project takes them from its program: term labels (from the package's shared
+  term tables) and Croissant validity.
+- **Consistency check:** each program's root project contains everything, so
+  it must score exactly like the program. It does, for all seven.
+
+In the app you:
+1. **choose** projects from a searchable table (program, project, record
+   counts, overall score);
+2. **set your needs**, using the same checkboxes as *Find ML-ready data* (the
+   choice carries over between the two pages);
+3. **review** each project's status:
+   - *Meets your needs:* at least the *minimum records needed* (default
+     100) have every selected field. There's no universal minimum for
+     training AI; it depends on the model and task.
+   - *Partly:* some records do, but fewer than the minimum. The review says
+     how many (e.g. "312 of 900 single-organism subjects") and which fields
+     not every record has.
+   - *Doesn't meet your needs:* none do.
+
+   One button removes the projects that don't meet your needs, and each
+   project can also be unticked by hand. If a project and one of its
+   sub-projects are both in the basket, the sub-project is counted once,
+   inside its parent;
+4. **export**, generated in the browser session with nothing stored on the
+   server:
+   - a manifest (CSV or JSON): program, project, record counts, qualifying
+     counts, status, the C2M2 download URL, release date and the release
+     zip's sha256;
+   - Croissant 1.0 metadata: each program's release zip, the C2M2 tables in
+     it and the columns behind the chosen needs, naming the selected
+     projects. It passes `validate_croissant.py`;
+   - a short Markdown summary report.
+
+The basket is kept in the browser session (`st.session_state`), so it
+survives switching pages but not closing the tab.
 
 ### Results (current releases, run 2026-09-29)
 
 | Program | Release | Release date | Records (project / subject / biosample / file) | Overall | FAIRness | Provenance | Characterization | Explainability | Ethics | Sustainability | Computability |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| ExRNA (ERCC_DCC) | `CFDE08272026_C2M2.zip` | 2026-08-28 | 78 / 8,584 / 14,765 / 336,426 | 91 | 50 | 98 | 100 | 100 | n/a | 100 | 100 |
 | HMP | `HMP_C2M2_2022-06-20_datapackage.zip` | 2022-06-20 (older release - may not reflect current metadata) | 24 / 7,903 / 51,873 / 251,136 | 80 | 86 | 50 | 59 | 100 | n/a | 88 | 100 |
 | Kids First (KFDRC) | `2026Q4_C2M2_datapackage.zip` | 2026-09-16 | 45 / 39,156 / 111,300 / 1,356,814 | 78 | 62 | 50 | 58 | 100 | n/a | 100 | 97 |
 | LINCS | `LINCS_C2M2_2023-09-18_datapackage.zip` | 2023-09-18 (older release - may not reflect current metadata) | 17 / 1,966 / 1,466,796 / 1,495,871 | 80 | 74 | 75 | 33 | 100 | n/a | 100 | 100 |
+| Metabolomics Workbench (MW) | `MW_submission_packet_20260914.zip` | 2026-09-14 | 2,891 / 4,551 / 476,563 / 8,366 | 68 | 50 | 50 | 9 | 100 | n/a | 100 | 100 |
 | SenNet | `sennet_c2m2_sep26.zip` | 2026-09-24 | 21 / 897 / 5,673 / 154,612 | 94 | 98 | 100 | 67 | 100 | n/a | 100 | 98 |
 | SPARC | `C2M2_datapackage_20260916.zip` | 2026-09-17 | 78 / 4,597 / 9,212 / 175,471 | 88 | 96 | 96 | 33 | 100 | n/a | 100 | 100 |
 
 Ethics is n/a for every program because of the C2M2 schema, not the
-programs. Most common gaps across programs: **age** recorded for 14% of
-single-organism subjects on average (0% in three of five releases),
-**sex** for 47%, and **persistent identifiers** on 67% of records. See
+programs. Most common gaps across programs: **age** recorded for 24% of
+single-organism subjects on average (0% in four of seven releases),
+**sex** for 48%, and **persistent identifiers** on 48% of records. See
 `output/readiness_comparison.md` for per-program numbers and data
 quality notes.
+
+### Tested on held-out programs
+The checker was written and tuned on HMP, Kids First, LINCS, SenNet and
+SPARC. To see whether it generalizes, it was then run - with no code
+changes first - on two programs it had never seen, both current releases
+under 100 MB: **ExRNA** (`CFDE08272026_C2M2.zip`, 2026-08-28, 16.9 MB) and
+**Metabolomics Workbench** (`MW_submission_packet_20260914.zip`,
+2026-09-14, 24.5 MB; its zip unpacks into a subfolder, which the checker
+already handled).
+
+- **It ran without errors** on both (about 3 and 5 seconds), and
+  `--compare` with all seven programs completed.
+- **Spot-checks:** nine numbers were re-derived with separate code (plain
+  `csv`, not the checker's pandas logic), and all matched exactly.
+  - Metabolomics Workbench: 125,384 of 476,563 biosamples with anatomy;
+    8,364 of 8,366 files with a file format; 2,890 persistent IDs (all
+    project DOIs).
+  - ExRNA scores: 8,580 of 8,580 single-organism subjects with sex; 8,580
+    with age; 350,633 of 359,853 records with a creation time.
+  - ExRNA finder counts: 8,580 of 8,580 subjects, 14,761 of 14,765
+    biosamples and 331,776 of 336,426 files meeting sex (and age).
+- **No scoring bugs were found.** Two things looked suspicious, and
+  inspecting the raw data showed the numbers were right but hid a detail:
+  - ExRNA's sex is 100% recorded, but 1,223 of its single-organism
+    subjects are coded `cfde_subject_sex:0` (*Indeterminate* in the CFDE
+    vocabulary), and no subject is coded Male.
+  - 1,508 of its recorded `age_at_enrollment` values are exactly 0.
+
+  The checker now reports both situations for any program, as unscored
+  data quality notes: Indeterminate sex codes, with the full list of sex
+  values used, and ages of exactly 0 when they are at least 5% of the
+  recorded ages. The scoring rule was not changed. Indeterminate is a valid
+  C2M2 value, and Kids First also uses it for 348 subjects.
+- **The original five programs' scores, dimensions and field coverage are
+  unchanged.** The only difference for them is the new Indeterminate note
+  for Kids First.
+- **Held-out results:** ExRNA 91 overall, Metabolomics Workbench 68.
+  Metabolomics Workbench records no sex or age for any subject. Its
+  biosample `persistent_id` values are Metabolomics Workbench landing-page
+  URLs, which are not on the persistent-identifier scheme list.
+
+Two programs is a small test. Programs with very different layouts (for
+example ones that describe files mainly through collections) may still
+expose gaps.
 
 ### Limitations
 - Simplified proxies, not an official implementation of the Bridge2AI

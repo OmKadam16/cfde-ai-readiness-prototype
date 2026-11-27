@@ -13,13 +13,13 @@ Every score is computed from the C2M2 records in `/Users/omkadam/Documents/Om Ka
 
 | Program | Records (project / subject / biosample / file) | Overall | FAIRness | Provenance | Characterization | Pre-model Explainability | Ethics | Sustainability | Computability |
 |---|---|---|---|---|---|---|---|---|---|
-| MW | 2,891 / 4,551 / 476,563 / 8,366 | 68 | 50 | 50 | 9 | 100 | n/a | 100 | 100 |
+| MW | 2,891 / 4,551 / 476,563 / 8,366 | 71 | 50 | 50 | 28 | 100 | n/a | 100 | 100 |
 
 n/a = NOT ASSESSABLE (reason given in the program section).
 
 ## MW (`https://www.metabolomicsworkbench.org/`)
 
-**Overall: 68/100** (average of the 6 of 7 dimensions that could be assessed)  
+**Overall: 71/100** (average of the 6 of 7 dimensions that could be assessed)  
 Records: 2891 project, 4551 subject, 476563 biosample, 8366 file  
 Release: `MW_submission_packet_20260914.zip` (2026-09-14)
 
@@ -33,12 +33,13 @@ Release: `MW_submission_packet_20260914.zip` (2026-09-14)
 - `creation_time` = 0 -- Records (project/subject/biosample/file) with a creation_time: 492,371 of 492,371 records have no creation_time recorded
 - `file_checksums` = 100 -- Files with a sha256 or md5 checksum: 0 of 8,366 files have no checksum recorded
 
-### Characterization: 9/100 [subject_sex 0/3673, subject_age 0/3673, biosample_anatomy 125384/476563]
-- **Observation:** 3,673 of 3,673 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
-- `subject_sex` = 0 -- Single-organism subjects with sex recorded: 3,673 of 3,673 subjects have no sex recorded
-- `subject_age` = 0 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 3,673 of 3,673 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)
-- `biosample_anatomy` = 26 -- Biosamples with anatomy recorded: 351,179 of 476,563 biosamples have no anatomy recorded
+### Characterization: 28/100 [subject_sex 0/3296, subject_age 0/3296, biosample_anatomy 374929/442123]
+- **Observation:** 3,296 of 3,296 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
+- `subject_sex` = 0 -- Single-organism subjects with sex recorded: 3,296 of 3,296 subjects have no sex recorded
+- `subject_age` = 0 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 3,296 of 3,296 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)
+- `biosample_anatomy` = 85 -- Biosamples with anatomy or biofluid recorded: 67,194 of 442,123 biosamples have no anatomy or biofluid recorded
 - *Info (not scored):* 818 cell-line and 38 synthetic and 22 microbiome subjects excluded from sex/age checks (these checks apply to single-organism subjects, human or animal)
+- *Info (not scored):* 377 single-organism subjects that are plants, fungi or microbes (per NCBI Taxonomy) excluded from sex/age checks
 - *Info (not scored):* 2,525 disease associations in this release (0 in biosample_disease.tsv, 2,525 in subject_disease.tsv) - not scored, since not every program studies a disease
 
 ### Pre-model Explainability: 100/100 [labeled_terms 459/459]

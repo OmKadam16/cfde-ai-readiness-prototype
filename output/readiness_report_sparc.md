@@ -35,7 +35,7 @@ Release: `C2M2_datapackage_20260916.zip` (2026-09-17)
 - **Observation:** 4,597 of 4,597 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
 - `subject_sex` = 0 -- Single-organism subjects with sex recorded: 4,597 of 4,597 subjects have no sex recorded
 - `subject_age` = 0 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 4,597 of 4,597 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)
-- `biosample_anatomy` = 100 -- Biosamples with anatomy recorded: 6 of 9,212 biosamples have no anatomy recorded
+- `biosample_anatomy` = 100 -- Biosamples with anatomy or biofluid recorded: 6 of 9,212 biosamples have no anatomy or biofluid recorded
 - *Info (not scored):* 0 disease associations in this release (0 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease
 
 ### Pre-model Explainability: 100/100 [labeled_terms 100/100]

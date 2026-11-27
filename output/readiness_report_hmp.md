@@ -36,7 +36,7 @@ Release: `HMP_C2M2_2022-06-20_datapackage.zip` (2022-06-20) - older release - ma
 - **Observation:** 7,903 of 7,903 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample). Recording age lets model developers check whether results differ across age groups, such as children and adults.
 - `subject_sex` = 84 -- Single-organism subjects with sex recorded: 1,280 of 7,903 subjects have no sex recorded
 - `subject_age` = 0 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 7,903 of 7,903 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)
-- `biosample_anatomy` = 94 -- Biosamples with anatomy recorded: 3,363 of 51,873 biosamples have no anatomy recorded
+- `biosample_anatomy` = 94 -- Biosamples with anatomy or biofluid recorded: 3,363 of 51,873 biosamples have no anatomy or biofluid recorded
 - *Info (not scored):* 3,023 disease associations in this release (2,531 in biosample_disease.tsv, 492 in subject_disease.tsv) - not scored, since not every program studies a disease
 
 ### Pre-model Explainability: 100/100 [labeled_terms 146/146]

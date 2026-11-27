@@ -105,12 +105,12 @@
             },
             {
               "id": "biosample_anatomy",
-              "description": "Biosamples with anatomy recorded",
+              "description": "Biosamples with anatomy or biofluid recorded",
               "passed": 5669,
               "total": 5673,
               "score": 100,
-              "detail": "4 of 5,673 biosamples have no anatomy recorded",
-              "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
+              "detail": "4 of 5,673 biosamples have no anatomy or biofluid recorded",
+              "why_it_matters": "Recording anatomy or biofluid lets a model keep tissue- and fluid-specific signals apart instead of mixing different sample types."
             }
           ],
           "info": [
@@ -202,8 +202,8 @@
         },
         {
           "field": "anatomy",
-          "label": "Anatomy",
-          "columns": "biosample.anatomy",
+          "label": "Anatomy or biofluid",
+          "columns": "biosample.anatomy, biosample.biofluid",
           "unit": "biosamples",
           "passed": 5669,
           "total": 5673
@@ -911,7 +911,9 @@
           "subject_race.race",
           "subject_role_taxonomy.taxonomy_id",
           "subject_substance.substance",
-          "_single_organism"
+          "_single_organism",
+          "_human",
+          "_animal"
         ],
         "levels": {
           "subject": {
@@ -1065,6 +1067,13 @@
         "zeros": 71,
         "recorded": 4025,
         "median_nonzero_age": 47.0
+      },
+      "species": {
+        "unknown": {
+          "subjects": 897,
+          "sex": 450,
+          "age": 462
+        }
       }
     }
   ]

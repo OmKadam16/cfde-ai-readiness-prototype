@@ -35,7 +35,7 @@ Release: `LINCS_C2M2_2023-09-18_datapackage.zip` (2023-09-18) - older release - 
 - **Observation:** 275 of 275 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
 - `subject_sex` = 0 -- Single-organism subjects with sex recorded: 275 of 275 subjects have no sex recorded
 - `subject_age` = 0 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 275 of 275 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)
-- `biosample_anatomy` = 99 -- Biosamples with anatomy recorded: 15,190 of 1,466,796 biosamples have no anatomy recorded
+- `biosample_anatomy` = 99 -- Biosamples with anatomy or biofluid recorded: 15,190 of 1,466,796 biosamples have no anatomy or biofluid recorded
 - *Info (not scored):* 1,527 cell-line and 164 synthetic subjects excluded from sex/age checks (these checks apply to single-organism subjects, human or animal)
 - *Info (not scored):* 1,211,291 disease associations in this release (1,211,094 in biosample_disease.tsv, 197 in subject_disease.tsv) - not scored, since not every program studies a disease
 

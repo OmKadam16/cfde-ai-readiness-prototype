@@ -35,7 +35,7 @@ Release: `CFDE08272026_C2M2.zip` (2026-08-28)
 ### Characterization: 94/100 [subject_sex 8580/8580, subject_age 7072/8580, biosample_anatomy 14765/14765]
 - `subject_sex` = 100 -- Single-organism subjects with sex recorded: 0 of 8,580 subjects have no sex recorded
 - `subject_age` = 82 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 1,508 of 8,580 subjects have no age recorded (7,072 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample); ages of exactly 0 are treated as not recorded (likely placeholders, see Methods)
-- `biosample_anatomy` = 100 -- Biosamples with anatomy recorded: 0 of 14,765 biosamples have no anatomy recorded
+- `biosample_anatomy` = 100 -- Biosamples with anatomy or biofluid recorded: 0 of 14,765 biosamples have no anatomy or biofluid recorded
 - *Info (not scored):* 4 cell-line subjects excluded from sex/age checks (these checks apply to single-organism subjects, human or animal)
 - *Info (not scored):* 4,961 disease associations in this release (3,125 in biosample_disease.tsv, 1,836 in subject_disease.tsv) - not scored, since not every program studies a disease
 

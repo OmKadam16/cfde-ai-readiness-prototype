@@ -69,6 +69,8 @@ DATA_REAL_DIR = Path(__file__).parent.parent / "data_real"
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
 # Where each data_real/ package came from (tracked in git; data_real/ is not).
 RELEASES_FILE = Path(__file__).parent.parent / "releases.tsv"
+# Species of each NCBI taxon the packages' subjects use, from NCBI Taxonomy (src/fetch_taxonomy.py).
+TAXONOMY_FILE = Path(__file__).parent.parent / "taxonomy_lineage.tsv"
 OLD_RELEASE_YEARS = 2
 OLD_RELEASE_FLAG = "older release - may not reflect current metadata"
 
@@ -164,7 +166,7 @@ WHY_IT_MATTERS = {
     "subject_sex": ("Recording sex lets model developers check whether results hold for both sexes; "
                     "NIH's Sex as a Biological Variable policy applies to human and animal studies alike."),
     "subject_age": "Recording age lets model developers check whether results differ across age groups, such as children and adults.",
-    "biosample_anatomy": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues.",
+    "biosample_anatomy": "Recording anatomy or biofluid lets a model keep tissue- and fluid-specific signals apart instead of mixing different sample types.",
     "persistent_ids": "Persistent identifiers let a training set be cited and re-assembled later, which supports reproducible models.",
     "ontology_ids": "Ontology term IDs let values be matched reliably across programs ('Breast' in one, 'UBERON:0000310' in another), so a model sees one concept as one feature.",
     "creation_time": "Timestamps help identify which version of the data a model used and make batch or time effects detectable.",
@@ -434,34 +436,127 @@ def value_scheme(value: str) -> str:
     return match.group(1) if match else "(no scheme)"
 
 
-def organism_mask(subjects: pd.DataFrame) -> pd.Series:
-    """True for single-organism subjects (or subjects with no granularity recorded)."""
+# Who the subjects are. From each subject's taxa in subject_role_taxonomy.tsv:
+#   human    any of its taxa is Homo sapiens
+#   animal   otherwise, any taxon is an animal (Metazoa, per NCBI Taxonomy)
+#   other    otherwise, a known taxon that is not an animal (plants, fungi, bacteria, ...)
+#   unknown  no taxon recorded, or one not in taxonomy_lineage.tsv
+SPECIES_GROUPS = {
+    "human": "Humans",
+    "animal": "Other animals",
+    "other": "Other organisms (plants, fungi, microbes)",
+    "unknown": "Species not recorded",
+}
+HUMAN_TAXON_IDS = {"NCBI:txid9606", "NCBITaxon:9606"}
+
+
+def load_animal_taxa() -> dict[str, bool]:
+    """taxonomy_id -> is it an animal, for every taxon in taxonomy_lineage.tsv."""
+    table = read_tsv(TAXONOMY_FILE)
+    if table is None:
+        return {}
+    return dict(zip(table["taxonomy_id"].str.strip(), table["is_animal"].str.strip() == "true"))
+
+
+ANIMAL_TAXA = load_animal_taxa()
+
+
+def species_groups(prog: dict | None, subjects: pd.DataFrame) -> pd.Series:
+    """The species group (see SPECIES_GROUPS) of each subject row."""
+    groups = pd.Series("unknown", index=subjects.index, dtype=object)
+    taxa = (prog or {}).get("assoc", {}).get("subject_role_taxonomy")
+    if taxa is None or not len(taxa) or "taxonomy_id" not in taxa.columns or not len(subjects):
+        return groups
+    taxon = taxa["taxonomy_id"].astype(str).str.strip()
+    kind = taxon.map(lambda t: "human" if t in HUMAN_TAXON_IDS else
+                     "animal" if ANIMAL_TAXA.get(t) else "other" if t in ANIMAL_TAXA else None)
+    rank = {"human": 3, "animal": 2, "other": 1}
+    best = (pd.DataFrame({"key": taxa["subject_id_namespace"].astype(str) + "|" + taxa["subject_local_id"].astype(str),
+                          "rank": kind.map(rank)}).dropna().groupby("key")["rank"].max())
+    keys = subjects["id_namespace"].astype(str) + "|" + subjects["local_id"].astype(str)
+    found = keys.map(best).map({v: k for k, v in rank.items()})
+    return found.fillna("unknown").astype(object)
+
+
+def organism_mask(subjects: pd.DataFrame, prog: dict | None = None) -> pd.Series:
+    """True for the subjects sex and age apply to: single organisms (or no granularity recorded) that are not
+    known to be a non-animal organism. With no package (prog) given, only granularity is used."""
     if "granularity" not in subjects.columns:
-        return pd.Series(True, index=subjects.index)
-    granularity = subjects["granularity"].astype("string").str.strip()
-    return (granularity == SINGLE_ORGANISM).fillna(False).astype(bool) | ~filled_mask(subjects["granularity"])
+        single = pd.Series(True, index=subjects.index)
+    else:
+        granularity = subjects["granularity"].astype("string").str.strip()
+        single = (granularity == SINGLE_ORGANISM).fillna(False).astype(bool) | ~filled_mask(subjects["granularity"])
+    if prog is None:
+        return single
+    return single & (species_groups(prog, subjects) != "other")
 
 
-def organism_subjects(subjects: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
-    """Subjects whose sex and age are checked: single organisms (human or animal).
-    Cell lines, microbiomes, synthetic entities etc. are excluded and reported.
-    A subject with no granularity recorded is kept (C2M2 requires the field;
-    only our hand-collected sample leaves it blank)."""
+def organism_subjects(subjects: pd.DataFrame, prog: dict | None = None) -> tuple[pd.DataFrame, list[str]]:
+    """Subjects whose sex and age are checked: single organisms, human or animal.
+    Cell lines, microbiomes, synthetic entities etc. are excluded and reported, and so are single
+    organisms that are plants, fungi or microbes. A subject with no granularity recorded is kept
+    (C2M2 requires the field; only our hand-collected sample leaves it blank)."""
     if "granularity" not in subjects.columns:
         return subjects, (["subject.tsv has no granularity column, so all subjects are treated as single organisms"]
                           if len(subjects) else [])
-    keep = organism_mask(subjects)
+    single = organism_mask(subjects)
+    keep = organism_mask(subjects, prog)
     granularity = subjects["granularity"].astype("string").str.strip()
     blank = ~filled_mask(subjects["granularity"])
     info = []
-    excluded = granularity[~keep].value_counts()
+    excluded = granularity[~single].value_counts()
     if len(excluded):
         parts = [f"{n:,} {GRANULARITY_NAMES.get(g, g)}" for g, n in excluded.items()]
         info.append(f"{' and '.join(parts)} subjects excluded from sex/age checks "
                     "(these checks apply to single-organism subjects, human or animal)")
+    non_animal = int((single & ~keep).sum())
+    if non_animal:
+        info.append(f"{non_animal:,} single-organism subjects that are plants, fungi or microbes (per NCBI Taxonomy) "
+                    "excluded from sex/age checks")
     if blank.any():
         info.append(f"{int(blank.sum()):,} subject(s) have no granularity recorded and are counted as single organisms")
     return subjects[keep], info
+
+
+def non_animal_biosamples(prog: dict) -> pd.Series:
+    """Biosamples whose subjects are all plants, fungi or microbes (per NCBI Taxonomy)."""
+    biosamples, links, subjects = prog["biosample"], prog["biosample_from_subject"], prog["subject"]
+    if not len(biosamples) or not len(links):
+        return pd.Series(False, index=biosamples.index)
+    groups = species_groups(prog, subjects)
+    other = set(zip(subjects["id_namespace"].astype(str)[groups == "other"], subjects["local_id"].astype(str)[groups == "other"]))
+    if not other:
+        return pd.Series(False, index=biosamples.index)
+    from_other = pd.Series([k in other for k in zip(links["subject_id_namespace"].astype(str),
+                                                    links["subject_local_id"].astype(str))], index=links.index)
+    only_other = from_other.groupby([links["biosample_id_namespace"].astype(str),
+                                     links["biosample_local_id"].astype(str)]).all()
+    return pd.Series([bool(only_other.get(k, False)) for k in zip(biosamples["id_namespace"].astype(str),
+                                                                  biosamples["local_id"].astype(str))],
+                     index=biosamples.index)
+
+
+def species_summary(prog: dict) -> dict[str, dict]:
+    """Single-organism subjects by species group, with how many have sex (Male/Female) and age recorded."""
+    subjects = prog["subject"]
+    single = organism_mask(subjects)
+    groups = species_groups(prog, subjects)[single]
+    chosen = subjects[single]
+    known_sex = (chosen["sex"].astype("string").str.strip().isin(KNOWN_SEX).fillna(False).astype(bool)
+                 if "sex" in chosen.columns else pd.Series(False, index=chosen.index))
+    links = prog["biosample_from_subject"]
+    sampled = links[age_mask(links, "age_at_sampling", prog)]
+    sampled_keys = set(zip(sampled["subject_id_namespace"].astype(str), sampled["subject_local_id"].astype(str)))
+    has_age = age_mask(chosen, "age_at_enrollment", prog) | pd.Series(
+        [k in sampled_keys for k in zip(chosen["id_namespace"].astype(str), chosen["local_id"].astype(str))],
+        index=chosen.index, dtype=bool)
+    summary = {}
+    for group in SPECIES_GROUPS:
+        in_group = groups == group
+        if in_group.any():
+            summary[group] = {"subjects": int(in_group.sum()), "sex": int((known_sex & in_group).sum()),
+                              "age": int((has_age & in_group).sum())}
+    return summary
 
 
 # ---------------------------------------------------------------------------
@@ -532,10 +627,14 @@ def score_provenance(prog):
 
 
 def score_characterization(prog):
-    subjects, granularity_info = organism_subjects(prog["subject"])
+    subjects, granularity_info = organism_subjects(prog["subject"], prog)
     biosamples = prog["biosample"]
     n_sex = count_filled(subjects, "sex")
-    n_anat = count_filled(biosamples, "anatomy")
+    # Anatomy or biofluid: C2M2 records a fluid (blood, plasma, urine) in biofluid, not anatomy, so a sample
+    # with either is described. Biosamples that come only from plants, fungi or microbes are left out:
+    # anatomy and biofluid terms (UBERON) describe animal bodies.
+    biosamples = biosamples[~non_animal_biosamples(prog)]
+    n_anat = int((column_mask(biosamples, "anatomy") | column_mask(biosamples, "biofluid")).sum())
 
     # C2M2 records age in two places: subject.age_at_enrollment and
     # biosample_from_subject.age_at_sampling. A subject has an age if either
@@ -569,8 +668,8 @@ def score_characterization(prog):
               "(age_at_enrollment, or age_at_sampling on a linked biosample)",
               n_age, len(subjects), age_detail,
               raw={"age_at_enrollment": n_enrollment, "age_at_sampling_only": n_sampling_only}),
-        check("biosample_anatomy", "Biosamples with anatomy recorded",
-              n_anat, len(biosamples), missing_detail(n_anat, len(biosamples), "biosamples", "anatomy",
+        check("biosample_anatomy", "Biosamples with anatomy or biofluid recorded",
+              n_anat, len(biosamples), missing_detail(n_anat, len(biosamples), "biosamples", "anatomy or biofluid",
                                                       absent_column_note({"biosample": biosamples}, "anatomy"))),
     ], "No single-organism subjects or biosamples found for this program.",
         info=granularity_info + [disease_info])
@@ -697,7 +796,8 @@ METHODS = [
     ("Characterization", "subject_age",
      "Single-organism subjects with an age recorded",
      "subject: age_at_enrollment, granularity; biosample_from_subject: age_at_sampling"),
-    ("Characterization", "biosample_anatomy", "Biosamples with anatomy recorded", "biosample: anatomy"),
+    ("Characterization", "biosample_anatomy", "Biosamples with anatomy or biofluid recorded (not counting "
+     "biosamples only from plants, fungi or microbes)", "biosample: anatomy, biofluid"),
     ("Characterization", "(info, not scored)", "Disease associations; subjects excluded from sex/age checks",
      "biosample_disease, subject_disease; subject: granularity"),
     ("Pre-model Explainability", "labeled_terms",
@@ -750,7 +850,10 @@ MERGED_FIELDS = {
 }
 PER_RECORD_FIELDS = {"persistent_id": "persistent_id", "creation_time": "creation_time"}
 ORGANISM_FIELDS = {"sex", "age"}      # counted only for single-organism subjects
-SINGLE_ORGANISM_BIT = "_single_organism"  # hidden bit: sets the denominator for sex/age
+SINGLE_ORGANISM_BIT = "_single_organism"  # hidden bit: sets the denominator for sex/age (animal subjects)
+# Hidden bits for counting one kind of subject: records from (or about) humans, or other animals.
+SPECIES_BITS = {"_human": "human", "_animal": "animal"}
+SPECIES_FILTERS = {"human": "_human", "animal": "_animal"}
 FIELD_GROUPS = ["Demographics", "Clinical/disease", "Biological sample", "Molecular", "File/technical"]
 # Plain-English names and groups for known fields; anything else gets a name
 # built from its column and a group from its entity.
@@ -922,8 +1025,18 @@ def field_bitmasks(prog: dict, fields: dict | None = None) -> dict:
     fdb, fds = prog["file_describes_biosample"], prog["file_describes_subject"]
     fb_f, fb_b = positions(f_idx, fdb, "file"), positions(b_idx, fdb, "biosample")
     fs_f, fs_s = positions(f_idx, fds, "file"), positions(s_idx, fds, "subject")
-    s_org = organism_mask(subjects).to_numpy()
+    s_org = organism_mask(subjects, prog).to_numpy()
     b_org = any_linked(n["biosample"], bs_b, bs_s, s_org)
+    # Species bits: a subject's own group (single organisms only); biosamples and files take it from
+    # the subjects they come from or describe.
+    s_single = organism_mask(subjects).to_numpy()
+    s_group = species_groups(prog, subjects).to_numpy()
+    species_bits = {}
+    for bit, group in SPECIES_BITS.items():
+        s_flag = s_single & (s_group == group)
+        b_flag = any_linked(n["biosample"], bs_b, bs_s, s_flag)
+        f_flag = any_linked(n["file"], fb_f, fb_b, b_flag) | any_linked(n["file"], fs_f, fs_s, s_flag)
+        species_bits[bit] = {"subject": s_flag, "biosample": b_flag, "file": f_flag}
     index_of = {"subject": s_idx, "biosample": b_idx, "file": f_idx}
 
     def own(fid: str, f: dict, entity: str) -> np.ndarray:
@@ -966,8 +1079,11 @@ def field_bitmasks(prog: dict, fields: dict | None = None) -> dict:
                       | (any_linked(n["file"], fs_f, fs_s, subject_level) if "subject" in f["entities"] else False))
         levels["subject"][fid], levels["biosample"][fid], levels["file"][fid] = subject_level, biosample_level, file_level
     levels["subject"][SINGLE_ORGANISM_BIT] = s_org
+    for bit, flags in species_bits.items():
+        for lv in ENTITIES:
+            levels[lv][bit] = flags[lv]
 
-    order = sorted(fields) + [SINGLE_ORGANISM_BIT]
+    order = sorted(fields) + [SINGLE_ORGANISM_BIT] + list(SPECIES_BITS)
     patterns = {}
     for lv in ENTITIES:
         if n[lv] == 0:
@@ -992,13 +1108,22 @@ def field_bitmasks(prog: dict, fields: dict | None = None) -> dict:
                                   "file": int(f_indet.sum())}}
 
 
-def count_meeting(combinations: dict, level: str, required: list[str]) -> tuple[int, int]:
+def count_meeting(combinations: dict, level: str, required: list[str],
+                  species: str | None = None) -> tuple[int, int]:
     """(records at `level` that have ALL `required` fields, records counted at `level`), from stored bitmasks.
     A field the package doesn't have is met by no record. Sex/age subject counts are out of single-organism
-    subjects."""
+    animal subjects. `species` ("human" or "animal") counts only records from that kind of subject."""
     order = combinations["fields"]
     data = combinations["levels"][level]
     total = data["total"]
+    if species:
+        bit = SPECIES_FILTERS[species]
+        if bit not in order:  # results built before species were tracked
+            return 0, 0
+        flag = 1 << order.index(bit)
+        patterns = [[m, c] for m, c in data["patterns"] if m & flag]
+        return count_meeting({"fields": order, "levels": {level: {"total": sum(c for _, c in patterns),
+                                                                  "patterns": patterns}}}, level, required)
     if level == "subject" and ORGANISM_FIELDS & set(required):
         org = 1 << order.index(SINGLE_ORGANISM_BIT)
         total = sum(c for m, c in data["patterns"] if m & org)
@@ -1089,7 +1214,8 @@ def field_coverage(dims: dict, combinations: dict) -> list[dict]:
         ("sex", "Sex", "subject.sex", "single-organism subjects", from_check("Characterization", "subject_sex")),
         ("age", "Age", "subject.age_at_enrollment, biosample_from_subject.age_at_sampling",
          "single-organism subjects", from_check("Characterization", "subject_age")),
-        ("anatomy", "Anatomy", "biosample.anatomy", "biosamples", from_check("Characterization", "biosample_anatomy")),
+        ("anatomy", "Anatomy or biofluid", "biosample.anatomy, biosample.biofluid", "biosamples",
+         from_check("Characterization", "biosample_anatomy")),
         ("disease", "Disease link", "biosample_disease, subject_disease (via biosample_from_subject)",
          "biosamples", disease),
         ("persistent_id", "Persistent ID", "persistent_id (all records), file.access_url", "records",
@@ -1106,9 +1232,6 @@ def field_coverage(dims: dict, combinations: dict) -> list[dict]:
 # ---------------------------------------------------------------------------
 # Data quality notes (reported, never scored)
 # ---------------------------------------------------------------------------
-
-HUMAN_TAXON_IDS = {"NCBI:txid9606", "NCBITaxon:9606"}
-
 
 def human_subjects(prog: dict, organisms: pd.DataFrame) -> tuple[pd.DataFrame, str]:
     """Single-organism subjects that are human (via subject_role_taxonomy, when the package has it)."""
@@ -1180,7 +1303,7 @@ def data_quality_notes(prog: dict[str, pd.DataFrame]) -> list[str]:
 
     # 6. Sex recorded as "Indeterminate" (cfde_subject_sex:0). It is a valid
     #    C2M2 value, so it counts as recorded, but it carries no sex information.
-    organisms, _ = organism_subjects(prog["subject"])
+    organisms, _ = organism_subjects(prog["subject"], prog)
     if "sex" in organisms.columns:
         sex = organisms["sex"].astype("string").str.strip()
         indeterminate = int((sex == INDETERMINATE_SEX).sum())
@@ -1253,6 +1376,7 @@ def score_program(namespace: str, label: str, prog: dict[str, pd.DataFrame],
         "fields": discover_fields(prog, combinations, fields),
         "combinations": combinations,
         "age_zero_rule": prog["age_rule"],
+        "species": species_summary(prog),
     }
 
 

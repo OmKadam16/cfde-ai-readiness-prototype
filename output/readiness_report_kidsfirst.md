@@ -37,7 +37,7 @@ Release: `2026Q4_C2M2_datapackage.zip` (2026-09-16)
 - **Observation:** 31,807 of 39,156 subjects have no age recorded (0 have age_at_enrollment; 7,349 more have age_at_sampling on a linked biosample). Recording age lets model developers check whether results differ across age groups, such as children and adults.
 - `subject_sex` = 100 -- Single-organism subjects with sex recorded: 112 of 39,156 subjects have no sex recorded
 - `subject_age` = 19 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 31,807 of 39,156 subjects have no age recorded (0 have age_at_enrollment; 7,349 more have age_at_sampling on a linked biosample)
-- `biosample_anatomy` = 55 -- Biosamples with anatomy recorded: 50,574 of 111,300 biosamples have no anatomy recorded
+- `biosample_anatomy` = 55 -- Biosamples with anatomy or biofluid recorded: 50,574 of 111,300 biosamples have no anatomy or biofluid recorded
 - *Info (not scored):* 154,157 disease associations in this release (114,888 in biosample_disease.tsv, 39,269 in subject_disease.tsv) - not scored, since not every program studies a disease
 
 ### Pre-model Explainability: 100/100 [labeled_terms 169/169]

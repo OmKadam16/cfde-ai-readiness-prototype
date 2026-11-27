@@ -104,12 +104,12 @@
             },
             {
               "id": "biosample_anatomy",
-              "description": "Biosamples with anatomy recorded",
+              "description": "Biosamples with anatomy or biofluid recorded",
               "passed": 2,
               "total": 2,
               "score": 100,
-              "detail": "0 of 2 biosamples have no anatomy recorded",
-              "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
+              "detail": "0 of 2 biosamples have no anatomy or biofluid recorded",
+              "why_it_matters": "Recording anatomy or biofluid lets a model keep tissue- and fluid-specific signals apart instead of mixing different sample types."
             }
           ],
           "info": [
@@ -182,8 +182,8 @@
         },
         {
           "field": "anatomy",
-          "label": "Anatomy",
-          "columns": "biosample.anatomy",
+          "label": "Anatomy or biofluid",
+          "columns": "biosample.anatomy, biosample.biofluid",
           "unit": "biosamples",
           "passed": 2,
           "total": 2
@@ -299,7 +299,9 @@
           "sex",
           "subject.ethnicity",
           "subject.granularity",
-          "_single_organism"
+          "_single_organism",
+          "_human",
+          "_animal"
         ],
         "levels": {
           "subject": {
@@ -336,6 +338,13 @@
         "zeros": 0,
         "recorded": 0,
         "median_nonzero_age": null
+      },
+      "species": {
+        "unknown": {
+          "subjects": 2,
+          "sex": 0,
+          "age": 0
+        }
       }
     },
     {
@@ -438,12 +447,12 @@
             },
             {
               "id": "biosample_anatomy",
-              "description": "Biosamples with anatomy recorded",
+              "description": "Biosamples with anatomy or biofluid recorded",
               "passed": 1,
               "total": 3,
               "score": 33,
-              "detail": "2 of 3 biosamples have no anatomy recorded",
-              "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
+              "detail": "2 of 3 biosamples have no anatomy or biofluid recorded",
+              "why_it_matters": "Recording anatomy or biofluid lets a model keep tissue- and fluid-specific signals apart instead of mixing different sample types."
             }
           ],
           "info": [
@@ -539,8 +548,8 @@
         },
         {
           "field": "anatomy",
-          "label": "Anatomy",
-          "columns": "biosample.anatomy",
+          "label": "Anatomy or biofluid",
+          "columns": "biosample.anatomy, biosample.biofluid",
           "unit": "biosamples",
           "passed": 1,
           "total": 3
@@ -698,7 +707,9 @@
           "sex",
           "subject.ethnicity",
           "subject.granularity",
-          "_single_organism"
+          "_single_organism",
+          "_human",
+          "_animal"
         ],
         "levels": {
           "subject": {
@@ -748,6 +759,13 @@
         "zeros": 0,
         "recorded": 0,
         "median_nonzero_age": null
+      },
+      "species": {
+        "unknown": {
+          "subjects": 3,
+          "sex": 0,
+          "age": 0
+        }
       }
     },
     {
@@ -850,12 +868,12 @@
             },
             {
               "id": "biosample_anatomy",
-              "description": "Biosamples with anatomy recorded",
+              "description": "Biosamples with anatomy or biofluid recorded",
               "passed": 2,
               "total": 3,
               "score": 67,
-              "detail": "1 of 3 biosamples have no anatomy recorded",
-              "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
+              "detail": "1 of 3 biosamples have no anatomy or biofluid recorded",
+              "why_it_matters": "Recording anatomy or biofluid lets a model keep tissue- and fluid-specific signals apart instead of mixing different sample types."
             }
           ],
           "info": [
@@ -949,8 +967,8 @@
         },
         {
           "field": "anatomy",
-          "label": "Anatomy",
-          "columns": "biosample.anatomy",
+          "label": "Anatomy or biofluid",
+          "columns": "biosample.anatomy, biosample.biofluid",
           "unit": "biosamples",
           "passed": 2,
           "total": 3
@@ -1133,7 +1151,9 @@
           "sex",
           "subject.ethnicity",
           "subject.granularity",
-          "_single_organism"
+          "_single_organism",
+          "_human",
+          "_animal"
         ],
         "levels": {
           "subject": {
@@ -1183,6 +1203,13 @@
         "zeros": 0,
         "recorded": 0,
         "median_nonzero_age": null
+      },
+      "species": {
+        "unknown": {
+          "subjects": 2,
+          "sex": 0,
+          "age": 0
+        }
       }
     },
     {
@@ -1285,12 +1312,12 @@
             },
             {
               "id": "biosample_anatomy",
-              "description": "Biosamples with anatomy recorded",
+              "description": "Biosamples with anatomy or biofluid recorded",
               "passed": 1,
               "total": 1,
               "score": 100,
-              "detail": "0 of 1 biosamples have no anatomy recorded",
-              "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
+              "detail": "0 of 1 biosamples have no anatomy or biofluid recorded",
+              "why_it_matters": "Recording anatomy or biofluid lets a model keep tissue- and fluid-specific signals apart instead of mixing different sample types."
             }
           ],
           "info": [
@@ -1361,8 +1388,8 @@
         },
         {
           "field": "anatomy",
-          "label": "Anatomy",
-          "columns": "biosample.anatomy",
+          "label": "Anatomy or biofluid",
+          "columns": "biosample.anatomy, biosample.biofluid",
           "unit": "biosamples",
           "passed": 1,
           "total": 1
@@ -1498,7 +1525,9 @@
           "sex",
           "subject.ethnicity",
           "subject.granularity",
-          "_single_organism"
+          "_single_organism",
+          "_human",
+          "_animal"
         ],
         "levels": {
           "subject": {
@@ -1535,6 +1564,13 @@
         "zeros": 0,
         "recorded": 0,
         "median_nonzero_age": null
+      },
+      "species": {
+        "unknown": {
+          "subjects": 1,
+          "sex": 0,
+          "age": 0
+        }
       }
     },
     {
@@ -1637,12 +1673,12 @@
             },
             {
               "id": "biosample_anatomy",
-              "description": "Biosamples with anatomy recorded",
+              "description": "Biosamples with anatomy or biofluid recorded",
               "passed": 3,
               "total": 3,
               "score": 100,
-              "detail": "0 of 3 biosamples have no anatomy recorded",
-              "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
+              "detail": "0 of 3 biosamples have no anatomy or biofluid recorded",
+              "why_it_matters": "Recording anatomy or biofluid lets a model keep tissue- and fluid-specific signals apart instead of mixing different sample types."
             }
           ],
           "info": [
@@ -1736,8 +1772,8 @@
         },
         {
           "field": "anatomy",
-          "label": "Anatomy",
-          "columns": "biosample.anatomy",
+          "label": "Anatomy or biofluid",
+          "columns": "biosample.anatomy, biosample.biofluid",
           "unit": "biosamples",
           "passed": 3,
           "total": 3
@@ -1955,7 +1991,9 @@
           "sex",
           "subject.ethnicity",
           "subject.granularity",
-          "_single_organism"
+          "_single_organism",
+          "_human",
+          "_animal"
         ],
         "levels": {
           "subject": {
@@ -1997,6 +2035,13 @@
         "zeros": 0,
         "recorded": 0,
         "median_nonzero_age": null
+      },
+      "species": {
+        "unknown": {
+          "subjects": 3,
+          "sex": 0,
+          "age": 0
+        }
       }
     }
   ]

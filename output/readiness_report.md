@@ -41,7 +41,7 @@ Records: 1 project, 2 subject, 2 biosample, 0 file
 - **Observation:** 2 of 2 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
 - `subject_sex` = 0 -- Single-organism subjects with sex recorded: 2 of 2 subjects have no sex recorded
 - `subject_age` = 0 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 2 of 2 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)
-- `biosample_anatomy` = 100 -- Biosamples with anatomy recorded: 0 of 2 biosamples have no anatomy recorded
+- `biosample_anatomy` = 100 -- Biosamples with anatomy or biofluid recorded: 0 of 2 biosamples have no anatomy or biofluid recorded
 - *Info (not scored):* 2 subject(s) have no granularity recorded and are counted as single organisms
 - *Info (not scored):* 0 disease associations in this release (0 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease
 
@@ -82,7 +82,7 @@ Records: 3 project, 3 subject, 3 biosample, 1 file
 - **Observation:** 3 of 3 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
 - `subject_sex` = 0 -- Single-organism subjects with sex recorded: 3 of 3 subjects have no sex recorded
 - `subject_age` = 0 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 3 of 3 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)
-- `biosample_anatomy` = 33 -- Biosamples with anatomy recorded: 2 of 3 biosamples have no anatomy recorded
+- `biosample_anatomy` = 33 -- Biosamples with anatomy or biofluid recorded: 2 of 3 biosamples have no anatomy or biofluid recorded
 - *Info (not scored):* 3 subject(s) have no granularity recorded and are counted as single organisms
 - *Info (not scored):* 0 disease associations in this release (0 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease
 
@@ -127,7 +127,7 @@ Records: 2 project, 2 subject, 3 biosample, 1 file
 - **Observation:** 2 of 2 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
 - `subject_sex` = 0 -- Single-organism subjects with sex recorded: 2 of 2 subjects have no sex recorded
 - `subject_age` = 0 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 2 of 2 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)
-- `biosample_anatomy` = 67 -- Biosamples with anatomy recorded: 1 of 3 biosamples have no anatomy recorded
+- `biosample_anatomy` = 67 -- Biosamples with anatomy or biofluid recorded: 1 of 3 biosamples have no anatomy or biofluid recorded
 - *Info (not scored):* 2 subject(s) have no granularity recorded and are counted as single organisms
 - *Info (not scored):* 2 disease associations in this release (2 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease
 
@@ -170,7 +170,7 @@ Records: 1 project, 1 subject, 1 biosample, 0 file
 - **Observation:** 1 of 1 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
 - `subject_sex` = 0 -- Single-organism subjects with sex recorded: 1 of 1 subjects have no sex recorded
 - `subject_age` = 0 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 1 of 1 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)
-- `biosample_anatomy` = 100 -- Biosamples with anatomy recorded: 0 of 1 biosamples have no anatomy recorded
+- `biosample_anatomy` = 100 -- Biosamples with anatomy or biofluid recorded: 0 of 1 biosamples have no anatomy or biofluid recorded
 - *Info (not scored):* 1 subject(s) have no granularity recorded and are counted as single organisms
 - *Info (not scored):* 0 disease associations in this release (0 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease
 
@@ -211,7 +211,7 @@ Records: 3 project, 3 subject, 3 biosample, 1 file
 - **Observation:** 3 of 3 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
 - `subject_sex` = 0 -- Single-organism subjects with sex recorded: 3 of 3 subjects have no sex recorded
 - `subject_age` = 0 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 3 of 3 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)
-- `biosample_anatomy` = 100 -- Biosamples with anatomy recorded: 0 of 3 biosamples have no anatomy recorded
+- `biosample_anatomy` = 100 -- Biosamples with anatomy or biofluid recorded: 0 of 3 biosamples have no anatomy or biofluid recorded
 - *Info (not scored):* 3 subject(s) have no granularity recorded and are counted as single organisms
 - *Info (not scored):* 0 disease associations in this release (0 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease
 

@@ -51,7 +51,7 @@ or work, and are meant to point at concrete, fixable gaps.
 |---|---|
 | FAIRness | records with a persistent identifier; ontology fields holding term IDs rather than free text |
 | Provenance | records with `creation_time`; files with a sha256 or md5 checksum |
-| Characterization | single-organism subjects with sex; with an age (`age_at_enrollment`, or `age_at_sampling` on a linked biosample); biosamples with anatomy |
+| Characterization | single-organism animal subjects (human or not) with sex; with an age (`age_at_enrollment`, or `age_at_sampling` on a linked biosample); biosamples with anatomy or biofluid (not counting biosamples only from plants, fungi or microbes) |
 | Pre-model Explainability | term IDs with a human-readable label (from the package's own term tables, or read off the portal) |
 | Ethics | not assessable: the C2M2 schema has no consent or governance fields |
 | Sustainability | files with a `persistent_id` or `access_url` |
@@ -188,6 +188,57 @@ The note suggests confirming whether 0 was meant as the missing sex. This
 currently applies to ExRNA: 7,325 Female, 1,223 Indeterminate and no Male
 human subjects.
 
+### Score audit: anatomy or biofluid
+Going through every check for all seven programs, one more check was found
+to count samples as undescribed when they are not. C2M2 records a fluid
+(blood, plasma, urine) in `biosample.biofluid`, not `anatomy`, and 252,462
+Metabolomics Workbench biosamples have a biofluid but no anatomy. The
+anatomy check now counts **anatomy or biofluid**. It also leaves out the
+34,440 biosamples that come only from plants, fungi or microbes, since
+anatomy and biofluid terms (UBERON) describe animal bodies.
+
+- Metabolomics Workbench's check moves from 125,384 of 476,563 (26%) to
+  374,929 of 442,123 (85%), Characterization from 9 to 28, and overall from
+  68 to 71.
+- No other program changes. ExRNA also uses biofluid, but its biosamples
+  all have anatomy as well.
+
+The other low and 0% results were checked against the raw files and are
+real gaps:
+- Kids First's `md5` and `sha256` columns are empty for all 1,356,814 files.
+- HMP and Metabolomics Workbench leave `creation_time` blank throughout.
+- ExRNA has no persistent identifiers.
+- HMP has no ages.
+- LINCS, Metabolomics Workbench and SPARC have no sex or age for any
+  subject, human or animal (see below).
+
+### Humans, other animals, and other organisms
+Not every subject is a person. Each subject's species comes from its NCBI
+taxonomy in `subject_role_taxonomy.tsv`. NCBI Taxonomy lineages (saved in
+`taxonomy_lineage.tsv` by `src/fetch_taxonomy.py`) sort each species into
+one of four groups: humans, other animals, other organisms (plants, fungi,
+microbes) and species not recorded.
+
+- **Sex and age** are checked for humans, other animals and subjects with no
+  species recorded. They are not checked for plants, fungi or microbes,
+  which only affects Metabolomics Workbench (377 such subjects).
+- **Find ML-ready data and the Dataset basket** can count humans only or
+  other animals only. Biosamples and files take the species of the subjects
+  they come from or describe.
+- **Field coverage** shows sex and age by species, and the Overview shows
+  who each program's subjects are.
+
+The split shows that the 0% sex and age for LINCS, Metabolomics Workbench
+and SPARC are not only because of animal data. Their human subjects have
+no sex or age in the C2M2 releases either:
+
+| Program | Humans | Other animals | Other organisms | Species not recorded | Humans with sex / age |
+|---|---|---|---|---|---|
+| LINCS | 275 | 0 | 0 | 0 | 0 / 0 |
+| Metabolomics Workbench | 1,299 | 1,838 | 377 | 159 | 0 / 0 |
+| SPARC | 736 | 3,858 | 0 | 3 | 0 / 0 |
+| ExRNA (for comparison) | 8,548 | 32 | 0 | 0 | 7,325 / 7,040 |
+
 ### Field discovery
 The "My model needs" choices are not a hard-coded list. For each package
 and each project, the checker scans every column of `subject.tsv`,
@@ -284,7 +335,7 @@ survives switching pages but not closing the tab.
 | HMP | `HMP_C2M2_2022-06-20_datapackage.zip` | 2022-06-20 (older release - may not reflect current metadata) | 24 / 7,903 / 51,873 / 251,136 | 80 | 86 | 50 | 59 | 100 | n/a | 88 | 100 |
 | Kids First (KFDRC) | `2026Q4_C2M2_datapackage.zip` | 2026-09-16 | 45 / 39,156 / 111,300 / 1,356,814 | 78 | 62 | 50 | 58 | 100 | n/a | 100 | 97 |
 | LINCS | `LINCS_C2M2_2023-09-18_datapackage.zip` | 2023-09-18 (older release - may not reflect current metadata) | 17 / 1,966 / 1,466,796 / 1,495,871 | 80 | 74 | 75 | 33 | 100 | n/a | 100 | 100 |
-| Metabolomics Workbench (MW) | `MW_submission_packet_20260914.zip` | 2026-09-14 | 2,891 / 4,551 / 476,563 / 8,366 | 68 | 50 | 50 | 9 | 100 | n/a | 100 | 100 |
+| Metabolomics Workbench (MW) | `MW_submission_packet_20260914.zip` | 2026-09-14 | 2,891 / 4,551 / 476,563 / 8,366 | 71 | 50 | 50 | 28 | 100 | n/a | 100 | 100 |
 | SenNet | `sennet_c2m2_sep26.zip` | 2026-09-24 | 21 / 897 / 5,673 / 154,612 | 94 | 98 | 100 | 67 | 100 | n/a | 100 | 98 |
 | SPARC | `C2M2_datapackage_20260916.zip` | 2026-09-17 | 78 / 4,597 / 9,212 / 175,471 | 88 | 96 | 96 | 33 | 100 | n/a | 100 | 100 |
 
@@ -330,7 +381,7 @@ already handled).
 - **The original five programs' scores, dimensions and field coverage are
   unchanged.** The only difference for them is the new Indeterminate note
   for Kids First.
-- **Held-out results:** ExRNA 91 overall (90 since the AGE_ZERO_PLACEHOLDER rule described above), Metabolomics Workbench 68.
+- **Held-out results:** ExRNA 91 overall (90 since the AGE_ZERO_PLACEHOLDER rule described above), Metabolomics Workbench 68 (71 since the anatomy-or-biofluid rule described below).
   Metabolomics Workbench records no sex or age for any subject. Its
   biosample `persistent_id` values are Metabolomics Workbench landing-page
   URLs, which are not on the persistent-identifier scheme list.

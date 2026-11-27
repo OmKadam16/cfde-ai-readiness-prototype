@@ -16,7 +16,7 @@
         "biosample": 476563,
         "file": 8366
       },
-      "overall_score": 68,
+      "overall_score": 71,
       "dimensions_assessed": 6,
       "dimensions": {
         "FAIRness": {
@@ -80,25 +80,25 @@
           "observation": "492,371 of 492,371 records have no creation_time recorded. Timestamps help identify which version of the data a model used and make batch or time effects detectable."
         },
         "Characterization": {
-          "score": 9,
+          "score": 28,
           "reason": "",
           "checks": [
             {
               "id": "subject_sex",
               "description": "Single-organism subjects with sex recorded",
               "passed": 0,
-              "total": 3673,
+              "total": 3296,
               "score": 0,
-              "detail": "3,673 of 3,673 subjects have no sex recorded",
+              "detail": "3,296 of 3,296 subjects have no sex recorded",
               "why_it_matters": "Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike."
             },
             {
               "id": "subject_age",
               "description": "Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample)",
               "passed": 0,
-              "total": 3673,
+              "total": 3296,
               "score": 0,
-              "detail": "3,673 of 3,673 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
+              "detail": "3,296 of 3,296 subjects have no age recorded (0 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)",
               "raw": {
                 "age_at_enrollment": 0,
                 "age_at_sampling_only": 0
@@ -107,19 +107,20 @@
             },
             {
               "id": "biosample_anatomy",
-              "description": "Biosamples with anatomy recorded",
-              "passed": 125384,
-              "total": 476563,
-              "score": 26,
-              "detail": "351,179 of 476,563 biosamples have no anatomy recorded",
-              "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
+              "description": "Biosamples with anatomy or biofluid recorded",
+              "passed": 374929,
+              "total": 442123,
+              "score": 85,
+              "detail": "67,194 of 442,123 biosamples have no anatomy or biofluid recorded",
+              "why_it_matters": "Recording anatomy or biofluid lets a model keep tissue- and fluid-specific signals apart instead of mixing different sample types."
             }
           ],
           "info": [
             "818 cell-line and 38 synthetic and 22 microbiome subjects excluded from sex/age checks (these checks apply to single-organism subjects, human or animal)",
+            "377 single-organism subjects that are plants, fungi or microbes (per NCBI Taxonomy) excluded from sex/age checks",
             "2,525 disease associations in this release (0 in biosample_disease.tsv, 2,525 in subject_disease.tsv) - not scored, since not every program studies a disease"
           ],
-          "observation": "3,673 of 3,673 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike."
+          "observation": "3,296 of 3,296 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike."
         },
         "Pre-model Explainability": {
           "score": 100,
@@ -191,7 +192,7 @@
           "columns": "subject.sex",
           "unit": "single-organism subjects",
           "passed": 0,
-          "total": 3673
+          "total": 3296
         },
         {
           "field": "age",
@@ -199,15 +200,15 @@
           "columns": "subject.age_at_enrollment, biosample_from_subject.age_at_sampling",
           "unit": "single-organism subjects",
           "passed": 0,
-          "total": 3673
+          "total": 3296
         },
         {
           "field": "anatomy",
-          "label": "Anatomy",
-          "columns": "biosample.anatomy",
+          "label": "Anatomy or biofluid",
+          "columns": "biosample.anatomy, biosample.biofluid",
           "unit": "biosamples",
-          "passed": 125384,
-          "total": 476563
+          "passed": 374929,
+          "total": 442123
         },
         {
           "field": "disease",
@@ -868,7 +869,9 @@
           "subject_race.race",
           "subject_role_taxonomy.taxonomy_id",
           "subject_substance.substance",
-          "_single_organism"
+          "_single_organism",
+          "_human",
+          "_animal"
         ],
         "levels": {
           "subject": {
@@ -896,11 +899,11 @@
               ],
               [
                 150994944,
-                49
+                324
               ],
               [
                 150994946,
-                179
+                192
               ],
               [
                 150994948,
@@ -908,19 +911,19 @@
               ],
               [
                 150995968,
-                151
+                214
               ],
               [
                 150995970,
-                329
+                345
               ],
               [
                 150995972,
-                12
+                14
               ],
               [
                 184549376,
-                2
+                3
               ],
               [
                 184549378,
@@ -928,11 +931,11 @@
               ],
               [
                 184550400,
-                16
+                22
               ],
               [
                 184550402,
-                58
+                59
               ],
               [
                 553648128,
@@ -975,63 +978,111 @@
                 1
               ],
               [
-                687865856,
-                413
+                1761607680,
+                33
               ],
               [
-                687865858,
-                729
+                1761607682,
+                142
               ],
               [
-                687865860,
-                442
+                1761607684,
+                263
               ],
               [
-                687865862,
-                44
+                1761607686,
+                6
               ],
               [
-                687866880,
-                172
+                1761608704,
+                50
               ],
               [
-                687866882,
-                645
+                1761608706,
+                224
               ],
               [
-                687866884,
-                479
+                1761608708,
+                329
               ],
               [
-                687866886,
-                31
+                1761608710,
+                6
               ],
               [
-                721420288,
-                1
+                1795162114,
+                6
               ],
               [
-                721420290,
-                43
+                1795162116,
+                11
               ],
               [
-                721420292,
-                29
+                1795163136,
+                4
               ],
               [
-                721421312,
-                26
+                1795163138,
+                56
               ],
               [
-                721421314,
-                210
+                1795163140,
+                169
               ],
               [
-                721421316,
-                234
+                2835349504,
+                105
               ],
               [
-                721421318,
+                2835349506,
+                574
+              ],
+              [
+                2835349508,
+                179
+              ],
+              [
+                2835349510,
+                38
+              ],
+              [
+                2835350528,
+                59
+              ],
+              [
+                2835350530,
+                405
+              ],
+              [
+                2835350532,
+                148
+              ],
+              [
+                2835350534,
+                25
+              ],
+              [
+                2868903938,
+                37
+              ],
+              [
+                2868903940,
+                18
+              ],
+              [
+                2868904960,
+                16
+              ],
+              [
+                2868904962,
+                153
+              ],
+              [
+                2868904964,
+                65
+              ],
+              [
+                2868904966,
                 16
               ]
             ]
@@ -1081,51 +1132,139 @@
               ],
               [
                 150994944,
-                55585
+                36326
               ],
               [
                 150994946,
-                59074
+                11081
               ],
               [
                 150994948,
-                93664
+                24
               ],
               [
                 150995968,
-                19505
+                10233
               ],
               [
                 150995970,
-                46533
+                12550
               ],
               [
                 150995972,
-                112147
+                247
               ],
               [
                 184549376,
-                277
+                36
               ],
               [
                 184549378,
-                3699
-              ],
-              [
-                184549380,
-                2219
+                899
               ],
               [
                 184550400,
-                5231
+                941
               ],
               [
                 184550402,
-                13347
+                1472
               ],
               [
-                184550404,
-                43072
+                1224736768,
+                8526
+              ],
+              [
+                1224736770,
+                17605
+              ],
+              [
+                1224736772,
+                80696
+              ],
+              [
+                1224737792,
+                5284
+              ],
+              [
+                1224737794,
+                15338
+              ],
+              [
+                1224737796,
+                102941
+              ],
+              [
+                1258291200,
+                130
+              ],
+              [
+                1258291202,
+                311
+              ],
+              [
+                1258291204,
+                1358
+              ],
+              [
+                1258292224,
+                2133
+              ],
+              [
+                1258292226,
+                4412
+              ],
+              [
+                1258292228,
+                39689
+              ],
+              [
+                2298478592,
+                10733
+              ],
+              [
+                2298478594,
+                30388
+              ],
+              [
+                2298478596,
+                12944
+              ],
+              [
+                2298479616,
+                3988
+              ],
+              [
+                2298479618,
+                18645
+              ],
+              [
+                2298479620,
+                8959
+              ],
+              [
+                2332033024,
+                111
+              ],
+              [
+                2332033026,
+                2489
+              ],
+              [
+                2332033028,
+                861
+              ],
+              [
+                2332034048,
+                2157
+              ],
+              [
+                2332034050,
+                7463
+              ],
+              [
+                2332034052,
+                3383
               ]
             ]
           },
@@ -1158,6 +1297,28 @@
         "zeros": 0,
         "recorded": 0,
         "median_nonzero_age": null
+      },
+      "species": {
+        "human": {
+          "subjects": 1299,
+          "sex": 0,
+          "age": 0
+        },
+        "animal": {
+          "subjects": 1838,
+          "sex": 0,
+          "age": 0
+        },
+        "other": {
+          "subjects": 377,
+          "sex": 0,
+          "age": 0
+        },
+        "unknown": {
+          "subjects": 159,
+          "sex": 0,
+          "age": 0
+        }
       }
     }
   ]

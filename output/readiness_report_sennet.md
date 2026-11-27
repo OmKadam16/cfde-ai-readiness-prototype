@@ -35,7 +35,7 @@ Release: `sennet_c2m2_sep26.zip` (2026-09-24)
 - **Observation:** 447 of 897 subjects have no sex recorded. Recording sex lets model developers check whether results hold for both sexes; NIH's Sex as a Biological Variable policy applies to human and animal studies alike.
 - `subject_sex` = 50 -- Single-organism subjects with sex recorded: 447 of 897 subjects have no sex recorded
 - `subject_age` = 52 -- Single-organism subjects with an age recorded (age_at_enrollment, or age_at_sampling on a linked biosample): 435 of 897 subjects have no age recorded (462 have age_at_enrollment; 0 more have age_at_sampling on a linked biosample)
-- `biosample_anatomy` = 100 -- Biosamples with anatomy recorded: 4 of 5,673 biosamples have no anatomy recorded
+- `biosample_anatomy` = 100 -- Biosamples with anatomy or biofluid recorded: 4 of 5,673 biosamples have no anatomy or biofluid recorded
 - *Info (not scored):* 0 disease associations in this release (0 in biosample_disease.tsv, 0 in subject_disease.tsv) - not scored, since not every program studies a disease
 
 ### Pre-model Explainability: 100/100 [labeled_terms 76/76]

@@ -106,12 +106,12 @@
             },
             {
               "id": "biosample_anatomy",
-              "description": "Biosamples with anatomy recorded",
+              "description": "Biosamples with anatomy or biofluid recorded",
               "passed": 48510,
               "total": 51873,
               "score": 94,
-              "detail": "3,363 of 51,873 biosamples have no anatomy recorded",
-              "why_it_matters": "Recording anatomy lets a model keep tissue-specific signals apart instead of mixing samples from different tissues."
+              "detail": "3,363 of 51,873 biosamples have no anatomy or biofluid recorded",
+              "why_it_matters": "Recording anatomy or biofluid lets a model keep tissue- and fluid-specific signals apart instead of mixing different sample types."
             }
           ],
           "info": [
@@ -199,8 +199,8 @@
         },
         {
           "field": "anatomy",
-          "label": "Anatomy",
-          "columns": "biosample.anatomy",
+          "label": "Anatomy or biofluid",
+          "columns": "biosample.anatomy, biosample.biofluid",
           "unit": "biosamples",
           "passed": 48510,
           "total": 51873
@@ -684,38 +684,40 @@
           "subject_race.race",
           "subject_role_taxonomy.taxonomy_id",
           "subject_substance.substance",
-          "_single_organism"
+          "_single_organism",
+          "_human",
+          "_animal"
         ],
         "levels": {
           "subject": {
             "total": 7903,
             "patterns": [
               [
-                42991616,
+                110100480,
                 190
               ],
               [
-                42991618,
+                110100482,
                 1087
               ],
               [
-                42991746,
+                110100610,
                 3
               ],
               [
-                43253760,
+                110362624,
                 410
               ],
               [
-                43253762,
+                110362626,
                 5724
               ],
               [
-                43253888,
+                110362752,
                 166
               ],
               [
-                43253890,
+                110362754,
                 323
               ]
             ]
@@ -732,31 +734,31 @@
                 1757
               ],
               [
-                9437184,
+                76546048,
                 717
               ],
               [
-                9437186,
+                76546050,
                 16578
               ],
               [
-                9437314,
+                76546178,
                 13
               ],
               [
-                9699328,
+                76808192,
                 1692
               ],
               [
-                9699330,
+                76808194,
                 27953
               ],
               [
-                9699456,
+                76808320,
                 309
               ],
               [
-                9699458,
+                76808322,
                 2209
               ]
             ]
@@ -785,55 +787,55 @@
                 2
               ],
               [
-                9546272,
+                76655136,
                 124
               ],
               [
-                9611808,
+                76720672,
                 2
               ],
               [
-                9611810,
+                76720674,
                 12
               ],
               [
-                9677344,
+                76786208,
                 1523
               ],
               [
-                9677346,
+                76786210,
                 102011
               ],
               [
-                9677474,
+                76786338,
                 104
               ],
               [
-                9808416,
+                76917280,
                 1397
               ],
               [
-                9808418,
+                76917282,
                 11128
               ],
               [
-                9873954,
+                76982818,
                 22764
               ],
               [
-                9939488,
+                77048352,
                 1891
               ],
               [
-                9939490,
+                77048354,
                 81051
               ],
               [
-                9939616,
+                77048480,
                 1015
               ],
               [
-                9939618,
+                77048482,
                 10242
               ]
             ]
@@ -850,6 +852,13 @@
         "zeros": 0,
         "recorded": 0,
         "median_nonzero_age": null
+      },
+      "species": {
+        "human": {
+          "subjects": 7903,
+          "sex": 6623,
+          "age": 0
+        }
       }
     }
   ]
